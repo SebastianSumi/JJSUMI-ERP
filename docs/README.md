@@ -37,3 +37,4 @@ El ecosistema **JJSUMI** integra tres plataformas en tiempo real para gestionar 
 | [03-bsc-estrategico-y-finanzas-sunat.md](./03-bsc-estrategico-y-finanzas-sunat.md) | Arquitectura NestJS + Prisma + React, SSO, modelo de datos, KPIs `K1–K20` y tablero Finanzas & SUNAT. | Desarrollo / Analistas |
 | [04-n8n-automatizacion-y-notificaciones.md](./04-n8n-automatizacion-y-notificaciones.md) | Detalle de los 3 workflows activos, webhook de eventos Odoo, resúmenes diarios y alertas críticas. | Desarrollo / Operaciones |
 | [05-operacion-mantenimiento-y-manual-usuario.md](./05-operacion-mantenimiento-y-manual-usuario.md) | Guía paso a paso para usuarios finales, comandos de administración, despliegues y respaldo. | Público Final / Soporte TI |
+| [06-guia-visual-y-recursos.md](./06-guia-visual-y-recursos.md) | Paleta corporativa, hojas de estilo consolidadas, íconos y diagramas visuales. | Diseño / Desarrollo / Público Final |

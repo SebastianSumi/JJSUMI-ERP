@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Acciones de navegación CORE que no existen en Odoo nativo -->
+    <record id="action_jjsumi_sedes" model="ir.actions.act_window">
+        <field name="name">Sucursales</field>
+        <field name="res_model">res.company</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('parent_id', '!=', False)]</field>
+        <field name="context">{'default_parent_id': ref('base.main_company')}</field>
+    </record>
+    <record id="action_jjsumi_emp_sin_usuario" model="ir.actions.act_window">
+        <field name="name">Empleados sin usuario</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('user_id', '=', False)]</field>
+    </record>
+    <record id="action_jjsumi_emp_con_usuario" model="ir.actions.act_window">
+        <field name="name">Empleados con usuario</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('user_id', '!=', False)]</field>
+    </record>
+
+    <menuitem id="menu_jjsumi_core_root" name="CORE" sequence="1"/>
+
+    <menuitem id="menu_jjsumi_core_org" name="Organización" parent="menu_jjsumi_core_root" sequence="10"/>
+    <menuitem id="menu_jjsumi_core_company" name="Compañía" parent="menu_jjsumi_core_org" action="base.action_res_company_form" sequence="10"/>
+    <menuitem id="menu_jjsumi_core_branches" name="Sucursales" parent="menu_jjsumi_core_org" action="action_jjsumi_sedes" sequence="20"/>
+    <menuitem id="menu_jjsumi_core_depts" name="Departamentos" parent="menu_jjsumi_core_org" action="hr.hr_department_tree_action" sequence="30"/>
+    <menuitem id="menu_jjsumi_core_areas" name="Áreas" parent="menu_jjsumi_core_org" action="jjsumi_org.action_jjsumi_area" sequence="40"/>
+    <menuitem id="menu_jjsumi_core_jobs" name="Cargos" parent="menu_jjsumi_core_org" action="hr.action_hr_job" sequence="50"/>
+
+    <menuitem id="menu_jjsumi_core_person" name="Personal" parent="menu_jjsumi_core_root" sequence="20"/>
+    <menuitem id="menu_jjsumi_core_emp" name="Empleados" parent="menu_jjsumi_core_person" action="hr.open_view_employee_list" sequence="10"/>
+    <menuitem id="menu_jjsumi_core_emp_no_user" name="Empleados sin usuario" parent="menu_jjsumi_core_person" action="action_jjsumi_emp_sin_usuario" sequence="20"/>
+    <menuitem id="menu_jjsumi_core_emp_user" name="Empleados con usuario" parent="menu_jjsumi_core_person" action="action_jjsumi_emp_con_usuario" sequence="30"/>
+
+    <menuitem id="menu_jjsumi_core_access" name="Accesos" parent="menu_jjsumi_core_root" sequence="30"/>
+    <menuitem id="menu_jjsumi_core_users" name="Usuarios" parent="menu_jjsumi_core_access" action="base.action_res_users" sequence="10"/>
+    <menuitem id="menu_jjsumi_core_roles" name="Roles empresariales" parent="menu_jjsumi_core_access" action="base.action_res_groups" sequence="20"/>
+    <menuitem id="menu_jjsumi_core_priv" name="Grupos técnicos" parent="menu_jjsumi_core_access" action="base.action_res_groups_privilege" sequence="30"/>
+
+    <menuitem id="menu_jjsumi_core_gov" name="Gobierno" parent="menu_jjsumi_core_root" sequence="40"/>
+    <menuitem id="menu_jjsumi_core_approvals" name="Solicitudes de aprobación" parent="menu_jjsumi_core_gov" action="jjsumi_approvals.action_jjsumi_approval" sequence="10"/>
+
+    <menuitem id="menu_jjsumi_core_audit" name="Auditoría" parent="menu_jjsumi_core_root" sequence="50"/>
+    <menuitem id="menu_jjsumi_core_audit_events" name="Eventos" parent="menu_jjsumi_core_audit" action="jjsumi_audit.action_jjsumi_audit" sequence="10"/>
+
+    <menuitem id="menu_jjsumi_core_params" name="Parámetros" parent="menu_jjsumi_core_root" sequence="60"/>
+    <menuitem id="menu_jjsumi_core_params_gen" name="Parámetros generales" parent="menu_jjsumi_core_params" action="base.ir_config_list_action" sequence="10"/>
+    <menuitem id="menu_jjsumi_core_seq" name="Secuencias CORE" parent="menu_jjsumi_core_params" action="base.ir_sequence_form" sequence="20"/>
+</odoo>

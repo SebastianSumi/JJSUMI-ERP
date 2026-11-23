@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- CONFIRMADOS por el propietario -->
+        <record id="param_min_local" model="ir.config_parameter">
+            <field name="key">jjsumi.min_local</field>
+            <field name="value">50</field>
+        </record>
+        <record id="param_min_intercity" model="ir.config_parameter">
+            <field name="key">jjsumi.min_intercity</field>
+            <field name="value">200</field>
+        </record>
+        <record id="param_bonus_cada" model="ir.config_parameter">
+            <field name="key">jjsumi.bonus_cada</field>
+            <field name="value">200</field>
+        </record>
+        <record id="param_bonus_bolsas" model="ir.config_parameter">
+            <field name="key">jjsumi.bonus_bolsas</field>
+            <field name="value">3</field>
+        </record>
+        <record id="param_capacidad_vehiculo" model="ir.config_parameter">
+            <field name="key">jjsumi.capacidad_vehiculo</field>
+            <field name="value">300</field>
+        </record>
+        <!-- SUPUESTOS del asistente (el propietario dejó estos a criterio): validar -->
+        <record id="param_transporte_local" model="ir.config_parameter">
+            <field name="key">jjsumi.transporte_local</field>
+            <field name="value">80</field>
+        </record>
+        <record id="param_transporte_intercity" model="ir.config_parameter">
+            <field name="key">jjsumi.transporte_intercity</field>
+            <field name="value">350</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record model="res.groups.privilege" id="res_groups_privilege_jjsumi">
+        <field name="name">JJSUMI Roles</field>
+        <field name="sequence">15</field>
+    </record>
+
+    <record id="group_jjsumi_admin" model="res.groups">
+        <field name="name">ROL-001 Administrador ERP</field>
+        <field name="sequence">1</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    <record id="group_jjsumi_general_manager" model="res.groups">
+        <field name="name">ROL-002 Gerente General</field>
+        <field name="sequence">2</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_branch_manager" model="res.groups">
+        <field name="name">ROL-003 Gerente de Sucursal</field>
+        <field name="sequence">3</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_production_manager" model="res.groups">
+        <field name="name">ROL-004 Jefe de Producción</field>
+        <field name="sequence">4</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_warehouse_supervisor" model="res.groups">
+        <field name="name">ROL-005 Supervisor de Almacén</field>
+        <field name="sequence">5</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_buyer" model="res.groups">
+        <field name="name">ROL-006 Comprador</field>
+        <field name="sequence">6</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_salesperson" model="res.groups">
+        <field name="name">ROL-007 Vendedor</field>
+        <field name="sequence">7</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_cashier" model="res.groups">
+        <field name="name">ROL-008 Cajero</field>
+        <field name="sequence">8</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_accountant" model="res.groups">
+        <field name="name">ROL-009 Contador</field>
+        <field name="sequence">9</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_hr_manager" model="res.groups">
+        <field name="name">ROL-010 Responsable de RR. HH.</field>
+        <field name="sequence">10</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_maintenance_technician" model="res.groups">
+        <field name="name">ROL-011 Técnico de Mantenimiento</field>
+        <field name="sequence">11</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_auditor" model="res.groups">
+        <field name="name">ROL-012 Auditor</field>
+        <field name="sequence">12</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_sales_supervisor" model="res.groups">
+        <field name="name">ROL-013 Supervisor Comercial</field>
+        <field name="sequence">13</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_quality_manager" model="res.groups">
+        <field name="name">ROL-014 Responsable de Calidad</field>
+        <field name="sequence">14</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+    <record id="group_jjsumi_distribution_coordinator" model="res.groups">
+        <field name="name">ROL-015 Coordinador de Distribución</field>
+        <field name="sequence">15</field>
+        <field name="privilege_id" ref="res_groups_privilege_jjsumi"/>
+    </record>
+</odoo>

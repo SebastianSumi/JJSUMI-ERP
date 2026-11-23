@@ -1,0 +1,319 @@
+{
+  "id": "jjsumiOdooEventos1",
+  "name": "JJSUMI ERP - Eventos Odoo (Ventas, Finanzas SUNAT, Compras e Inventario)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jjsumi-odoo",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-jjsumi",
+      "name": "Webhook Odoo JJSUMI",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 360],
+      "webhookId": "jjsumi-odoo"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  { "leftValue": "={{ $json.body.event }}", "rightValue": "sale.order.confirmed", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Venta Confirmada"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  { "leftValue": "={{ $json.body.event }}", "rightValue": "sale.order.discount_approved", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Descuento Aprobado"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  { "leftValue": "={{ $json.body.event }}", "rightValue": "crm.lead.created", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Nuevo Lead CRM"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  { "leftValue": "={{ $json.body.event }}", "rightValue": "finance.sunat.risk", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Riesgo Fiscal SUNAT"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  { "leftValue": "={{ $json.body.event }}", "rightValue": "finance.credit_note.posted", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Nota de Crédito"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  { "leftValue": "={{ $json.body.event }}", "rightValue": "purchase.order.high_amount", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Compra Alta >= 5000"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  { "leftValue": "={{ $json.body.event }}", "rightValue": "inventory.stock.low", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Quiebre de Stock"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-evento",
+      "name": "Enrutar por Evento",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [440, 360]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.data.amount_total }}",
+              "rightValue": 5000,
+              "operator": { "type": "number", "operation": "gte" }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "if-monto-alto",
+      "name": "Check monto >= 5000",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [720, 140]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "mode": "id", "value": "PEGA_TU_SHEET_ID" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "Ventas" },
+        "columns": { "mappingMode": "autoMapInputData", "value": {} },
+        "options": {}
+      },
+      "id": "sheets-registrar",
+      "name": "Capture sale (append: sheet)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [980, 40],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "fromEmail": "jetersucasaire@gmail.com",
+        "toEmail": "jetersucasaire@gmail.com",
+        "subject": "=Alerta Venta Alta JJSUMI {{ $json.body.data.name }}",
+        "emailFormat": "text",
+        "text": "=Venta por monto >= S/ 5,000:\nPedido: {{ $json.body.data.name }}\nCliente: {{ $json.body.data.partner_name }}\nTotal: S/ {{ $json.body.data.amount_total }}\nSucursal: {{ $json.body.data.company }}\nVendedor: {{ $json.body.data.salesperson }}",
+        "options": {}
+      },
+      "id": "smtp-alerta-gerencia",
+      "name": "Request approval / Alerta Gerencia",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [980, 200],
+      "credentials": {
+        "smtp": { "id": "jjsumiSmtpGmail1", "name": "Gmail SMTP JJSUMI" }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "jetersucasaire@gmail.com",
+        "toEmail": "={{ $('Webhook Odoo JJSUMI').item.json.body.data.partner_email || 'jetersucasaire@gmail.com' }}",
+        "subject": "=Confirmación JJSUMI {{ $('Webhook Odoo JJSUMI').item.json.body.data.name }}",
+        "emailFormat": "text",
+        "text": "=Estimado(a) {{ $('Webhook Odoo JJSUMI').item.json.body.data.partner_name }},\n\nSu pedido {{ $('Webhook Odoo JJSUMI').item.json.body.data.name }} ha sido confirmado.\n\nDetalle de la venta:\n{{ $('Webhook Odoo JJSUMI').item.json.body.data.description || 'Pedido registrado en JJSUMI ERP' }}\n\nTotal: S/ {{ $('Webhook Odoo JJSUMI').item.json.body.data.amount_total }}\nSucursal: {{ $('Webhook Odoo JJSUMI').item.json.body.data.company }}",
+        "options": {}
+      },
+      "id": "smtp-confirmation",
+      "name": "Send confirmation email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1240, 200],
+      "credentials": {
+        "smtp": { "id": "jjsumiSmtpGmail1", "name": "Gmail SMTP JJSUMI" }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "jetersucasaire@gmail.com",
+        "toEmail": "jetersucasaire@gmail.com",
+        "subject": "=[RIESGO FISCAL SUNAT] Compra a RUC no verificado ({{ $json.body.data.name }})",
+        "emailFormat": "text",
+        "text": "=ALERTA TRIBUTARIA SUNAT/RENIEC:\nSe registró una factura de proveedor sin estado Activo/Habido verificado.\n\nDocumento: {{ $json.body.data.name }} ({{ $json.body.data.document_type }})\nProveedor: {{ $json.body.data.partner_name }}\nRUC/DNI: {{ $json.body.data.partner_vat }}\nEstado RENIEC/SUNAT: {{ $json.body.data.reniec_estado }}\nIGV en riesgo: S/ {{ $json.body.data.amount_tax }}\nTotal: S/ {{ $json.body.data.amount_total }}\nSucursal: {{ $json.body.data.company }}",
+        "options": {}
+      },
+      "id": "smtp-sunat-risk",
+      "name": "Alerta Riesgo Fiscal SUNAT",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [760, 360],
+      "credentials": {
+        "smtp": { "id": "jjsumiSmtpGmail1", "name": "Gmail SMTP JJSUMI" }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "jetersucasaire@gmail.com",
+        "toEmail": "jetersucasaire@gmail.com",
+        "subject": "=[FINANZAS] Nota de Crédito emitida ({{ $json.body.data.name }})",
+        "emailFormat": "text",
+        "text": "=Se emitió una Nota de Crédito en Odoo:\nDocumento: {{ $json.body.data.name }}\nCliente: {{ $json.body.data.partner_name }} ({{ $json.body.data.partner_vat }})\nMonto: S/ {{ $json.body.data.amount_total }} (IGV: S/ {{ $json.body.data.amount_tax }})\nSucursal: {{ $json.body.data.company }}",
+        "options": {}
+      },
+      "id": "smtp-credit-note",
+      "name": "Notificar Nota de Crédito",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [760, 500],
+      "credentials": {
+        "smtp": { "id": "jjsumiSmtpGmail1", "name": "Gmail SMTP JJSUMI" }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "jetersucasaire@gmail.com",
+        "toEmail": "jetersucasaire@gmail.com",
+        "subject": "=[COMPRAS] Orden >= S/ 5,000 requiere revisión ({{ $json.body.data.name }})",
+        "emailFormat": "text",
+        "text": "=Orden de compra de alto monto confirmada:\nOC: {{ $json.body.data.name }}\nProveedor: {{ $json.body.data.partner_name }} ({{ $json.body.data.partner_vat }})\nTotal: S/ {{ $json.body.data.amount_total }}\nResponsable: {{ $json.body.data.user }}\nSucursal: {{ $json.body.data.company }}",
+        "options": {}
+      },
+      "id": "smtp-purchase-high",
+      "name": "Alerta Compra Alta",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [760, 640],
+      "credentials": {
+        "smtp": { "id": "jjsumiSmtpGmail1", "name": "Gmail SMTP JJSUMI" }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "jetersucasaire@gmail.com",
+        "toEmail": "jetersucasaire@gmail.com",
+        "subject": "=[INVENTARIO] Quiebre de stock detectado ({{ $json.body.data.picking_name }})",
+        "emailFormat": "text",
+        "text": "=Movimiento validado en almacén dejó productos sin saldo (<= 0):\nAlbarán: {{ $json.body.data.picking_name }}\nSucursal: {{ $json.body.data.company }}\nProductos afectados: {{ JSON.stringify($json.body.data.productos) }}",
+        "options": {}
+      },
+      "id": "smtp-stock-low",
+      "name": "Alerta Quiebre de Stock",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [760, 780],
+      "credentials": {
+        "smtp": { "id": "jjsumiSmtpGmail1", "name": "Gmail SMTP JJSUMI" }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Registro / Feedback Cliente JJSUMI",
+        "formDescription": "Formulario para registrar consultas o feedback de clientes JJSUMI",
+        "formFields": {
+          "values": [
+            { "fieldLabel": "Nombre o Razón Social", "requiredField": true },
+            { "fieldLabel": "Correo", "requiredField": true },
+            { "fieldLabel": "Teléfono / WhatsApp" },
+            { "fieldLabel": "Mensaje", "fieldType": "textarea" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "form-trigger",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [200, 700],
+      "webhookId": "jjsumi-form"
+    },
+    {
+      "parameters": {
+        "fromEmail": "jetersucasaire@gmail.com",
+        "toEmail": "={{ $json['Correo'] || 'jetersucasaire@gmail.com' }}",
+        "subject": "Gracias por contactar a JJSUMI",
+        "emailFormat": "text",
+        "text": "=Hola {{ $json['Nombre o Razón Social'] }},\n\nRecibimos tu solicitud correctamente:\n{{ $json['Mensaje'] }}",
+        "options": {}
+      },
+      "id": "smtp-feedback",
+      "name": "Send feedback",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [460, 700],
+      "credentials": {
+        "smtp": { "id": "jjsumiSmtpGmail1", "name": "Gmail SMTP JJSUMI" }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Odoo JJSUMI": {
+      "main": [[{ "node": "Enrutar por Evento", "type": "main", "index": 0 }]]
+    },
+    "Enrutar por Evento": {
+      "main": [
+        [{ "node": "Check monto >= 5000", "type": "main", "index": 0 }],
+        [{ "node": "Send confirmation email", "type": "main", "index": 0 }],
+        [{ "node": "Capture sale (append: sheet)", "type": "main", "index": 0 }],
+        [{ "node": "Alerta Riesgo Fiscal SUNAT", "type": "main", "index": 0 }],
+        [{ "node": "Notificar Nota de Crédito", "type": "main", "index": 0 }],
+        [{ "node": "Alerta Compra Alta", "type": "main", "index": 0 }],
+        [{ "node": "Alerta Quiebre de Stock", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check monto >= 5000": {
+      "main": [
+        [
+          { "node": "Capture sale (append: sheet)", "type": "main", "index": 0 },
+          { "node": "Request approval / Alerta Gerencia", "type": "main", "index": 0 }
+        ],
+        [{ "node": "Send confirmation email", "type": "main", "index": 0 }]
+      ]
+    },
+    "Request approval / Alerta Gerencia": {
+      "main": [[{ "node": "Send confirmation email", "type": "main", "index": 0 }]]
+    },
+    "On form submission": {
+      "main": [[{ "node": "Send feedback", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" }
+}

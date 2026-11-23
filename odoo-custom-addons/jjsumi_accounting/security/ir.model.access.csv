@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_jjsumi_documento_user,jjsumi_documento user,model_jjsumi_documento,base.group_user,1,1,1,0
+access_jjsumi_documento_admin,jjsumi_documento admin,model_jjsumi_documento,base.group_system,1,1,1,1
+access_jjsumi_hoja_user,jjsumi_hoja user,model_jjsumi_hoja,base.group_user,1,1,1,0
+access_jjsumi_hoja_admin,jjsumi_hoja admin,model_jjsumi_hoja,base.group_system,1,1,1,1
+access_jjsumi_hoja_linea_user,jjsumi.hoja.linea user,model_jjsumi_hoja_linea,base.group_user,1,1,1,1

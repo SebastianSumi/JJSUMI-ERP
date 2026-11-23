@@ -1,0 +1,525 @@
+/* ============================================================
+   JJSumi Auth — Login premium (Odoo 19)
+   Tarjeta centrada, fondo navy, acentos dorados.
+   Scoped a .o_jjsumi_login_* para no afectar otras páginas.
+   ============================================================ */
+
+:root {
+    --jj-login-navy-900: #0B1628;
+    --jj-login-navy-800: #101F3A;
+    --jj-login-navy-700: #16305A;
+    --jj-login-navy-link: #1E4B8C;
+    --jj-login-gold: #C9A227;
+    --jj-login-gold-600: #A9861B;
+    --jj-login-ink: #1D2939;
+    --jj-login-muted: #667085;
+    --jj-login-line: #E4E7EC;
+    --jj-login-surface: #F7F8FA;
+    --jj-login-card-radius: 20px;
+    --jj-login-shadow: 0 24px 64px rgba(11, 22, 40, .35), 0 4px 16px rgba(11, 22, 40, .18);
+}
+
+/* ---------- Fondo full-screen ---------- */
+body:has(.o_jjsumi_login_page) {
+    background: linear-gradient(160deg, var(--jj-login-navy-900) 0%, var(--jj-login-navy-800) 45%, var(--jj-login-navy-700) 100%) !important;
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+body:has(.o_jjsumi_login_page) #wrapwrap,
+body:has(.o_jjsumi_login_page) #wrapwrap main {
+    background: transparent !important;
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+}
+
+/* Ocultar skip-link del website en el login */
+body:has(.o_jjsumi_login_page) .o_skip_to_content {
+    display: none !important;
+}
+
+.o_jjsumi_login_page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px 16px;
+    background: linear-gradient(160deg, var(--jj-login-navy-900) 0%, var(--jj-login-navy-800) 45%, var(--jj-login-navy-700) 100%);
+}
+
+/* ---------- Tarjeta ---------- */
+.o_jjsumi_login_card {
+    width: 100%;
+    max-width: 420px;
+    background: #FFFFFF;
+    border-radius: var(--jj-login-card-radius);
+    box-shadow: var(--jj-login-shadow);
+    padding: 36px 36px 28px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Filete dorado superior */
+.o_jjsumi_login_card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--jj-login-gold), var(--jj-login-gold-600), var(--jj-login-gold));
+}
+
+/* ---------- Marca ---------- */
+.o_jjsumi_login_brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    margin-bottom: 22px;
+}
+
+.o_jjsumi_login_logo {
+    max-height: 72px;
+    max-width: 200px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    margin-bottom: 4px;
+}
+
+.o_jjsumi_login_name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: var(--jj-login-navy-800);
+    text-transform: uppercase;
+}
+
+.o_jjsumi_login_tag {
+    font-size: .8rem;
+    color: var(--jj-login-muted);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+/* ---------- Encabezado bienvenida ---------- */
+.o_jjsumi_login_intro {
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+.o_jjsumi_login_heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--jj-login-navy-800);
+    margin: 0 0 4px;
+    line-height: 1.2;
+}
+
+.o_jjsumi_login_sub {
+    font-size: .9rem;
+    color: var(--jj-login-muted);
+    margin: 0;
+}
+
+/* ---------- Cuerpo / formulario ---------- */
+.o_jjsumi_login_body .oe_login_form,
+.o_jjsumi_login_body .oe_signup_form,
+.o_jjsumi_login_body .oe_reset_password_form,
+.oe_website_login_container .oe_login_form {
+    max-width: 100% !important;
+    margin: 0 !important;
+    position: relative;
+}
+
+.o_jjsumi_login_body label,
+.o_jjsumi_login_card label.form-label,
+.o_jjsumi_login_card label.col-form-label {
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--jj-login-ink);
+    margin-bottom: 6px;
+}
+
+.o_jjsumi_login_card .form-control {
+    border-radius: 10px;
+    border: 1.5px solid var(--jj-login-line);
+    padding: 10px 14px;
+    font-size: .95rem;
+    background-color: var(--jj-login-surface);
+    transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+.o_jjsumi_login_card .form-control::placeholder {
+    color: #98A2B3;
+}
+
+.o_jjsumi_login_card .form-control:hover {
+    border-color: #C7CEDB;
+    background-color: #FFFFFF;
+}
+
+.o_jjsumi_login_card .form-control:focus {
+    background-color: #FFFFFF;
+    border-color: var(--jj-login-gold);
+    box-shadow: 0 0 0 3px rgba(201, 162, 39, .22);
+    color: var(--jj-login-ink);
+}
+
+/* Botón ojo password */
+.o_jjsumi_login_card .o_show_password {
+    border-radius: 0 10px 10px 0 !important;
+    border: 1.5px solid var(--jj-login-line) !important;
+    border-left: none !important;
+    background: var(--jj-login-surface) !important;
+    color: var(--jj-login-muted) !important;
+    padding: 0 14px;
+    transition: color .2s ease, background-color .2s ease;
+}
+
+.o_jjsumi_login_card .o_show_password:hover {
+    color: var(--jj-login-navy-700) !important;
+    background: #EEF1F6 !important;
+}
+
+.o_jjsumi_login_card .input-group .form-control {
+    border-radius: 10px 0 0 10px !important;
+    border-right: none !important;
+}
+
+/* ---------- Botón principal ---------- */
+.o_jjsumi_login_card .oe_login_buttons .btn-primary,
+.o_jjsumi_login_card .oe_login_buttons button[type="submit"],
+.o_jjsumi_login_card form.oe_login_form button[type="submit"],
+.o_jjsumi_login_card .oe_signup_form button[type="submit"],
+.o_jjsumi_login_card .oe_reset_password_form button[type="submit"] {
+    background: linear-gradient(135deg, var(--jj-login-navy-800), var(--jj-login-navy-700)) !important;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: .02em;
+    padding: 12px 20px;
+    border-radius: 10px;
+    box-shadow: 0 6px 16px rgba(16, 31, 58, .28);
+    transition: transform .15s ease, box-shadow .2s ease, background .2s ease, filter .2s ease;
+}
+
+.o_jjsumi_login_card .oe_login_buttons .btn-primary:hover,
+.o_jjsumi_login_card form.oe_login_form button[type="submit"]:hover,
+.o_jjsumi_login_card .oe_signup_form button[type="submit"]:hover,
+.o_jjsumi_login_card .oe_reset_password_form button[type="submit"]:hover {
+    background: linear-gradient(135deg, var(--jj-login-navy-700), var(--jj-login-navy-800)) !important;
+    box-shadow: 0 8px 22px rgba(16, 31, 58, .36);
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+}
+
+.o_jjsumi_login_card .oe_login_buttons .btn-primary:active,
+.o_jjsumi_login_card form.oe_login_form button[type="submit"]:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 8px rgba(16, 31, 58, .3);
+}
+
+/* Accento dorado al focus del botón */
+.o_jjsumi_login_card .oe_login_buttons .btn-primary:focus {
+    box-shadow: 0 0 0 3px rgba(201, 162, 39, .35), 0 6px 16px rgba(16, 31, 58, .28);
+}
+
+/* ---------- Enlaces (Reset password / signup) ---------- */
+.o_jjsumi_login_card a {
+    color: var(--jj-login-navy-link);
+    text-decoration: none;
+    transition: color .15s ease;
+}
+
+.o_jjsumi_login_card a:hover {
+    color: var(--jj-login-gold-600);
+}
+
+.o_jjsumi_login_card .oe_login_form a.btn-link,
+.o_jjsumi_login_card .oe_signup_form a.btn-link,
+.o_jjsumi_login_card .oe_reset_password_form a.btn-link {
+    color: var(--jj-login-navy-link);
+    font-weight: 500;
+    font-size: .875rem;
+}
+
+.o_jjsumi_login_card .oe_login_form a.btn-link:hover,
+.o_jjsumi_login_card .oe_signup_form a.btn-link:hover,
+.o_jjsumi_login_card .oe_reset_password_form a.btn-link:hover {
+    color: var(--jj-login-gold-600);
+    text-decoration: underline;
+}
+
+/* ---------- Alertas ---------- */
+.o_jjsumi_login_card .alert {
+    border-radius: 10px;
+    font-size: .9rem;
+    border: none;
+    padding: 12px 14px;
+    margin-top: 14px;
+    animation: jjLoginShake .4s ease;
+}
+
+.o_jjsumi_login_card .alert-danger {
+    background: #FEF3F2;
+    color: #B42318;
+    border-left: 4px solid #F04438;
+    box-shadow: 0 2px 8px rgba(176, 35, 24, .08);
+}
+
+.o_jjsumi_login_card .alert-success {
+    background: #ECFDF3;
+    color: #027A48;
+    border-left: 4px solid #12B76A;
+    box-shadow: 0 2px 8px rgba(2, 122, 72, .08);
+}
+
+/* ---------- Zona SSO / passkey / auth_btns (preparada) ---------- */
+.o_jjsumi_login_card .o_login_auth {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--jj-login-line);
+}
+
+.o_jjsumi_login_card .o_login_auth em {
+    color: var(--jj-login-muted);
+    font-size: .8rem;
+    font-style: normal;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-bottom: 12px !important;
+}
+
+.o_jjsumi_login_card .o_login_auth .list-group {
+    border: none;
+    gap: 8px;
+}
+
+.o_jjsumi_login_card .o_login_auth .list-group-item {
+    border: 1.5px solid var(--jj-login-line) !important;
+    border-radius: 10px !important;
+    background: var(--jj-login-surface);
+    color: var(--jj-login-navy-800);
+    font-weight: 500;
+    font-size: .9rem;
+    padding: 11px 16px;
+    transition: border-color .2s ease, background-color .2s ease, transform .15s ease, box-shadow .2s ease;
+}
+
+.o_jjsumi_login_card .o_login_auth .list-group-item:hover {
+    border-color: var(--jj-login-gold) !important;
+    background: #FFFFFF;
+    color: var(--jj-login-navy-800);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(11, 22, 40, .08);
+}
+
+.o_jjsumi_login_card .o_login_auth .list-group-item i {
+    color: var(--jj-login-gold-600);
+}
+
+/* ---------- User switch (elegir usuario) ---------- */
+.o_jjsumi_login_card web.user_switch,
+.o_jjsumi_login_body web.user_switch {
+    display: block;
+    margin-bottom: 12px;
+}
+
+/* ---------- 2FA badge ---------- */
+.o_jjsumi_totp_badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(201, 162, 39, .12), rgba(201, 162, 39, .06));
+    border: 1px solid rgba(201, 162, 39, .35);
+    color: var(--jj-login-gold-600);
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+}
+
+.o_jjsumi_totp_badge i {
+    font-size: .9rem;
+}
+
+.o_jjsumi_totp_title {
+    color: var(--jj-login-navy-800) !important;
+    font-weight: 700 !important;
+    margin-bottom: 8px !important;
+}
+
+/* ---------- Footer tarjeta: idioma + copyright ---------- */
+.o_jjsumi_login_footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--jj-login-line);
+    min-height: 36px;
+}
+
+.o_jjsumi_login_footer .o_jjsumi_copy {
+    font-size: .78rem;
+    color: var(--jj-login-muted);
+    white-space: nowrap;
+}
+
+/* Selector de idioma */
+.o_jjsumi_login_footer .o_jjsumi_lang {
+    margin: 0;
+}
+
+.o_jjsumi_login_footer .o_jjsumi_lang_btn {
+    color: var(--jj-login-muted) !important;
+    font-size: .8rem !important;
+    font-weight: 500 !important;
+    padding: 2px 6px !important;
+    border: none !important;
+    background: transparent !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: color .15s ease;
+}
+
+.o_jjsumi_login_footer .o_jjsumi_lang_btn:hover,
+.o_jjsumi_login_footer .o_jjsumi_lang_btn:focus {
+    color: var(--jj-login-gold-600) !important;
+    box-shadow: none !important;
+}
+
+.o_jjsumi_login_footer .o_jjsumi_lang_btn::before {
+    content: "\f0ac";
+    font-family: FontAwesome;
+    font-size: .78rem;
+    opacity: .8;
+}
+
+.o_jjsumi_login_footer .o_jjsumi_lang .dropdown-menu {
+    border-radius: 10px;
+    border: 1px solid var(--jj-login-line);
+    box-shadow: 0 12px 32px rgba(11, 22, 40, .14);
+    padding: 6px;
+    min-width: 140px;
+}
+
+.o_jjsumi_login_footer .o_jjsumi_lang .dropdown-item {
+    border-radius: 7px;
+    font-size: .875rem;
+    padding: 7px 12px;
+    color: var(--jj-login-ink);
+    transition: background-color .12s ease, color .12s ease;
+}
+
+.o_jjsumi_login_footer .o_jjsumi_lang .dropdown-item:hover {
+    background: var(--jj-login-surface);
+    color: var(--jj-login-navy-800);
+}
+
+.o_jjsumi_login_footer .o_jjsumi_lang .dropdown-item.active {
+    background: var(--jj-login-navy-800);
+    color: #FFFFFF;
+}
+
+/* Sin selector de idioma: copyright a la izquierda */
+.o_jjsumi_login_footer:not(:has(.js_language_selector)) {
+    justify-content: center;
+}
+
+/* ---------- Caps lock warning ---------- */
+.o_jjsumi_login_card .o_caps_lock_warning small,
+.o_jjsumi_login_card #capslock {
+    color: var(--jj-login-gold-600);
+    font-weight: 600;
+}
+
+/* ---------- Microinteracciones / animaciones ---------- */
+@keyframes jjLoginFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(.985);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes jjLoginShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(2px); }
+}
+
+.o_jjsumi_anim_in {
+    animation: jjLoginFadeUp .55s cubic-bezier(.22, .9, .3, 1) both;
+}
+
+/* Botón: pulso sutil al cargar (microinteracción) */
+.o_jjsumi_login_card .oe_login_buttons .btn-primary {
+    animation: jjLoginFadeUp .55s cubic-bezier(.22, .9, .3, 1) .12s both;
+}
+
+/* Glow leve mientras el usuario escribe (JS: o_jjsumi_is-typing) */
+.o_jjsumi_login_card {
+    transition: box-shadow .35s ease;
+}
+
+.o_jjsumi_login_card.o_jjsumi_is-typing {
+    box-shadow: var(--jj-login-shadow), 0 0 0 3px rgba(201, 162, 39, .18);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+    .o_jjsumi_login_card {
+        padding: 28px 22px 22px;
+        border-radius: 16px;
+    }
+
+    .o_jjsumi_login_logo {
+        max-height: 56px;
+    }
+
+    .o_jjsumi_login_name {
+        font-size: 1.15rem;
+    }
+
+    .o_jjsumi_login_heading {
+        font-size: 1.3rem;
+    }
+
+    .o_jjsumi_login_footer {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+}
+
+/* ---------- Seguridad: contraseñas guardadas por el navegador ---------- */
+.o_jjsumi_login_card input:-webkit-autofill,
+.o_jjsumi_login_card input:-webkit-autofill:hover,
+.o_jjsumi_login_card input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--jj-login-ink);
+    -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset;
+    box-shadow: 0 0 0 1000px #FFFFFF inset;
+    transition: background-color 9999s ease-in-out 0s;
+    caret-color: var(--jj-login-ink);
+}
+
+/* Ocultar autocomplete amarillo feo */
+.o_jjsumi_login_card input[autocomplete="current-password"]:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset;
+}

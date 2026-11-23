@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="jjsumi_equipment_contador_form" model="ir.ui.view">
+        <field name="name">maintenance.equipment.form.jjsumi.contador</field>
+        <field name="model">maintenance.equipment</field>
+        <field name="inherit_id" ref="maintenance.hr_equipment_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Contador JJSUMI" name="jjsumi_contador">
+                    <group>
+                        <group><field name="x_jjsumi_codigo"/><field name="x_jjsumi_ubicacion"/>
+                               <field name="x_jjsumi_horas"/><field name="x_jjsumi_km"/></group>
+                        <group><field name="x_jjsumi_frec_horas"/><field name="x_jjsumi_frec_km"/>
+                               <field name="x_jjsumi_ult_horas"/><field name="x_jjsumi_ult_km"/></group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

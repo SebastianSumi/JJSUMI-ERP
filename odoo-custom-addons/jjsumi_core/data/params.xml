@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="param_jjsumi_pais" model="ir.config_parameter">
+            <field name="key">jjsumi.pais</field>
+            <field name="value">Perú</field>
+        </record>
+        <record id="param_jjsumi_idioma" model="ir.config_parameter">
+            <field name="key">jjsumi.idioma</field>
+            <field name="value">es_PE</field>
+        </record>
+        <record id="param_jjsumi_tz" model="ir.config_parameter">
+            <field name="key">jjsumi.tz</field>
+            <field name="value">America/Lima</field>
+        </record>
+        <record id="param_jjsumi_dominio" model="ir.config_parameter">
+            <field name="key">jjsumi.dominio_correo</field>
+            <field name="value">jjsumi.pe</field>
+        </record>
+        <record id="param_jjsumi_prefijo" model="ir.config_parameter">
+            <field name="key">jjsumi.prefijo</field>
+            <field name="value">JJS</field>
+        </record>
+        <record id="param_jjsumi_emp" model="ir.config_parameter">
+            <field name="key">jjsumi.prefijo_empleado</field>
+            <field name="value">EMP-</field>
+        </record>
+        <record id="param_jjsumi_sede" model="ir.config_parameter">
+            <field name="key">jjsumi.prefijo_sede</field>
+            <field name="value">SEDE-</field>
+        </record>
+        <record id="param_jjsumi_dep" model="ir.config_parameter">
+            <field name="key">jjsumi.prefijo_departamento</field>
+            <field name="value">DEP-</field>
+        </record>
+        <record id="param_jjsumi_are" model="ir.config_parameter">
+            <field name="key">jjsumi.prefijo_area</field>
+            <field name="value">ARE-</field>
+        </record>
+        <record id="param_jjsumi_car" model="ir.config_parameter">
+            <field name="key">jjsumi.prefijo_cargo</field>
+            <field name="value">CAR-</field>
+        </record>
+        <record id="param_jjsumi_apr" model="ir.config_parameter">
+            <field name="key">jjsumi.prefijo_aprobacion</field>
+            <field name="value">APR-</field>
+        </record>
+        <record id="param_jjsumi_fase" model="ir.config_parameter">
+            <field name="key">jjsumi.fase_actual</field>
+            <field name="value">01</field>
+        </record>
+    </data>
+</odoo>

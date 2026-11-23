@@ -1,0 +1,230 @@
+# JJSUMI ERP — FASE 03: INVENTARIO Y ALMACENES
+
+**Especificación funcional, de datos, interfaz, seguridad y pruebas**  
+**Plataforma objetivo:** Odoo 19 Community  
+**Base existente:** `jjsumi` — protegida  
+**Estado:** Diseño aprobado para implementación  
+**Versión del documento:** 1.0  
+**Fecha:** 18 de noviembre de 2026  
+
+---
+
+## 0. Reglas obligatorias de la Fase 03
+
+1. Utilizar exclusivamente los modelos nativos de Odoo: `stock.warehouse`, `stock.location`, `stock.picking`, `stock.picking.type`, `stock.move`, `stock.move.line`, `stock.quant`, `stock.lot`, `stock.rule`, `stock.route`.
+2. No crear modelos paralelos para inventario. Las extensiones se harán mediante campos personalizados (`x_jjsumi_*`) solo si son estrictamente necesarios.
+3. Cada almacén tendrá un código único de 5 caracteres (ej. `WH-JUL`).
+4. Las ubicaciones internas seguirán una jerarquía estricta: `Almacén / Tipo de Zona / Ubicación específica`.
+5. El seguimiento por lotes (`tracking = 'lot'`) es obligatorio para las categorías CAT-YES, CAT-MAS y CAT-MAT, configuradas en la Fase 02.
+6. No se eliminarán movimientos de inventario validados. Las correcciones se realizan mediante ajustes de inventario o devoluciones con trazabilidad.
+7. La valoración de inventario se regirá por el método definido en la categoría del producto (`cost_method`: `average` o `standard`) y la configuración de valoración (`valuation`: `manual_periodic` o `real_time`).
+
+---
+
+## 1. Objetivo y Alcance
+
+Controlar las existencias y movimientos de las cinco sedes de JJSUMI, garantizando la trazabilidad desde la recepción de materia prima hasta el despacho de producto terminado o venta en punto de venta.
+
+### 1.1 Entregables
+- 5 almacenes configurados y vinculados a sus respectivas sucursales.
+- Estructura jerárquica de ubicaciones internas (con énfasis en la planta de Juliaca).
+- Tipos de operación (Recepciones, Despachos, Transferencias Internas, Transferencias entre Sucursales).
+- Reglas de reposición y rutas de abastecimiento configuradas.
+- Procedimientos de inventario físico y ajustes autorizados.
+- Gestión de productos dañados y devoluciones.
+
+---
+
+## 2. Aplicaciones nativas y modelos técnicos (Odoo 19 Community)
+
+| Modelo Nativo | Uso en JJSUMI | Campos técnicos clave |
+| :--- | :--- | :--- |
+| `stock.warehouse` | Definición de los 5 almacenes | `name`, `code`, `company_id`, `lot_stock_id`, `view_location_id`, `reception_steps`, `delivery_steps` |
+| `stock.location` | Estructura jerárquica de ubicaciones | `name`, `usage` (`internal`, `view`, `supplier`, `customer`, `inventory`, `transit`, `production`), `location_id`, `company_id`, `barcode` |
+| `stock.picking.type` | Tipos de operación (Albaranes) | `name`, `code` (`incoming`, `outgoing`, `internal`), `sequence_id`, `default_location_src_id`, `default_location_dest_id`, `warehouse_id` |
+| `stock.picking` | Movimientos de almacén (Albaranes) | `picking_type_id`, `location_id`, `location_dest_id`, `state` (`draft`, `waiting`, `confirmed`, `assigned`, `done`), `origin` |
+| `stock.move` | Líneas de movimiento (cabecera) | `product_id`, `product_uom_qty`, `product_uom`, `location_id`, `location_dest_id`, `state` |
+| `stock.move.line` | Líneas de movimiento detalladas (lotes) | `product_id`, `lot_id`, `qty_done`, `location_id`, `location_dest_id` |
+| `stock.quant` | Existencias actuales por ubicación/lote | `product_id`, `location_id`, `lot_id`, `quantity`, `inventory_quantity` |
+| `stock.lot` | Seguimiento de lotes | `name`, `product_id`, `company_id`, `product_qty` (calculado) |
+| `stock.route` | Rutas de abastecimiento | `name`, `sequence`, `warehouse_ids` |
+| `stock.rule` | Reglas de reposición | `name`, `action` (`pull`, `push`, `pull_push`, `buy`, `manufacture`), `route_id`, `location_src_id`, `location_dest_id` |
+
+---
+
+## 3. Arquitectura de Almacenes y Ubicaciones
+
+### 3.1 Los 5 Almacenes (`stock.warehouse`)
+
+| Código | Nombre | Sucursal vinculada | Dirección de vista (`view_location_id`) | Ubicación de stock (`lot_stock_id`) |
+| :--- | :--- | :--- | :--- | :--- |
+| WH-JUL | Almacén Central Juliaca | SEDE-001 | WH-JUL/View | WH-JUL/Stock |
+| WH-PUN | Almacén Puno | SEDE-002 | WH-PUN/View | WH-PUN/Stock |
+| WH-AQP | Almacén Arequipa | SEDE-003 | WH-AQP/View | WH-AQP/Stock |
+| WH-CUS | Almacén Cusco | SEDE-004 | WH-CUS/View | WH-CUS/Stock |
+| WH-TAC | Almacén Tacna | SEDE-005 | WH-TAC/View | WH-TAC/Stock |
+
+*Nota: Al crear un almacén en Odoo, el sistema genera automáticamente las ubicaciones `View` y `Stock`, y los tipos de operación básicos. Se ampliarán con ubicaciones personalizadas.*
+
+### 3.2 Estructura de Ubicaciones Internas (Ejemplo detallado: WH-JUL)
+
+La planta de Juliaca requiere una estructura granular para el proceso industrial. Las demás sucursales (Puno, Arequipa, Cusco, Tacna) tendrán una estructura simplificada: `Recepción`, `Stock`, `Despacho`, `Devoluciones`.
+
+**Jerarquía de WH-JUL (`stock.location`):**
+```text
+WH-JUL (View)
+ ├── WH-JUL/Recepcion (internal)
+ ├── WH-JUL/Stock (internal) [Ubicación por defecto 'lot_stock_id']
+ │    ├── WH-JUL/Stock/Materia_Prima (internal)
+ │    ├── WH-JUL/Stock/Producto_Terminado (internal)
+ │    └── WH-JUL/Stock/Insumos (internal)
+ ├── WH-JUL/Produccion (production)
+ ├── WH-JUL/Calidad (internal)
+ ├── WH-JUL/Empaquetado (internal)
+ ├── WH-JUL/Despacho (internal)
+ ├── WH-JUL/Devoluciones (internal)
+ └── WH-JUL/Defectuosos (inventory)
+```
+
+**Campos técnicos para crear ubicaciones personalizadas (CSV/XML):**
+- `name`: Nombre de la ubicación (ej. `Materia_Prima`).
+- `location_id`: Referencia a la ubicación padre (ej. `WH-JUL/Stock`).
+- `usage`: `internal` (para stock normal), `production` (para áreas de fabricación), `inventory` (para pérdidas/ganancias o defectuosos).
+- `company_id`: JJSUMI.
+- `barcode`: Código de barras para escaneo (ej. `LOC-JUL-MP-01`).
+
+---
+
+## 4. Tipos de Operación (`stock.picking.type`)
+
+Odoo crea 3 tipos por defecto al crear un almacén (`Recepciones`, `Entregas`, `Operaciones internas`). Se configurarán y nombrarán explícitamente para JJSUMI:
+
+| Almacén | Código | Nombre visible | Secuencia | Ubicación Origen | Ubicación Destino |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| WH-JUL | IN | Recepciones de Materia Prima | WH-JUL/IN/ | Proveedores (Virtual) | WH-JUL/Recepcion |
+| WH-JUL | OUT | Despachos de Producto Terminado | WH-JUL/OUT/ | WH-JUL/Despacho | Clientes (Virtual) |
+| WH-JUL | INT | Movimientos Internos Planta | WH-JUL/INT/ | WH-JUL/Stock | WH-JUL/Produccion |
+| WH-JUL | TRF | Transferencia a Sucursales | WH-JUL/TRF/ | WH-JUL/Stock | Ubicación de Tránsito |
+| WH-PUN | IN | Recepciones de Sucursal | WH-PUN/IN/ | WH-JUL/Stock (o Prov.) | WH-PUN/Recepcion |
+| WH-PUN | OUT | Ventas POS / Mostrador | WH-PUN/OUT/ | WH-PUN/Stock | Clientes (Virtual) |
+| ... | ... | *(Aplicar misma lógica a AQP, CUS, TAC)* | ... | ... | ... |
+
+*Nota: Las "Ubicaciones Virtuales" (`stock.location` con `usage` = `supplier`, `customer`, `inventory`, `production`) son nativas de Odoo y no deben eliminarse.*
+
+---
+
+## 5. Reglas de Reposición y Rutas (`stock.rule` y `stock.route`)
+
+### 5.1 Rutas habilitadas en Almacenes
+- **Buy (Comprar):** Para productos de las categorías CAT-PLA, CAT-DEC, CAT-HER y materias primas (CAT-MAT).
+- **Manufacture (Fabricar):** Para productos terminados de las categorías CAT-YES y CAT-MAS.
+- **Replenish on Order (MTO):** No se usará de forma general, solo para productos decorativos especiales bajo pedido (si aplica).
+
+### 5.2 Reglas de Reabastecimiento (Ejemplo: Transferencia de Juliaca a Puno)
+Para que Puno pueda solicitar stock a Juliaca, se configura una regla de reabastecimiento:
+- **Nombre:** Reponer WH-PUN desde WH-JUL
+- **Acción:** `pull` (Pull) o `pull_push` (Push & Pull)
+- **Ruta:** Ruta de reabastecimiento multialmacén
+- **Ubicación de destino:** `WH-PUN/Stock`
+- **Ubicación de origen:** `WH-JUL/Stock`
+- **Regla de reorden (Orderpoint):** Se configurará en `stock.warehouse.orderpoint` para productos críticos en Puno (ej. YES-001, PLA-001), definiendo `product_min_qty` y `product_max_qty`.
+
+---
+
+## 6. Lotes y Trazabilidad (`stock.lot`)
+
+- **Activación:** Ajustes → Inventario → Trazabilidad → ✅ Números de serie y lotes.
+- **Regla de negocio:** Todo producto con `tracking = 'lot'` (definido en Fase 02) exigirá la selección o creación de un lote en las líneas de movimiento (`stock.move.line`).
+- **Nomenclatura de lotes:** Se sugiere el formato `LOT-YYYYMMDD-XXX` (ej. `LOT-20261118-001`), aunque Odoo permite cualquier formato de texto.
+- **Vencimiento:** No se activará la gestión de fechas de caducidad (`expiration dates`) en esta fase, ya que el yeso no tiene una caducidad estricta gestionada por el sistema, solo una vida útil informativa.
+
+---
+
+## 7. Inventarios Físicos y Ajustes
+
+En Odoo 19 Community, los ajustes de inventario se gestionan a través de las existencias (`stock.quant`).
+
+### 7.1 Proceso de Ajuste Autorizado
+1. El supervisor de almacén inicia un "Inventario" desde la ubicación específica (ej. `WH-JUL/Stock/Materia_Prima`).
+2. Odoo genera líneas con la "Cantidad Contada" vacía.
+3. El usuario ingresa la cantidad física real.
+4. Al validar, Odoo crea automáticamente un movimiento de ajuste (`stock.picking` de tipo `Inventory Loss` o `Inventory Gain`) que impacta la cuenta de valoración de inventario (si `valuation` = `real_time`) o queda registrado para ajuste manual (si `valuation` = `manual_periodic`).
+
+### 7.2 Productos Dañados
+- Se utilizará la ubicación `WH-JUL/Defectuosos` (tipo `inventory`).
+- Se realiza una transferencia interna desde `WH-JUL/Stock` hacia `WH-JUL/Defectuosos`.
+- Motivo: Obligatorio registrar en el campo `Note` del albarán o mediante una etiqueta de producto.
+
+---
+
+## 8. Flujo de Operaciones de Almacén
+
+### 8.1 Recepción de Mercadería (Compras)
+1. Orden de Compra confirmada → Genera `stock.picking` tipo `Recepciones` (Estado: `Esperando`).
+2. Mercadería llega a `WH-JUL/Recepcion`.
+3. Almacenero valida el albarán, ingresa cantidades y **lotes** (si aplica).
+4. Estado cambia a `Hecho`. El stock aumenta en `WH-JUL/Recepcion`.
+5. (Opcional) Transferencia interna a `WH-JUL/Stock/Materia_Prima`.
+
+### 8.2 Transferencia entre Sucursales (Juliaca → Puno)
+1. Se crea una Transferencia Interna (`stock.picking` tipo `Transferencia a Sucursales`).
+2. Origen: `WH-JUL/Stock`. Destino: `WH-PUN/Stock`.
+3. Juliaca valida la salida (Estado: `Hecho`). El stock sale de Juliaca y entra en una ubicación de `Tránsito` (nativa de Odoo para rutas multialmacén).
+4. Puno recibe la mercadería y valida la entrada. El stock se refleja en `WH-PUN/Stock`.
+
+### 8.3 Despacho por Venta o POS
+1. Venta confirmada o sesión de POS cerrada → Genera `stock.picking` tipo `Entregas`.
+2. Origen: `WH-PUN/Stock`. Destino: `Clientes`.
+3. Almacenero valida la salida. El stock disminuye.
+
+---
+
+## 9. Pruebas de Aceptación (Fase 03)
+
+| ID | Prueba | Resultado esperado |
+| :--- | :--- | :--- |
+| T01 | Verificar creación de 5 almacenes | WH-JUL, WH-PUN, WH-AQP, WH-CUS, WH-TAC existen con códigos correctos. |
+| T02 | Verificar estructura de ubicaciones de Juliaca | Existen las 9 ubicaciones hijas bajo WH-JUL con `usage` correcto. |
+| T03 | Crear regla de reabastecimiento | Regla pull de WH-JUL a WH-PUN creada y activa. |
+| T04 | Recibir producto con lote (YES-001) | El sistema obliga a ingresar un número de lote en `stock.move.line`. |
+| T05 | Validar transferencia multialmacén | Al validar salida en Juliaca, el stock aparece en tránsito; al validar en Puno, aumenta el stock de Puno. |
+| T06 | Realizar ajuste de inventario | Modificar cantidad en `stock.quant` genera un movimiento de ajuste con estado `done`. |
+| T07 | Mover producto a ubicación de defectuosos | Transferencia interna a `WH-JUL/Defectuosos` reduce el stock disponible y lo aísla. |
+| T08 | Verificar tipos de operación | Los 5 almacenes tienen sus secuencias de albaranes (IN, OUT, INT) configuradas. |
+| T09 | Validar restricción de ubicación | Un producto sin seguimiento por lote NO exige lote; uno con `tracking='lot'` SÍ lo exige. |
+| T10 | Reporte de existencias | El informe "Existencias" muestra el desglose correcto por almacén y ubicación. |
+
+---
+
+## 10. Orden exacto de implementación
+
+1. **Auditoría previa:** Verificar que los módulos `stock`, `product` y `purchase` (si se usa para pruebas de recepción) estén instalados.
+2. **Activación de configuraciones:** Ajustes → Inventario → Activar "Ubicaciones de almacenamiento", "Rutas avanzadas", "Números de serie y lotes", "Códigos de barras".
+3. **Creación de Almacenes:** Crear los 5 registros en `stock.warehouse` (Odoo generará ubicaciones y tipos de operación base).
+4. **Creación de Ubicaciones Personalizadas:** Importar o crear manualmente la estructura jerárquica detallada (especialmente para WH-JUL).
+5. **Configuración de Tipos de Operación:** Ajustar nombres, secuencias y ubicaciones por defecto de los `stock.picking.type`.
+6. **Configuración de Rutas:** Verificar que las rutas "Buy" y "Manufacture" estén activas y asignadas a las categorías de producto (hecho en Fase 02).
+7. **Configuración de Reglas de Reabastecimiento:** Crear reglas de transferencia entre almacenes y puntos de reorden (`stock.warehouse.orderpoint`) para productos clave.
+8. **Pruebas de Flujo:** Ejecutar una recepción, una transferencia interna, una transferencia multialmacén y un ajuste de inventario.
+9. **Validación y Aprobación:** Firmar el acta de aceptación de la Fase 03.
+
+---
+
+## 11. Estado de aprobación
+
+| Elemento | Estado |
+| :--- | :--- |
+| Definición de 5 almacenes | Completado |
+| Estructura jerárquica de ubicaciones | Completada |
+| Tipos de operación (Picking Types) | Definidos |
+| Reglas de reposición y rutas | Definidas |
+| Gestión de lotes y trazabilidad | Alineada a Fase 02 |
+| Procedimientos de ajuste y devoluciones | Definidos |
+| Pruebas de aceptación | Diseñadas |
+| Implementación | No iniciada (Pendiente de aprobación de Fase 02) |
+
+---
+
+**Documento maestro de Fase 03 — JJSUMI ERP — Odoo 19 Community.**  
+**Estado:** Diseño aprobado para implementación. No autoriza por sí mismo cambios en la base de datos.  
+**Próximo paso:** Una vez aprobada la Fase 02, proceder con la configuración de esta fase en el entorno de validación, siguiendo estrictamente los modelos y campos nativos de Odoo 19 detallados arriba.

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_jjsumi_area_list" model="ir.ui.view">
+        <field name="name">jjsumi.area.list</field>
+        <field name="model">jjsumi.area</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="department_id"/>
+                <field name="scope"/>
+                <field name="manager_employee_id"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_jjsumi_area_form" model="ir.ui.view">
+        <field name="name">jjsumi.area.form</field>
+        <field name="model">jjsumi.area</field>
+        <field name="arch" type="xml">
+            <form string="Área">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="department_id"/>
+                        </group>
+                        <group>
+                            <field name="scope"/>
+                            <field name="manager_employee_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_jjsumi_area_search" model="ir.ui.view">
+        <field name="name">jjsumi.area.search</field>
+        <field name="model">jjsumi.area</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="department_id"/>
+            </search>
+        </field>
+    </record>
+    <record id="action_jjsumi_area" model="ir.actions.act_window">
+        <field name="name">Áreas</field>
+        <field name="res_model">jjsumi.area</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crear área</p>
+        </field>
+    </record>
+</odoo>

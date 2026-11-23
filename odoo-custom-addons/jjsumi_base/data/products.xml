@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="product_category_jjsumi" model="product.category">
+            <field name="name">Yeso</field>
+        </record>
+
+        <record id="attribute_peso" model="product.attribute">
+            <field name="name">Peso</field>
+        </record>
+
+        <record id="attribute_value_30kg" model="product.attribute.value">
+            <field name="name">30 kg</field>
+            <field name="attribute_id" ref="attribute_peso"/>
+        </record>
+
+        <record id="attribute_value_26kg" model="product.attribute.value">
+            <field name="name">26 kg</field>
+            <field name="attribute_id" ref="attribute_peso"/>
+        </record>
+
+        <record id="attribute_value_23kg" model="product.attribute.value">
+            <field name="name">23 kg</field>
+            <field name="attribute_id" ref="attribute_peso"/>
+        </record>
+
+        <record id="product_template_yeso" model="product.template">
+            <field name="name">Yeso</field>
+            <field name="type">consu</field>
+            <field name="categ_id" ref="product_category_jjsumi"/>
+            <field name="is_storable" eval="True"/>
+            <field name="attribute_line_ids" eval="[(0, 0, {
+                'attribute_id': ref('attribute_peso'),
+                'value_ids': [(6, 0, [ref('attribute_value_30kg'), ref('attribute_value_26kg'), ref('attribute_value_23kg')])],
+            })]"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="jjsumi_vehiculo_view_list" model="ir.ui.view">
+        <field name="name">jjsumi.vehiculo.list</field>
+        <field name="model">jjsumi.vehiculo</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="name"/>
+                <field name="capacidad_bolsas"/>
+                <field name="conductor_id"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="jjsumi_vehiculo_action" model="ir.actions.act_window">
+        <field name="name">Vehículos</field>
+        <field name="res_model">jjsumi.vehiculo</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <record id="jjsumi_reparto_view_list" model="ir.ui.view">
+        <field name="name">jjsumi.reparto.list</field>
+        <field name="model">jjsumi.reparto</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="excede">
+                <field name="name"/>
+                <field name="fecha"/>
+                <field name="vehiculo_id"/>
+                <field name="zona"/>
+                <field name="bolsas_total"/>
+                <field name="ocupacion" widget="progressbar"/>
+                <field name="excede" column_invisible="1"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="jjsumi_reparto_view_form" model="ir.ui.view">
+        <field name="name">jjsumi.reparto.form</field>
+        <field name="model">jjsumi.reparto</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_salir" string="Salir a reparto" type="object" class="btn-primary"
+                            invisible="state != 'planificado'"/>
+                    <button name="action_entregado" string="Marcar entregado" type="object" class="btn-primary"
+                            invisible="state != 'en_ruta'"/>
+                    <button name="action_cancelar" string="Cancelar" type="object"
+                            invisible="state in ('entregado', 'cancelado')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="planificado,en_ruta,entregado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="fecha"/>
+                            <field name="vehiculo_id"/>
+                            <field name="zona"/>
+                        </group>
+                        <group>
+                            <field name="capacidad"/>
+                            <field name="bolsas_total"/>
+                            <field name="ocupacion" widget="progressbar"/>
+                            <field name="excede" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="picking_ids">
+                        <list>
+                            <field name="name"/>
+                            <field name="partner_id"/>
+                            <field name="scheduled_date"/>
+                            <field name="state"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="jjsumi_reparto_action" model="ir.actions.act_window">
+        <field name="name">Hojas de reparto</field>
+        <field name="res_model">jjsumi.reparto</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_jjsumi_reparto" name="Hojas de reparto" parent="jjsumi_base.menu_jjsumi_inventario"
+              action="jjsumi_reparto_action" sequence="10"/>
+    <menuitem id="menu_jjsumi_vehiculos" name="Vehículos" parent="jjsumi_base.menu_jjsumi_inventario"
+              action="jjsumi_vehiculo_action" sequence="40"/>
+</odoo>

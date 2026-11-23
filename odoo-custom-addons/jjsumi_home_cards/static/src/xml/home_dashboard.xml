@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="jjsumi_home_cards.Dashboard">
+        <main class="o_jjsumi_home">
+            <section class="o_jjsumi_hero">
+                <div class="o_jjsumi_brand">
+                    <div class="o_jjsumi_brand_mark">J</div>
+                    <div>
+                        <div class="o_jjsumi_eyebrow">
+                            SISTEMA DE GESTIÓN EMPRESARIAL · <t t-esc="state.summary.company_name || 'JJSUMI ERP'"/>
+                        </div>
+                        <h1>Hola, <t t-esc="state.summary.user_name || 'Bienvenido'"/></h1>
+                        <p>Centro de operaciones empresariales · Accede a cada área en un clic</p>
+                    </div>
+                </div>
+
+                <div class="o_jjsumi_hero_actions">
+                    <div class="o_jjsumi_search">
+                        <i class="fa fa-search" aria-hidden="true"/>
+                        <input type="text"
+                               placeholder="Buscar módulo o área..."
+                               t-model="state.query"/>
+                        <button t-if="state.query"
+                                type="button"
+                                class="o_jjsumi_search_clear"
+                                t-on-click="clearQuery"
+                                title="Limpiar">
+                            <i class="fa fa-times" aria-hidden="true"/>
+                        </button>
+                    </div>
+                    <button type="button" class="o_jjsumi_web_btn" t-on-click="openPublicSite">
+                        <i class="fa fa-globe" aria-hidden="true"/>
+                        <span>Ver Web Pública</span>
+                    </button>
+                </div>
+            </section>
+
+            <section class="o_jjsumi_pulse">
+                <div class="o_jjsumi_pulse_item">
+                    <span class="o_pulse_label">Ventas confirmadas</span>
+                    <strong t-esc="state.summary.pulse.sales || 0"/>
+                </div>
+                <div class="o_jjsumi_pulse_item">
+                    <span class="o_pulse_label">Oportunidades CRM</span>
+                    <strong t-esc="state.summary.pulse.crm || 0"/>
+                </div>
+                <div class="o_jjsumi_pulse_item">
+                    <span class="o_pulse_label">Tickets POS</span>
+                    <strong t-esc="state.summary.pulse.pos || 0"/>
+                </div>
+                <div class="o_jjsumi_pulse_item">
+                    <span class="o_pulse_label">Colaboradores activos</span>
+                    <strong t-esc="state.summary.pulse.hr || 0"/>
+                </div>
+            </section>
+
+            <t t-if="filteredGroups.length === 0">
+                <div class="o_jjsumi_empty">
+                    <i class="fa fa-search fa-2x mb-2" aria-hidden="true"/>
+                    <h3>No encontramos módulos para "<t t-esc="state.query"/>"</h3>
+                    <button type="button" class="o_jjsumi_web_btn mt-2" t-on-click="clearQuery">
+                        Mostrar todos los módulos
+                    </button>
+                </div>
+            </t>
+
+            <t t-foreach="filteredGroups" t-as="group" t-key="group.id">
+                <section class="o_jjsumi_group">
+                    <div class="o_jjsumi_section_head">
+                        <h2 t-esc="group.title"/>
+                    </div>
+                    <div class="o_jjsumi_cards">
+                        <t t-foreach="group.cards" t-as="card" t-key="card.key">
+                            <button type="button"
+                                    t-att-class="'o_jjsumi_card o_tone_' + card.tone"
+                                    t-on-click="() => this.openCard(card.key)">
+                                <span class="o_jjsumi_card_icon">
+                                    <i t-att-class="'fa ' + card.icon" aria-hidden="true"/>
+                                </span>
+                                <span class="o_jjsumi_card_text">
+                                    <span class="o_jjsumi_card_top">
+                                        <strong t-esc="card.title"/>
+                                        <span t-if="cardBadge(card)" class="o_jjsumi_badge" t-esc="cardBadge(card)"/>
+                                    </span>
+                                    <small t-esc="card.subtitle"/>
+                                </span>
+                                <span class="o_jjsumi_card_arrow fa fa-arrow-right" aria-hidden="true"/>
+                            </button>
+                        </t>
+                    </div>
+                </section>
+            </t>
+
+            <footer class="o_jjsumi_footer">
+                <span>JJSUMI ERP · <t t-esc="state.summary.company_name || 'Consolidado'"/></span>
+                <span>Odoo 19 Community · Integrado con BSC &amp; n8n</span>
+            </footer>
+        </main>
+    </t>
+
+    <t t-name="jjsumi_home_cards.HomeSystray">
+        <button type="button"
+                class="o_nav_entry o_jjsumi_home_btn d-flex align-items-center gap-1 border-0 bg-transparent text-reset"
+                title="Ir al Inicio JJSUMI"
+                aria-label="Ir al Inicio JJSUMI"
+                t-on-click="goHome">
+            <i class="fa fa-home" aria-hidden="true"/>
+        </button>
+    </t>
+</templates>

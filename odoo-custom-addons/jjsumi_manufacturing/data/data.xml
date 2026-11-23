@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_jjsumi_calidad" model="ir.sequence">
+            <field name="name">Control de calidad JJSumi</field>
+            <field name="code">jjsumi.calidad</field>
+            <field name="prefix">QC/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        <!-- SUPUESTOS de calidad: validar con el propietario -->
+        <record id="param_tolerancia_peso" model="ir.config_parameter">
+            <field name="key">jjsumi.tolerancia_peso</field>
+            <field name="value">2.0</field>
+        </record>
+        <record id="param_humedad_max" model="ir.config_parameter">
+            <field name="key">jjsumi.humedad_max</field>
+            <field name="value">1.0</field>
+        </record>
+    </data>
+    <function model="jjsumi.manufacturing.seed" name="_jjsumi_seed"/>
+</odoo>

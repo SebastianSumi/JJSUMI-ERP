@@ -1,0 +1,53 @@
+import { useEffect, useState } from 'react'
+
+import { api } from '../lib/api'
+import type { EventoCalendario, Periodo } from '../data/types'
+import { Select } from './Select'
+
+export function CalendarioPanel({ periodos }: { periodos: Periodo[] }) {
+  const [eventos, setEventos] = useState<EventoCalendario[]>([])
+  const [periodoId, setPeriodoId] = useState('')
+
+  const cargar = () => api.listarCalendario(periodoId || undefined).then(setEventos).catch(() => {})
+  useEffect(() => {
+    cargar()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periodoId])
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Select
+          value={periodoId}
+          onChange={(e) => setPeriodoId(e.target.value)}
+          className="bsc-select">
+          <option value="">Todos</option>
+          {periodos.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nombre}
+            </option>
+          ))}
+        </Select>
+      </div>
+      <div className="space-y-2">
+        {eventos.map((e) => (
+          <div
+            key={e.id}
+            className="flex items-center justify-between rounded-2xl border p-3"
+            style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
+          >
+            <div>
+              <p className="text-sm font-semibold">{e.titulo}</p>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                {e.tipo} · {e.periodo?.nombre ?? '-'} · {new Date(e.fecha).toLocaleDateString()}
+              </p>
+            </div>
+            <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: e.completado ? 'color-mix(in oklab, var(--success) 13%, transparent)' : 'var(--muted)' }}>
+              {e.completado ? 'Completado' : 'Pendiente'}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

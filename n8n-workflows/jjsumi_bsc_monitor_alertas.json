@@ -1,0 +1,114 @@
+{
+  "id": "jjsumiBscMonitorAlertas1",
+  "name": "JJSUMI BSC - Monitor de Alertas Críticas",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "cron-monitor-alertas",
+      "name": "Cada 6 horas",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://127.0.0.1:3000/bsc/n8n-resumen",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-jjsumi-secret",
+              "value": "jjsumi-odoo-bsc-sync-2026"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-alertas-bsc",
+      "name": "Consultar Alertas Críticas BSC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.totalAlertasCriticas }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "if-hay-alertas",
+      "name": "¿Existen alertas críticas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst lista = (data.alertasCriticas || []).map((a, i) => `${i + 1}. [${a.empresa}] ${a.mensaje}`).join('\\n');\nreturn [{ json: { subject: `[URGENTE BSC] ${data.totalAlertasCriticas} Alertas Críticas Activas`, text: `Se detectaron ${data.totalAlertasCriticas} alertas críticas sin resolver en el BSC:\\n\\n${lista}\\n\\nRevisar en el panel de Alertas del BSC.` } }];"
+      },
+      "id": "code-formatear-alertas",
+      "name": "Formatear Consolidado de Alertas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 220]
+    },
+    {
+      "parameters": {
+        "fromEmail": "jetersucasaire@gmail.com",
+        "toEmail": "jetersucasaire@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {}
+      },
+      "id": "smtp-alertas-criticas",
+      "name": "Notificar Alertas Críticas por Correo",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1160, 220],
+      "credentials": {
+        "smtp": {
+          "id": "jjsumiSmtpGmail1",
+          "name": "Gmail SMTP JJSUMI"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cada 6 horas": {
+      "main": [[{ "node": "Consultar Alertas Críticas BSC", "type": "main", "index": 0 }]]
+    },
+    "Consultar Alertas Críticas BSC": {
+      "main": [[{ "node": "¿Existen alertas críticas?", "type": "main", "index": 0 }]]
+    },
+    "¿Existen alertas críticas?": {
+      "main": [
+        [{ "node": "Formatear Consolidado de Alertas", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Formatear Consolidado de Alertas": {
+      "main": [[{ "node": "Notificar Alertas Críticas por Correo", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" }
+}

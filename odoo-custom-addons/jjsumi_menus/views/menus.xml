@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- CRM -->
+    <menuitem id="menu_jjsumi_crm" name="JJSUMI" parent="crm.crm_menu_root" sequence="90">
+        <menuitem id="menu_jjsumi_crm_equipos" name="Equipos de venta (comisión)" action="sales_team.crm_team_action_config" sequence="10"/>
+        <menuitem id="menu_jjsumi_crm_etapas" name="Etapas del pipeline" action="crm.crm_stage_action" sequence="20"/>
+        <menuitem id="menu_jjsumi_crm_motivos" name="Motivos de pérdida" action="crm.crm_lost_reason_action" sequence="30"/>
+        <menuitem id="menu_jjsumi_crm_etiquetas" name="Etiquetas CRM" action="sales_team.sales_team_crm_tag_action" sequence="40"/>
+        <menuitem id="menu_jjsumi_crm_clientes" name="Clientes JJSUMI" action="action_jjsumi_clientes" sequence="50"/>
+        <menuitem id="menu_jjsumi_crm_oportunidades" name="Oportunidades (pipeline)" action="crm.crm_lead_action_pipeline" sequence="60"/>
+    </menuitem>
+
+    <!-- Ventas -->
+    <menuitem id="menu_jjsumi_ventas" name="JJSUMI" parent="sale.sale_menu_root" sequence="90">
+        <menuitem id="menu_jjsumi_ventas_descuento" name="Descuentos por aprobar" action="action_jjsumi_pedidos_descuento" sequence="10"/>
+        <menuitem id="menu_jjsumi_ventas_pedidos" name="Pedidos (zona, bonificación, margen)" action="sale.action_orders" sequence="20"/>
+        <menuitem id="menu_jjsumi_ventas_listas" name="Listas de precios" action="product.product_pricelist_action2" sequence="30"/>
+        <menuitem id="menu_jjsumi_ventas_parametros" name="Parámetros de bonificación y transporte" action="action_jjsumi_parametros" groups="base.group_system" sequence="40"/>
+    </menuitem>
+
+    <!-- Compras -->
+    <menuitem id="menu_jjsumi_compras" name="JJSUMI" parent="purchase.menu_purchase_root" sequence="90">
+        <menuitem id="menu_jjsumi_compras_aprobar" name="Órdenes por aprobar (niveles)" action="action_jjsumi_oc_aprobar" sequence="10"/>
+        <menuitem id="menu_jjsumi_compras_proveedores" name="Proveedores JJSUMI" action="action_jjsumi_proveedores" sequence="20"/>
+        <menuitem id="menu_jjsumi_compras_acuerdos" name="Acuerdos de compra (cotización múltiple)" action="purchase_requisition.action_purchase_requisition_list" sequence="30"/>
+        <menuitem id="menu_jjsumi_compras_pagos" name="Condiciones de pago" action="account.action_payment_term_form" sequence="40"/>
+    </menuitem>
+
+    <!-- Inventario -->
+    <menuitem id="menu_jjsumi_inv" name="JJSUMI" parent="stock.menu_stock_root" sequence="90">
+        <menuitem id="menu_jjsumi_inv_almacenes" name="Almacenes JUL / PUN / AQP / CUS / TAC" action="stock.action_warehouse_form" sequence="10"/>
+        <menuitem id="menu_jjsumi_inv_ubicaciones" name="Ubicaciones (incl. cuarentena y defectuosos)" action="stock.action_location_form" sequence="20"/>
+        <menuitem id="menu_jjsumi_inv_transf" name="Transferencias entre sucursales" action="action_jjsumi_transferencias_sucursal" sequence="30"/>
+        <menuitem id="menu_jjsumi_inv_mermas" name="Mermas (desechos)" action="stock.action_stock_scrap" sequence="40"/>
+        <menuitem id="menu_jjsumi_inv_lotes" name="Lotes" action="stock.action_production_lot_form" sequence="50"/>
+        <menuitem id="menu_jjsumi_inv_controles" name="Controles de calidad" action="jjsumi_quality_ext.jjsumi_quality_check_action" sequence="60"/>
+        <menuitem id="menu_jjsumi_inv_puntos" name="Puntos de control de calidad" action="jjsumi_quality_ext.jjsumi_quality_point_action" sequence="70"/>
+    </menuitem>
+
+    <!-- Fabricación -->
+    <menuitem id="menu_jjsumi_mrp" name="JJSUMI" parent="mrp.menu_mrp_root" sequence="90">
+        <menuitem id="menu_jjsumi_mrp_boms" name="Listas de materiales (BOM-001 a 020)" action="action_jjsumi_boms" sequence="10"/>
+        <menuitem id="menu_jjsumi_mrp_centros" name="Centros de trabajo" action="mrp.mrp_workcenter_action" sequence="20"/>
+        <menuitem id="menu_jjsumi_mrp_ordenes" name="Órdenes de fabricación" action="mrp.mrp_production_action" sequence="30"/>
+        <menuitem id="menu_jjsumi_mrp_calidad" name="Calidad de fabricación (JJSUMI)" action="jjsumi_manufacturing.jjsumi_calidad_action" sequence="40"/>
+    </menuitem>
+
+    <!-- Mantenimiento: el menú raíz no tiene XML ID; sus hijos se crean en hooks.py -->
+
+    <!-- Punto de venta -->
+    <menuitem id="menu_jjsumi_pos" name="JJSUMI" parent="point_of_sale.menu_point_root" sequence="90">
+        <menuitem id="menu_jjsumi_pos_puntos" name="Puntos de venta POS-001 a POS-008" action="action_jjsumi_pos" sequence="10"/>
+        <menuitem id="menu_jjsumi_pos_metodos" name="Métodos de pago" action="point_of_sale.action_pos_payment_method_form" sequence="20"/>
+        <menuitem id="menu_jjsumi_pos_sesiones" name="Sesiones de caja" action="point_of_sale.action_pos_session" sequence="30"/>
+    </menuitem>
+
+    <!-- Finanzas / Facturación -->
+    <menuitem id="menu_jjsumi_fin" name="JJSUMI" parent="account.menu_finance" sequence="90">
+        <menuitem id="menu_jjsumi_fin_hojas" name="Hojas de costos / presupuesto" action="jjsumi_accounting.jjsumi_hoja_action" sequence="10"/>
+        <menuitem id="menu_jjsumi_fin_docs" name="Documentos" action="jjsumi_accounting.jjsumi_documento_action" sequence="20"/>
+        <menuitem id="menu_jjsumi_fin_diarios" name="Diarios JJSUMI (VEN, COM, BAN, CAJ, VAR)" action="action_jjsumi_diarios" sequence="30"/>
+        <menuitem id="menu_jjsumi_fin_analitica" name="Cuentas analíticas (sucursal / departamento)" action="analytic.action_analytic_account_form" sequence="40"/>
+        <menuitem id="menu_jjsumi_fin_planes" name="Planes analíticos" action="analytic.account_analytic_plan_action" sequence="50"/>
+    </menuitem>
+
+    <!-- RR. HH. -->
+    <menuitem id="menu_jjsumi_hr" name="JJSUMI" parent="hr.menu_hr_root" sequence="90">
+        <menuitem id="menu_jjsumi_hr_emp" name="Empleados JJSUMI (EMP-001 a 065)" action="action_jjsumi_empleados" sequence="10"/>
+        <menuitem id="menu_jjsumi_hr_versiones" name="Contratos y salarios (restringido)" action="hr.action_hr_version" sequence="20"/>
+        <menuitem id="menu_jjsumi_hr_tipos_contrato" name="Tipos de contrato" action="hr.hr_contract_type_action" sequence="30"/>
+        <menuitem id="menu_jjsumi_hr_deptos" name="Departamentos" action="hr.hr_department_tree_action" sequence="40"/>
+    </menuitem>
+
+    <!-- Vacaciones -->
+    <menuitem id="menu_jjsumi_leaves" name="JJSUMI" parent="hr_holidays.menu_hr_holidays_root" sequence="90">
+        <menuitem id="menu_jjsumi_leaves_tipos" name="Tipos de ausencia (AUS-001 a 005)" action="hr_holidays.open_view_holiday_status" sequence="10"/>
+        <menuitem id="menu_jjsumi_leaves_solicitudes" name="Solicitudes por aprobar" action="hr_holidays.hr_leave_action_action_approve_department" sequence="20"/>
+        <menuitem id="menu_jjsumi_leaves_asignaciones" name="Asignaciones de días" action="hr_holidays.hr_leave_allocation_action_all" sequence="30"/>
+    </menuitem>
+
+    <!-- Asistencias -->
+    <menuitem id="menu_jjsumi_att" name="JJSUMI" parent="hr_attendance.menu_hr_attendance_root" sequence="90">
+        <menuitem id="menu_jjsumi_att_registros" name="Registros de asistencia" action="hr_attendance.hr_attendance_action" sequence="10"/>
+    </menuitem>
+
+    <!-- Flota -->
+    <menuitem id="menu_jjsumi_fleet" name="JJSUMI" parent="fleet.menu_root" sequence="90">
+        <menuitem id="menu_jjsumi_fleet_veh" name="Vehículos JJSUMI (VEH-001 a 008)" action="action_jjsumi_vehiculos" sequence="10"/>
+        <menuitem id="menu_jjsumi_fleet_viajes" name="Viajes de distribución" action="action_jjsumi_viajes" sequence="20"/>
+        <menuitem id="menu_jjsumi_fleet_servicios" name="Servicios y costos" action="fleet.fleet_vehicle_log_services_action" sequence="30"/>
+    </menuitem>
+</odoo>

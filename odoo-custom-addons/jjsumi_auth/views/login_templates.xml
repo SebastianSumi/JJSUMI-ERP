@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         Layout de login: tarjeta premium full-screen (post-website)
+         website.login_layout (prio 20) envuelve en website.layout;
+         aquí (prio 25) reemplazamos esa envoltura por nuestra tarjeta
+         sin header/footer del sitio.
+         ============================================================ -->
+    <template id="jjsumi_login_layout" inherit_id="web.login_layout" priority="25" name="JJSumi Login Layout">
+        <xpath expr="//t[@t-call='website.layout']" position="replace">
+            <t t-call="website.layout">
+                <t t-set="no_header" t-value="True"/>
+                <t t-set="no_footer" t-value="True"/>
+                <div class="o_jjsumi_login_page">
+                    <div class="o_jjsumi_login_card o_jjsumi_anim_in">
+                        <div class="o_jjsumi_login_brand">
+                            <img class="o_jjsumi_login_logo"
+                                 src="/web/binary/company_logo"
+                                 alt="Logo"/>
+                            <span class="o_jjsumi_login_name">JJSumi</span>
+                            <span class="o_jjsumi_login_tag">Plataforma corporativa</span>
+                        </div>
+
+                        <div class="o_jjsumi_login_body">
+                            <t t-out="0"/>
+                        </div>
+
+                        <div class="o_jjsumi_login_footer" t-if="not disable_footer">
+                            <t t-call="portal.language_selector">
+                                <t t-set="_div_classes" t-value="'o_jjsumi_lang'"/>
+                                <t t-set="_btn_class" t-value="'btn btn-sm btn-link o_jjsumi_lang_btn'"/>
+                                <t t-set="_txt_class" t-value="'o_jjsumi_lang_txt'"/>
+                            </t>
+                            <span class="o_jjsumi_copy">© JJSumi</span>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- ============================================================
+         Formulario de login: encabezado de bienvenida
+         ============================================================ -->
+    <template id="jjsumi_login_form" inherit_id="web.login" name="JJSumi Login Form">
+        <xpath expr="//div[hasclass('oe_structure')][@id='oe_structure_login_top']" position="after">
+            <div class="o_jjsumi_login_intro">
+                <h1 class="o_jjsumi_login_heading">Bienvenido</h1>
+                <p class="o_jjsumi_login_sub">Ingresa a tu cuenta para continuar</p>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- ============================================================
+         Formulario 2FA: badge de seguridad
+         ============================================================ -->
+    <template id="jjsumi_totp_form" inherit_id="auth_totp.auth_totp_form" name="JJSumi TOTP Form">
+        <xpath expr="//div[hasclass('oe_login_form')]/h5" position="before">
+            <div class="o_jjsumi_totp_badge">
+                <i class="fa fa-shield" role="img" aria-label="Seguridad"/>
+                <span>Protegido con 2FA</span>
+            </div>
+        </xpath>
+        <xpath expr="//div[hasclass('oe_login_form')]/h5" position="attributes">
+            <attribute name="class">card-title o_jjsumi_totp_title</attribute>
+        </xpath>
+    </template>
+
+</odoo>

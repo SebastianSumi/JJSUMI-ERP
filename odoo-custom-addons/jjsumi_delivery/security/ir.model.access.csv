@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_jjsumi_vehiculo_user,jjsumi.vehiculo user,model_jjsumi_vehiculo,base.group_user,1,1,1,0
+access_jjsumi_vehiculo_admin,jjsumi.vehiculo admin,model_jjsumi_vehiculo,base.group_system,1,1,1,1
+access_jjsumi_reparto_user,jjsumi.reparto user,model_jjsumi_reparto,base.group_user,1,1,1,0
+access_jjsumi_reparto_admin,jjsumi.reparto admin,model_jjsumi_reparto,base.group_system,1,1,1,1

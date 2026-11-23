@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="jjsumi_quality_point_list" model="ir.ui.view">
+        <field name="name">jjsumi.quality.point.list</field>
+        <field name="model">jjsumi.quality.point</field>
+        <field name="arch" type="xml">
+            <list><field name="code"/><field name="name"/><field name="test_type"/><field name="moment"/><field name="norm_min"/><field name="norm_max"/></list>
+        </field>
+    </record>
+    <record id="jjsumi_quality_check_list" model="ir.ui.view">
+        <field name="name">jjsumi.quality.check.list</field>
+        <field name="model">jjsumi.quality.check</field>
+        <field name="arch" type="xml">
+            <list><field name="point_id"/><field name="lot_id"/><field name="measure"/><field name="result"/><field name="cuarentena"/><field name="user_id"/><field name="check_date"/></list>
+        </field>
+    </record>
+    <record id="jjsumi_quality_check_form" model="ir.ui.view">
+        <field name="name">jjsumi.quality.check.form</field>
+        <field name="model">jjsumi.quality.check</field>
+        <field name="arch" type="xml">
+            <form><sheet><group>
+                <group><field name="point_id"/><field name="test_type"/><field name="lot_id"/><field name="production_id"/><field name="picking_id"/></group>
+                <group><field name="measure"/><field name="result"/><field name="cuarentena"/><field name="user_id"/><field name="check_date"/></group>
+            </group><field name="observations"/></sheet></form>
+        </field>
+    </record>
+    <record id="jjsumi_quality_check_action" model="ir.actions.act_window">
+        <field name="name">Controles de calidad (JJSUMI)</field>
+        <field name="res_model">jjsumi.quality.check</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="jjsumi_quality_point_action" model="ir.actions.act_window">
+        <field name="name">Puntos de control (JJSUMI)</field>
+        <field name="res_model">jjsumi.quality.point</field>
+        <field name="view_mode">list</field>
+    </record>
+    <menuitem id="menu_jjsumi_quality_root" name="Control de calidad JJSUMI" parent="jjsumi_base.menu_jjsumi_inventario" sequence="25"/>
+    <menuitem id="menu_jjsumi_quality_checks" name="Controles" parent="menu_jjsumi_quality_root" action="jjsumi_quality_check_action" sequence="10"/>
+    <menuitem id="menu_jjsumi_quality_points" name="Puntos de control" parent="menu_jjsumi_quality_root" action="jjsumi_quality_point_action" sequence="20"/>
+</odoo>

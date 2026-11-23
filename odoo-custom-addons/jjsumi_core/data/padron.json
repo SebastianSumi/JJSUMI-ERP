@@ -1,0 +1,1813 @@
+{
+  "sedes": [
+    [
+      "SEDE-001",
+      "Sucursal Juliaca",
+      "Juliaca",
+      "San Román",
+      "Puno",
+      "21001",
+      "Av. Ilave 123",
+      "(051) 321-456",
+      "juliaca@jjsumi.pe"
+    ],
+    [
+      "SEDE-002",
+      "Sucursal Puno",
+      "Puno",
+      "Puno",
+      "Puno",
+      "21000",
+      "Jr. Lima 456",
+      "(051) 362-789",
+      "puno@jjsumi.pe"
+    ],
+    [
+      "SEDE-003",
+      "Sucursal Arequipa",
+      "Arequipa",
+      "Arequipa",
+      "Arequipa",
+      "04001",
+      "Av. Ejército 789",
+      "(054) 215-334",
+      "arequipa@jjsumi.pe"
+    ],
+    [
+      "SEDE-004",
+      "Sucursal Cusco",
+      "Cusco",
+      "Cusco",
+      "Cusco",
+      "08002",
+      "Av. El Sol 321",
+      "(084) 234-567",
+      "cusco@jjsumi.pe"
+    ],
+    [
+      "SEDE-005",
+      "Sucursal Tacna",
+      "Tacna",
+      "Tacna",
+      "Tacna",
+      "23001",
+      "Av. Jorge Basadre 654",
+      "(052) 412-890",
+      "tacna@jjsumi.pe"
+    ]
+  ],
+  "deps": [
+    [
+      "DEP-001",
+      "Gerencia General",
+      null,
+      "SEDE-001",
+      "EMP-001"
+    ],
+    [
+      "DEP-002",
+      "Administración",
+      "DEP-001",
+      "SEDE-001",
+      "EMP-003"
+    ],
+    [
+      "DEP-003",
+      "Finanzas y Contabilidad",
+      "DEP-002",
+      "SEDE-001",
+      "EMP-007"
+    ],
+    [
+      "DEP-004",
+      "Recursos Humanos",
+      "DEP-002",
+      "SEDE-001",
+      "EMP-011"
+    ],
+    [
+      "DEP-005",
+      "Tecnología y Sistemas",
+      "DEP-002",
+      "SEDE-001",
+      "EMP-014"
+    ],
+    [
+      "DEP-006",
+      "Auditoría y Control Interno",
+      "DEP-001",
+      "SEDE-001",
+      "EMP-017"
+    ],
+    [
+      "DEP-007",
+      "Producción",
+      "DEP-001",
+      "SEDE-001",
+      "EMP-019"
+    ],
+    [
+      "DEP-008",
+      "Calidad",
+      "DEP-007",
+      "SEDE-001",
+      "EMP-030"
+    ],
+    [
+      "DEP-009",
+      "Mantenimiento",
+      "DEP-007",
+      "SEDE-001",
+      "EMP-033"
+    ],
+    [
+      "DEP-010",
+      "Almacenes y Logística",
+      "DEP-001",
+      "SEDE-001",
+      "EMP-038"
+    ],
+    [
+      "DEP-011",
+      "Compras y Abastecimiento",
+      "DEP-002",
+      "SEDE-001",
+      "EMP-046"
+    ],
+    [
+      "DEP-012",
+      "Comercial y Ventas",
+      "DEP-001",
+      "SEDE-001",
+      "EMP-050"
+    ]
+  ],
+  "areas": [
+    [
+      "ARE-001",
+      "Dirección Ejecutiva",
+      "DEP-001",
+      "Corporativa",
+      "EMP-001"
+    ],
+    [
+      "ARE-002",
+      "Planeamiento y Administración",
+      "DEP-002",
+      "Corporativa",
+      "EMP-003"
+    ],
+    [
+      "ARE-003",
+      "Tesorería",
+      "DEP-003",
+      "Corporativa",
+      "EMP-007"
+    ],
+    [
+      "ARE-004",
+      "Contabilidad",
+      "DEP-003",
+      "Corporativa",
+      "EMP-008"
+    ],
+    [
+      "ARE-005",
+      "Gestión de Personal",
+      "DEP-004",
+      "Corporativa",
+      "EMP-011"
+    ],
+    [
+      "ARE-006",
+      "Selección y Capacitación",
+      "DEP-004",
+      "Corporativa",
+      "EMP-013"
+    ],
+    [
+      "ARE-007",
+      "Infraestructura y Soporte TI",
+      "DEP-005",
+      "Corporativa",
+      "EMP-014"
+    ],
+    [
+      "ARE-008",
+      "Seguridad de Sistemas",
+      "DEP-005",
+      "Corporativa",
+      "EMP-015"
+    ],
+    [
+      "ARE-009",
+      "Control Interno",
+      "DEP-006",
+      "Corporativa",
+      "EMP-017"
+    ],
+    [
+      "ARE-010",
+      "Trituración y Preparación",
+      "DEP-007",
+      "SEDE-001",
+      "EMP-019"
+    ],
+    [
+      "ARE-011",
+      "Calcinación y Molienda",
+      "DEP-007",
+      "SEDE-001",
+      "EMP-020"
+    ],
+    [
+      "ARE-012",
+      "Mezclado y Envasado",
+      "DEP-007",
+      "SEDE-001",
+      "EMP-020"
+    ],
+    [
+      "ARE-013",
+      "Inspección de Materias Primas",
+      "DEP-008",
+      "SEDE-001",
+      "EMP-031"
+    ],
+    [
+      "ARE-014",
+      "Inspección de Producto Terminado",
+      "DEP-008",
+      "SEDE-001",
+      "EMP-030"
+    ],
+    [
+      "ARE-015",
+      "Mantenimiento Mecánico y Eléctrico",
+      "DEP-009",
+      "SEDE-001",
+      "EMP-033"
+    ],
+    [
+      "ARE-016",
+      "Almacén Central y Despacho",
+      "DEP-010",
+      "SEDE-001",
+      "EMP-038"
+    ],
+    [
+      "ARE-017",
+      "Abastecimiento y Proveedores",
+      "DEP-011",
+      "Corporativa",
+      "EMP-046"
+    ],
+    [
+      "ARE-018",
+      "Ventas y Atención al Cliente",
+      "DEP-012",
+      "Corporativa",
+      "EMP-050"
+    ],
+    [
+      "ARE-019",
+      "Operaciones Comerciales de Sucursales",
+      "DEP-012",
+      "SEDE-002,SEDE-003,SEDE-004,SEDE-005",
+      "EMP-054"
+    ],
+    [
+      "ARE-020",
+      "Distribución y Transporte",
+      "DEP-010",
+      "SEDE-001,SEDE-002,SEDE-003,SEDE-004,SEDE-005",
+      "EMP-043"
+    ]
+  ],
+  "jobs": [
+    [
+      "CAR-001",
+      "Gerente General",
+      "DEP-001"
+    ],
+    [
+      "CAR-002",
+      "Asistente de Gerencia",
+      "DEP-001"
+    ],
+    [
+      "CAR-003",
+      "Gerente Administrativo",
+      "DEP-002"
+    ],
+    [
+      "CAR-004",
+      "Analista Administrativo",
+      "DEP-002"
+    ],
+    [
+      "CAR-005",
+      "Jefe de Finanzas",
+      "DEP-003"
+    ],
+    [
+      "CAR-006",
+      "Contador General",
+      "DEP-003"
+    ],
+    [
+      "CAR-007",
+      "Asistente Contable",
+      "DEP-003"
+    ],
+    [
+      "CAR-008",
+      "Jefe de Recursos Humanos",
+      "DEP-004"
+    ],
+    [
+      "CAR-009",
+      "Analista de Recursos Humanos",
+      "DEP-004"
+    ],
+    [
+      "CAR-010",
+      "Administrador de Sistemas",
+      "DEP-005"
+    ],
+    [
+      "CAR-011",
+      "Soporte Técnico",
+      "DEP-005"
+    ],
+    [
+      "CAR-012",
+      "Auditor Interno",
+      "DEP-006"
+    ],
+    [
+      "CAR-013",
+      "Jefe de Planta",
+      "DEP-007"
+    ],
+    [
+      "CAR-014",
+      "Supervisor de Producción",
+      "DEP-007"
+    ],
+    [
+      "CAR-015",
+      "Operario de Producción",
+      "DEP-007"
+    ],
+    [
+      "CAR-016",
+      "Inspector de Calidad",
+      "DEP-008"
+    ],
+    [
+      "CAR-017",
+      "Jefe de Mantenimiento",
+      "DEP-009"
+    ],
+    [
+      "CAR-018",
+      "Técnico de Mantenimiento",
+      "DEP-009"
+    ],
+    [
+      "CAR-019",
+      "Jefe de Almacén",
+      "DEP-010"
+    ],
+    [
+      "CAR-020",
+      "Almacenero",
+      "DEP-010"
+    ],
+    [
+      "CAR-021",
+      "Coordinador de Distribución",
+      "DEP-010"
+    ],
+    [
+      "CAR-022",
+      "Jefe de Compras",
+      "DEP-011"
+    ],
+    [
+      "CAR-023",
+      "Comprador",
+      "DEP-011"
+    ],
+    [
+      "CAR-024",
+      "Jefe Comercial",
+      "DEP-012"
+    ],
+    [
+      "CAR-025",
+      "Vendedor de Sucursal",
+      "DEP-012"
+    ],
+    [
+      "CAR-026",
+      "Cajero",
+      "DEP-012"
+    ],
+    [
+      "CAR-027",
+      "Gerente de Sucursal",
+      "DEP-002"
+    ]
+  ],
+  "roles": [
+    [
+      "ROL-001",
+      "Administrador ERP",
+      "group_jjsumi_admin",
+      "all"
+    ],
+    [
+      "ROL-002",
+      "Gerente General",
+      "group_jjsumi_general_manager",
+      "all"
+    ],
+    [
+      "ROL-003",
+      "Gerente de Sucursal",
+      "group_jjsumi_branch_manager",
+      "branch"
+    ],
+    [
+      "ROL-004",
+      "Jefe de Producción",
+      "group_jjsumi_production_manager",
+      "SEDE-001"
+    ],
+    [
+      "ROL-005",
+      "Supervisor de Almacén",
+      "group_jjsumi_warehouse_supervisor",
+      "branch"
+    ],
+    [
+      "ROL-006",
+      "Comprador",
+      "group_jjsumi_buyer",
+      "corp"
+    ],
+    [
+      "ROL-007",
+      "Vendedor",
+      "group_jjsumi_salesperson",
+      "branch"
+    ],
+    [
+      "ROL-008",
+      "Cajero",
+      "group_jjsumi_cashier",
+      "branch"
+    ],
+    [
+      "ROL-009",
+      "Contador",
+      "group_jjsumi_accountant",
+      "corp"
+    ],
+    [
+      "ROL-010",
+      "Responsable de RR. HH.",
+      "group_jjsumi_hr_manager",
+      "corp"
+    ],
+    [
+      "ROL-011",
+      "Técnico de Mantenimiento",
+      "group_jjsumi_maintenance_technician",
+      "SEDE-001"
+    ],
+    [
+      "ROL-012",
+      "Auditor",
+      "group_jjsumi_auditor",
+      "all"
+    ],
+    [
+      "ROL-013",
+      "Supervisor Comercial",
+      "group_jjsumi_sales_supervisor",
+      "branch"
+    ],
+    [
+      "ROL-014",
+      "Responsable de Calidad",
+      "group_jjsumi_quality_manager",
+      "SEDE-001"
+    ],
+    [
+      "ROL-015",
+      "Coordinador de Distribución",
+      "group_jjsumi_distribution_coordinator",
+      "branch"
+    ]
+  ],
+  "emps": [
+    [
+      "EMP-001",
+      "Carlos Quispe Mamani",
+      "DEP-001",
+      "ARE-001",
+      "CAR-001",
+      "SEDE-001",
+      null,
+      "USR-001",
+      "carlos.quispe@jjsumi.pe",
+      "+51 951 100 001"
+    ],
+    [
+      "EMP-002",
+      "Ana Lucia Flores Rojas",
+      "DEP-001",
+      "ARE-001",
+      "CAR-002",
+      "SEDE-001",
+      "EMP-001",
+      "USR-002",
+      "ana.flores@jjsumi.pe",
+      "+51 951 100 002"
+    ],
+    [
+      "EMP-003",
+      "Roberto Condori Huanca",
+      "DEP-002",
+      "ARE-002",
+      "CAR-003",
+      "SEDE-001",
+      "EMP-001",
+      "USR-003",
+      "roberto.condori@jjsumi.pe",
+      "+51 951 100 003"
+    ],
+    [
+      "EMP-004",
+      "Jorge Luis Sanchez Vargas",
+      "DEP-002",
+      "ARE-002",
+      "CAR-027",
+      "SEDE-001",
+      "EMP-003",
+      "USR-004",
+      "jorge.sanchez@jjsumi.pe",
+      "+51 951 100 004"
+    ],
+    [
+      "EMP-005",
+      "Elena Maria Lopez Torres",
+      "DEP-002",
+      "ARE-002",
+      "CAR-027",
+      "SEDE-002",
+      "EMP-003",
+      "USR-005",
+      "elena.lopez@jjsumi.pe",
+      "+51 951 100 005"
+    ],
+    [
+      "EMP-006",
+      "Miguel Angel Vargas Aguilar",
+      "DEP-002",
+      "ARE-002",
+      "CAR-027",
+      "SEDE-003",
+      "EMP-003",
+      "USR-006",
+      "miguel.vargas@jjsumi.pe",
+      "+51 951 100 006"
+    ],
+    [
+      "EMP-007",
+      "Sofia Isabel Medina Paredes",
+      "DEP-003",
+      "ARE-003",
+      "CAR-005",
+      "SEDE-001",
+      "EMP-003",
+      "USR-007",
+      "sofia.medina@jjsumi.pe",
+      "+51 951 100 007"
+    ],
+    [
+      "EMP-008",
+      "David Alberto Huanca Espinoza",
+      "DEP-003",
+      "ARE-004",
+      "CAR-006",
+      "SEDE-001",
+      "EMP-007",
+      "USR-008",
+      "david.huanca@jjsumi.pe",
+      "+51 951 100 008"
+    ],
+    [
+      "EMP-009",
+      "Carmen Rosa Torres Delgado",
+      "DEP-003",
+      "ARE-004",
+      "CAR-007",
+      "SEDE-001",
+      "EMP-008",
+      "USR-009",
+      "carmen.torres@jjsumi.pe",
+      "+51 951 100 009"
+    ],
+    [
+      "EMP-010",
+      "Pedro Juan Aguilar Quispe",
+      "DEP-003",
+      "ARE-004",
+      "CAR-007",
+      "SEDE-001",
+      "EMP-008",
+      "USR-010",
+      "pedro.aguilar@jjsumi.pe",
+      "+51 951 100 010"
+    ],
+    [
+      "EMP-011",
+      "Rosa Maria Medina Mamani",
+      "DEP-004",
+      "ARE-005",
+      "CAR-008",
+      "SEDE-001",
+      "EMP-003",
+      "USR-011",
+      "rosa.medina@jjsumi.pe",
+      "+51 951 100 011"
+    ],
+    [
+      "EMP-012",
+      "Luis Fernando Paredes Rojas",
+      "DEP-004",
+      "ARE-005",
+      "CAR-009",
+      "SEDE-001",
+      "EMP-011",
+      "USR-012",
+      "luis.paredes@jjsumi.pe",
+      "+51 951 100 012"
+    ],
+    [
+      "EMP-013",
+      "Marta Elena Espinoza Huanca",
+      "DEP-004",
+      "ARE-005",
+      "CAR-009",
+      "SEDE-001",
+      "EMP-011",
+      "USR-013",
+      "marta.espinoza@jjsumi.pe",
+      "+51 951 100 013"
+    ],
+    [
+      "EMP-014",
+      "Juan Carlos Delgado Vargas",
+      "DEP-005",
+      "ARE-007",
+      "CAR-010",
+      "SEDE-001",
+      "EMP-003",
+      "USR-014",
+      "juan.delgado@jjsumi.pe",
+      "+51 951 100 014"
+    ],
+    [
+      "EMP-015",
+      "Maria Jose Quispe Flores",
+      "DEP-005",
+      "ARE-007",
+      "CAR-011",
+      "SEDE-001",
+      "EMP-014",
+      "USR-015",
+      "maria.quispe@jjsumi.pe",
+      "+51 951 100 015"
+    ],
+    [
+      "EMP-016",
+      "Jose Luis Mamani Flores",
+      "DEP-005",
+      "ARE-007",
+      "CAR-011",
+      "SEDE-001",
+      "EMP-014",
+      "USR-016",
+      "jose.mamani@jjsumi.pe",
+      "+51 951 100 016"
+    ],
+    [
+      "EMP-017",
+      "Laura Patricia Rojas Huanca",
+      "DEP-006",
+      "ARE-009",
+      "CAR-012",
+      "SEDE-001",
+      "EMP-001",
+      "USR-017",
+      "laura.rojas@jjsumi.pe",
+      "+51 951 100 017"
+    ],
+    [
+      "EMP-018",
+      "Fernando Alberto Huanca Rojas",
+      "DEP-006",
+      "ARE-009",
+      "CAR-012",
+      "SEDE-001",
+      "EMP-017",
+      "USR-018",
+      "fernando.huanca@jjsumi.pe",
+      "+51 951 100 018"
+    ],
+    [
+      "EMP-019",
+      "Gabriela Sofia Vargas Quispe",
+      "DEP-007",
+      "ARE-010",
+      "CAR-013",
+      "SEDE-001",
+      "EMP-001",
+      "USR-019",
+      "gabriela.vargas@jjsumi.pe",
+      "+51 951 100 019"
+    ],
+    [
+      "EMP-020",
+      "Ricardo Manuel Torres Mamani",
+      "DEP-007",
+      "ARE-010",
+      "CAR-014",
+      "SEDE-001",
+      "EMP-019",
+      "USR-020",
+      "ricardo.torres@jjsumi.pe",
+      "+51 951 100 020"
+    ],
+    [
+      "EMP-021",
+      "Claudia Elena Aguilar Rojas",
+      "DEP-007",
+      "ARE-010",
+      "CAR-014",
+      "SEDE-001",
+      "EMP-019",
+      "USR-021",
+      "claudia.aguilar@jjsumi.pe",
+      "+51 951 100 021"
+    ],
+    [
+      "EMP-022",
+      "Diego Armando Paredes Huanca",
+      "DEP-007",
+      "ARE-010",
+      "CAR-026",
+      "SEDE-001",
+      "EMP-020",
+      "USR-022",
+      "diego.paredes@jjsumi.pe",
+      "+51 951 100 022"
+    ],
+    [
+      "EMP-023",
+      "Veronica Isabel Espinoza Vargas",
+      "DEP-007",
+      "ARE-010",
+      "CAR-026",
+      "SEDE-001",
+      "EMP-020",
+      "USR-023",
+      "veronica.espinoza@jjsumi.pe",
+      "+51 951 100 023"
+    ],
+    [
+      "EMP-024",
+      "Alejandro Jose Delgado Torres",
+      "DEP-007",
+      "ARE-010",
+      "CAR-026",
+      "SEDE-001",
+      "EMP-020",
+      "USR-024",
+      "alejandro.delgado@jjsumi.pe",
+      "+51 951 100 024"
+    ],
+    [
+      "EMP-025",
+      "Patricia Rosa Quispe Aguilar",
+      "DEP-007",
+      "ARE-011",
+      "CAR-026",
+      "SEDE-001",
+      "EMP-019",
+      "USR-025",
+      "patricia.quispe@jjsumi.pe",
+      "+51 951 100 025"
+    ],
+    [
+      "EMP-026",
+      "Raul Alberto Mamani Paredes",
+      "DEP-007",
+      "ARE-011",
+      "CAR-026",
+      "SEDE-001",
+      "EMP-019",
+      "USR-026",
+      "raul.mamani@jjsumi.pe",
+      "+51 951 100 026"
+    ],
+    [
+      "EMP-027",
+      "Silvia Maria Rojas Huanca",
+      "DEP-007",
+      "ARE-012",
+      "CAR-026",
+      "SEDE-001",
+      "EMP-020",
+      "USR-027",
+      "silvia.rojas@jjsumi.pe",
+      "+51 951 100 027"
+    ],
+    [
+      "EMP-028",
+      "Hector Luis Vargas Torres",
+      "DEP-007",
+      "ARE-012",
+      "CAR-026",
+      "SEDE-001",
+      "EMP-020",
+      "USR-028",
+      "hector.vargas@jjsumi.pe",
+      "+51 951 100 028"
+    ],
+    [
+      "EMP-029",
+      "Diana Carolina Torres Quispe",
+      "DEP-008",
+      "ARE-013",
+      "CAR-016",
+      "SEDE-001",
+      "EMP-019",
+      "USR-029",
+      "diana.torres@jjsumi.pe",
+      "+51 951 100 029"
+    ],
+    [
+      "EMP-030",
+      "Francisco Javier Aguilar Mamani",
+      "DEP-008",
+      "ARE-014",
+      "CAR-016",
+      "SEDE-001",
+      "EMP-021",
+      "USR-030",
+      "francisco.aguilar@jjsumi.pe",
+      "+51 951 100 030"
+    ],
+    [
+      "EMP-031",
+      "Beatriz Elena Paredes Rojas",
+      "DEP-008",
+      "ARE-014",
+      "CAR-016",
+      "SEDE-001",
+      "EMP-021",
+      "USR-031",
+      "beatriz.paredes@jjsumi.pe",
+      "+51 951 100 031"
+    ],
+    [
+      "EMP-032",
+      "Oscar Ricardo Huanca Vargas",
+      "DEP-008",
+      "ARE-014",
+      "CAR-016",
+      "SEDE-001",
+      "EMP-021",
+      "USR-032",
+      "oscar.huanca@jjsumi.pe",
+      "+51 951 100 032"
+    ],
+    [
+      "EMP-033",
+      "Natalia Sofia Espinoza Torres",
+      "DEP-009",
+      "ARE-015",
+      "CAR-017",
+      "SEDE-001",
+      "EMP-019",
+      "USR-033",
+      "natalia.espinoza@jjsumi.pe",
+      "+51 951 100 033"
+    ],
+    [
+      "EMP-034",
+      "Victor Manuel Delgado Quispe",
+      "DEP-009",
+      "ARE-015",
+      "CAR-018",
+      "SEDE-001",
+      "EMP-033",
+      "USR-034",
+      "victor.delgado@jjsumi.pe",
+      "+51 951 100 034"
+    ],
+    [
+      "EMP-035",
+      "Andrea Lucia Aguilar Mamani",
+      "DEP-009",
+      "ARE-015",
+      "CAR-018",
+      "SEDE-001",
+      "EMP-033",
+      "USR-035",
+      "andrea.aguilar@jjsumi.pe",
+      "+51 951 100 035"
+    ],
+    [
+      "EMP-036",
+      "Sergio Alberto Paredes Rojas",
+      "DEP-009",
+      "ARE-015",
+      "CAR-018",
+      "SEDE-001",
+      "EMP-033",
+      "USR-036",
+      "sergio.paredes@jjsumi.pe",
+      "+51 951 100 036"
+    ],
+    [
+      "EMP-037",
+      "Monica Isabel Huanca Vargas",
+      "DEP-009",
+      "ARE-015",
+      "CAR-018",
+      "SEDE-001",
+      "EMP-033",
+      "USR-037",
+      "monica.huanca@jjsumi.pe",
+      "+51 951 100 037"
+    ],
+    [
+      "EMP-038",
+      "Eduardo Jose Torres Delgado",
+      "DEP-010",
+      "ARE-016",
+      "CAR-019",
+      "SEDE-001",
+      "EMP-001",
+      "USR-038",
+      "eduardo.torres@jjsumi.pe",
+      "+51 951 100 038"
+    ],
+    [
+      "EMP-039",
+      "Daniela Rosa Quispe Aguilar",
+      "DEP-010",
+      "ARE-016",
+      "CAR-020",
+      "SEDE-001",
+      "EMP-038",
+      "USR-039",
+      "daniela.quispe@jjsumi.pe",
+      "+51 951 100 039"
+    ],
+    [
+      "EMP-040",
+      "Gustavo Luis Mamani Paredes",
+      "DEP-010",
+      "ARE-016",
+      "CAR-020",
+      "SEDE-001",
+      "EMP-038",
+      "USR-040",
+      "gustavo.mamani@jjsumi.pe",
+      "+51 951 100 040"
+    ],
+    [
+      "EMP-041",
+      "Valeria Elena Rojas Huanca",
+      "DEP-010",
+      "ARE-016",
+      "CAR-020",
+      "SEDE-001",
+      "EMP-038",
+      null,
+      "valeria.rojas@jjsumi.pe",
+      "+51 951 100 041"
+    ],
+    [
+      "EMP-042",
+      "Andres Felipe Vargas Torres",
+      "DEP-010",
+      "ARE-016",
+      "CAR-020",
+      "SEDE-001",
+      "EMP-038",
+      null,
+      "andres.vargas@jjsumi.pe",
+      "+51 951 100 042"
+    ],
+    [
+      "EMP-043",
+      "Camila Sofia Delgado Quispe",
+      "DEP-010",
+      "ARE-020",
+      "CAR-021",
+      "SEDE-001",
+      "EMP-038",
+      null,
+      "camila.delgado@jjsumi.pe",
+      "+51 951 100 043"
+    ],
+    [
+      "EMP-044",
+      "Nicolas Alberto Aguilar Mamani",
+      "DEP-010",
+      "ARE-020",
+      "CAR-021",
+      "SEDE-001",
+      "EMP-038",
+      null,
+      "nicolas.aguilar@jjsumi.pe",
+      "+51 951 100 044"
+    ],
+    [
+      "EMP-045",
+      "Fernanda Maria Paredes Rojas",
+      "DEP-010",
+      "ARE-020",
+      "CAR-021",
+      "SEDE-001",
+      "EMP-038",
+      null,
+      "fernanda.paredes@jjsumi.pe",
+      "+51 951 100 045"
+    ],
+    [
+      "EMP-046",
+      "Sebastian Luis Huanca Vargas",
+      "DEP-011",
+      "ARE-017",
+      "CAR-022",
+      "SEDE-001",
+      "EMP-003",
+      null,
+      "sebastian.huanca@jjsumi.pe",
+      "+51 951 100 046"
+    ],
+    [
+      "EMP-047",
+      "Antonia Rosa Espinoza Torres",
+      "DEP-011",
+      "ARE-017",
+      "CAR-023",
+      "SEDE-001",
+      "EMP-046",
+      null,
+      "antonia.espinoza@jjsumi.pe",
+      "+51 951 100 047"
+    ],
+    [
+      "EMP-048",
+      "Mateo Jose Delgado Quispe",
+      "DEP-011",
+      "ARE-017",
+      "CAR-023",
+      "SEDE-001",
+      "EMP-046",
+      null,
+      "mateo.delgado@jjsumi.pe",
+      "+51 951 100 048"
+    ],
+    [
+      "EMP-049",
+      "Isabella Lucia Aguilar Mamani",
+      "DEP-011",
+      "ARE-017",
+      "CAR-023",
+      "SEDE-001",
+      "EMP-046",
+      null,
+      "isabella.aguilar@jjsumi.pe",
+      "+51 951 100 049"
+    ],
+    [
+      "EMP-050",
+      "Tomas Alberto Paredes Rojas",
+      "DEP-012",
+      "ARE-018",
+      "CAR-024",
+      "SEDE-001",
+      "EMP-001",
+      null,
+      "tomas.paredes@jjsumi.pe",
+      "+51 951 100 050"
+    ],
+    [
+      "EMP-051",
+      "Valentina Elena Huanca Vargas",
+      "DEP-012",
+      "ARE-018",
+      "CAR-025",
+      "SEDE-001",
+      "EMP-050",
+      null,
+      "valentina.huanca@jjsumi.pe",
+      "+51 951 100 051"
+    ],
+    [
+      "EMP-052",
+      "Benjamin Luis Torres Delgado",
+      "DEP-012",
+      "ARE-018",
+      "CAR-025",
+      "SEDE-001",
+      "EMP-050",
+      null,
+      "benjamin.torres@jjsumi.pe",
+      "+51 951 100 052"
+    ],
+    [
+      "EMP-053",
+      "Mariana Sofia Quispe Aguilar",
+      "DEP-012",
+      "ARE-018",
+      "CAR-025",
+      "SEDE-001",
+      "EMP-050",
+      null,
+      "mariana.quispe@jjsumi.pe",
+      "+51 951 100 053"
+    ],
+    [
+      "EMP-054",
+      "Julian Alberto Mamani Paredes",
+      "DEP-012",
+      "ARE-019",
+      "CAR-025",
+      "SEDE-002",
+      "EMP-050",
+      null,
+      "julian.mamani@jjsumi.pe",
+      "+51 951 100 054"
+    ],
+    [
+      "EMP-055",
+      "Emilia Rosa Rojas Huanca",
+      "DEP-012",
+      "ARE-019",
+      "CAR-025",
+      "SEDE-002",
+      "EMP-050",
+      null,
+      "emilia.rojas@jjsumi.pe",
+      "+51 951 100 055"
+    ],
+    [
+      "EMP-056",
+      "Leonardo Jose Vargas Torres",
+      "DEP-012",
+      "ARE-019",
+      "CAR-025",
+      "SEDE-003",
+      "EMP-050",
+      null,
+      "leonardo.vargas@jjsumi.pe",
+      "+51 951 100 056"
+    ],
+    [
+      "EMP-057",
+      "Luciana Elena Delgado Quispe",
+      "DEP-012",
+      "ARE-019",
+      "CAR-025",
+      "SEDE-003",
+      "EMP-050",
+      null,
+      "luciana.delgado@jjsumi.pe",
+      "+51 951 100 057"
+    ],
+    [
+      "EMP-058",
+      "Santiago Luis Aguilar Mamani",
+      "DEP-012",
+      "ARE-019",
+      "CAR-025",
+      "SEDE-004",
+      "EMP-050",
+      null,
+      "santiago.aguilar@jjsumi.pe",
+      "+51 951 100 058"
+    ],
+    [
+      "EMP-059",
+      "Catalina Maria Paredes Rojas",
+      "DEP-012",
+      "ARE-019",
+      "CAR-025",
+      "SEDE-004",
+      "EMP-050",
+      null,
+      "catalina.paredes@jjsumi.pe",
+      "+51 951 100 059"
+    ],
+    [
+      "EMP-060",
+      "Maximiliano Alberto Huanca Vargas",
+      "DEP-012",
+      "ARE-019",
+      "CAR-025",
+      "SEDE-005",
+      "EMP-050",
+      null,
+      "maximiliano.huanca@jjsumi.pe",
+      "+51 951 100 060"
+    ],
+    [
+      "EMP-061",
+      "Renata Sofia Espinoza Torres",
+      "DEP-012",
+      "ARE-019",
+      "CAR-025",
+      "SEDE-005",
+      "EMP-050",
+      null,
+      "renata.espinoza@jjsumi.pe",
+      "+51 951 100 061"
+    ],
+    [
+      "EMP-062",
+      "Agustin Jose Delgado Quispe",
+      "DEP-007",
+      "ARE-012",
+      "CAR-015",
+      "SEDE-001",
+      "EMP-020",
+      null,
+      "agustin.delgado@jjsumi.pe",
+      "+51 951 100 062"
+    ],
+    [
+      "EMP-063",
+      "Victoria Lucia Aguilar Mamani",
+      "DEP-007",
+      "ARE-012",
+      "CAR-015",
+      "SEDE-001",
+      "EMP-020",
+      null,
+      "victoria.aguilar@jjsumi.pe",
+      "+51 951 100 063"
+    ],
+    [
+      "EMP-064",
+      "Emiliano Alberto Paredes Rojas",
+      "DEP-008",
+      "ARE-014",
+      "CAR-016",
+      "SEDE-001",
+      "EMP-021",
+      null,
+      "emiliano.paredes@jjsumi.pe",
+      "+51 951 100 064"
+    ],
+    [
+      "EMP-065",
+      "Antonella Elena Huanca Vargas",
+      "DEP-010",
+      "ARE-016",
+      "CAR-020",
+      "SEDE-001",
+      "EMP-038",
+      null,
+      "antonella.huanca@jjsumi.pe",
+      "+51 951 100 065"
+    ]
+  ],
+  "usrs": [
+    [
+      "USR-001",
+      "Carlos Quispe Mamani",
+      "carlos.quispe",
+      "carlos.quispe@jjsumi.pe",
+      "EMP-001",
+      [
+        "ROL-001",
+        "ROL-002"
+      ],
+      "+51 951 100 001"
+    ],
+    [
+      "USR-002",
+      "Ana Lucia Flores Rojas",
+      "ana.flores",
+      "ana.flores@jjsumi.pe",
+      "EMP-002",
+      [
+        "ROL-001"
+      ],
+      "+51 951 100 002"
+    ],
+    [
+      "USR-003",
+      "Roberto Condori Huanca",
+      "roberto.condori",
+      "roberto.condori@jjsumi.pe",
+      "EMP-003",
+      [
+        "ROL-002"
+      ],
+      "+51 951 100 003"
+    ],
+    [
+      "USR-004",
+      "Jorge Luis Sanchez Vargas",
+      "jorge.sanchez",
+      "jorge.sanchez@jjsumi.pe",
+      "EMP-004",
+      [
+        "ROL-003"
+      ],
+      "+51 951 100 004"
+    ],
+    [
+      "USR-005",
+      "Elena Maria Lopez Torres",
+      "elena.lopez",
+      "elena.lopez@jjsumi.pe",
+      "EMP-005",
+      [
+        "ROL-003"
+      ],
+      "+51 951 100 005"
+    ],
+    [
+      "USR-006",
+      "Miguel Angel Vargas Aguilar",
+      "miguel.vargas",
+      "miguel.vargas@jjsumi.pe",
+      "EMP-006",
+      [
+        "ROL-003"
+      ],
+      "+51 951 100 006"
+    ],
+    [
+      "USR-007",
+      "Sofia Isabel Medina Paredes",
+      "sofia.medina",
+      "sofia.medina@jjsumi.pe",
+      "EMP-007",
+      [
+        "ROL-009"
+      ],
+      "+51 951 100 007"
+    ],
+    [
+      "USR-008",
+      "David Alberto Huanca Espinoza",
+      "david.huanca",
+      "david.huanca@jjsumi.pe",
+      "EMP-008",
+      [
+        "ROL-009"
+      ],
+      "+51 951 100 008"
+    ],
+    [
+      "USR-009",
+      "Carmen Rosa Torres Delgado",
+      "carmen.torres",
+      "carmen.torres@jjsumi.pe",
+      "EMP-009",
+      [],
+      "+51 951 100 009"
+    ],
+    [
+      "USR-010",
+      "Pedro Juan Aguilar Quispe",
+      "pedro.aguilar",
+      "pedro.aguilar@jjsumi.pe",
+      "EMP-010",
+      [],
+      "+51 951 100 010"
+    ],
+    [
+      "USR-011",
+      "Rosa Maria Medina Mamani",
+      "rosa.medina",
+      "rosa.medina@jjsumi.pe",
+      "EMP-011",
+      [
+        "ROL-010"
+      ],
+      "+51 951 100 011"
+    ],
+    [
+      "USR-012",
+      "Luis Fernando Paredes Rojas",
+      "luis.paredes",
+      "luis.paredes@jjsumi.pe",
+      "EMP-012",
+      [],
+      "+51 951 100 012"
+    ],
+    [
+      "USR-013",
+      "Marta Elena Espinoza Huanca",
+      "marta.espinoza",
+      "marta.espinoza@jjsumi.pe",
+      "EMP-013",
+      [],
+      "+51 951 100 013"
+    ],
+    [
+      "USR-014",
+      "Juan Carlos Delgado Vargas",
+      "juan.delgado",
+      "juan.delgado@jjsumi.pe",
+      "EMP-014",
+      [
+        "ROL-001"
+      ],
+      "+51 951 100 014"
+    ],
+    [
+      "USR-015",
+      "Maria Jose Quispe Flores",
+      "maria.quispe",
+      "maria.quispe@jjsumi.pe",
+      "EMP-015",
+      [],
+      "+51 951 100 015"
+    ],
+    [
+      "USR-016",
+      "Jose Luis Mamani Flores",
+      "jose.mamani",
+      "jose.mamani@jjsumi.pe",
+      "EMP-016",
+      [],
+      "+51 951 100 016"
+    ],
+    [
+      "USR-017",
+      "Laura Patricia Rojas Huanca",
+      "laura.rojas",
+      "laura.rojas@jjsumi.pe",
+      "EMP-017",
+      [
+        "ROL-012"
+      ],
+      "+51 951 100 017"
+    ],
+    [
+      "USR-018",
+      "Fernando Alberto Huanca Rojas",
+      "fernando.huanca",
+      "fernando.huanca@jjsumi.pe",
+      "EMP-018",
+      [
+        "ROL-012"
+      ],
+      "+51 951 100 018"
+    ],
+    [
+      "USR-019",
+      "Gabriela Sofia Vargas Quispe",
+      "gabriela.vargas",
+      "gabriela.vargas@jjsumi.pe",
+      "EMP-019",
+      [
+        "ROL-004"
+      ],
+      "+51 951 100 019"
+    ],
+    [
+      "USR-020",
+      "Ricardo Manuel Torres Mamani",
+      "ricardo.torres",
+      "ricardo.torres@jjsumi.pe",
+      "EMP-020",
+      [
+        "ROL-004"
+      ],
+      "+51 951 100 020"
+    ],
+    [
+      "USR-021",
+      "Claudia Elena Aguilar Rojas",
+      "claudia.aguilar",
+      "claudia.aguilar@jjsumi.pe",
+      "EMP-021",
+      [
+        "ROL-004"
+      ],
+      "+51 951 100 021"
+    ],
+    [
+      "USR-022",
+      "Diego Armando Paredes Huanca",
+      "diego.paredes",
+      "diego.paredes@jjsumi.pe",
+      "EMP-022",
+      [
+        "ROL-008"
+      ],
+      "+51 951 100 022"
+    ],
+    [
+      "USR-023",
+      "Veronica Isabel Espinoza Vargas",
+      "veronica.espinoza",
+      "veronica.espinoza@jjsumi.pe",
+      "EMP-023",
+      [
+        "ROL-008"
+      ],
+      "+51 951 100 023"
+    ],
+    [
+      "USR-024",
+      "Alejandro Jose Delgado Torres",
+      "alejandro.delgado",
+      "alejandro.delgado@jjsumi.pe",
+      "EMP-024",
+      [
+        "ROL-008"
+      ],
+      "+51 951 100 024"
+    ],
+    [
+      "USR-025",
+      "Patricia Rosa Quispe Aguilar",
+      "patricia.quispe",
+      "patricia.quispe@jjsumi.pe",
+      "EMP-025",
+      [
+        "ROL-008"
+      ],
+      "+51 951 100 025"
+    ],
+    [
+      "USR-026",
+      "Raul Alberto Mamani Paredes",
+      "raul.mamani",
+      "raul.mamani@jjsumi.pe",
+      "EMP-026",
+      [
+        "ROL-008"
+      ],
+      "+51 951 100 026"
+    ],
+    [
+      "USR-027",
+      "Silvia Maria Rojas Huanca",
+      "silvia.rojas",
+      "silvia.rojas@jjsumi.pe",
+      "EMP-027",
+      [
+        "ROL-008"
+      ],
+      "+51 951 100 027"
+    ],
+    [
+      "USR-028",
+      "Hector Luis Vargas Torres",
+      "hector.vargas",
+      "hector.vargas@jjsumi.pe",
+      "EMP-028",
+      [
+        "ROL-008"
+      ],
+      "+51 951 100 028"
+    ],
+    [
+      "USR-029",
+      "Diana Carolina Torres Quispe",
+      "diana.torres",
+      "diana.torres@jjsumi.pe",
+      "EMP-029",
+      [
+        "ROL-014"
+      ],
+      "+51 951 100 029"
+    ],
+    [
+      "USR-030",
+      "Francisco Javier Aguilar Mamani",
+      "francisco.aguilar",
+      "francisco.aguilar@jjsumi.pe",
+      "EMP-030",
+      [
+        "ROL-014"
+      ],
+      "+51 951 100 030"
+    ],
+    [
+      "USR-031",
+      "Beatriz Elena Paredes Rojas",
+      "beatriz.paredes",
+      "beatriz.paredes@jjsumi.pe",
+      "EMP-031",
+      [
+        "ROL-014"
+      ],
+      "+51 951 100 031"
+    ],
+    [
+      "USR-032",
+      "Oscar Ricardo Huanca Vargas",
+      "oscar.huanca",
+      "oscar.huanca@jjsumi.pe",
+      "EMP-032",
+      [
+        "ROL-014"
+      ],
+      "+51 951 100 032"
+    ],
+    [
+      "USR-033",
+      "Natalia Sofia Espinoza Torres",
+      "natalia.espinoza",
+      "natalia.espinoza@jjsumi.pe",
+      "EMP-033",
+      [
+        "ROL-011"
+      ],
+      "+51 951 100 033"
+    ],
+    [
+      "USR-034",
+      "Victor Manuel Delgado Quispe",
+      "victor.delgado",
+      "victor.delgado@jjsumi.pe",
+      "EMP-034",
+      [
+        "ROL-011"
+      ],
+      "+51 951 100 034"
+    ],
+    [
+      "USR-035",
+      "Andrea Lucia Aguilar Mamani",
+      "andrea.aguilar",
+      "andrea.aguilar@jjsumi.pe",
+      "EMP-035",
+      [
+        "ROL-011"
+      ],
+      "+51 951 100 035"
+    ],
+    [
+      "USR-036",
+      "Sergio Alberto Paredes Rojas",
+      "sergio.paredes",
+      "sergio.paredes@jjsumi.pe",
+      "EMP-036",
+      [
+        "ROL-011"
+      ],
+      "+51 951 100 036"
+    ],
+    [
+      "USR-037",
+      "Monica Isabel Huanca Vargas",
+      "monica.huanca",
+      "monica.huanca@jjsumi.pe",
+      "EMP-037",
+      [
+        "ROL-011"
+      ],
+      "+51 951 100 037"
+    ],
+    [
+      "USR-038",
+      "Eduardo Jose Torres Delgado",
+      "eduardo.torres",
+      "eduardo.torres@jjsumi.pe",
+      "EMP-038",
+      [
+        "ROL-005"
+      ],
+      "+51 951 100 038"
+    ],
+    [
+      "USR-039",
+      "Daniela Rosa Quispe Aguilar",
+      "daniela.quispe",
+      "daniela.quispe@jjsumi.pe",
+      "EMP-039",
+      [
+        "ROL-005"
+      ],
+      "+51 951 100 039"
+    ],
+    [
+      "USR-040",
+      "Gustavo Luis Mamani Paredes",
+      "gustavo.mamani",
+      "gustavo.mamani@jjsumi.pe",
+      "EMP-040",
+      [
+        "ROL-005"
+      ],
+      "+51 951 100 040"
+    ]
+  ],
+  "cargo_roles": {
+    "CAR-001": [
+      "ROL-001",
+      "ROL-002"
+    ],
+    "CAR-002": [],
+    "CAR-003": [
+      "ROL-002"
+    ],
+    "CAR-004": [],
+    "CAR-005": [
+      "ROL-009"
+    ],
+    "CAR-006": [
+      "ROL-009"
+    ],
+    "CAR-007": [],
+    "CAR-008": [
+      "ROL-010"
+    ],
+    "CAR-009": [],
+    "CAR-010": [
+      "ROL-001"
+    ],
+    "CAR-011": [],
+    "CAR-012": [
+      "ROL-012"
+    ],
+    "CAR-013": [
+      "ROL-004"
+    ],
+    "CAR-014": [
+      "ROL-004"
+    ],
+    "CAR-015": [],
+    "CAR-016": [
+      "ROL-014"
+    ],
+    "CAR-017": [
+      "ROL-011"
+    ],
+    "CAR-018": [
+      "ROL-011"
+    ],
+    "CAR-019": [
+      "ROL-005"
+    ],
+    "CAR-020": [
+      "ROL-005"
+    ],
+    "CAR-021": [
+      "ROL-015"
+    ],
+    "CAR-022": [
+      "ROL-006"
+    ],
+    "CAR-023": [
+      "ROL-006"
+    ],
+    "CAR-024": [
+      "ROL-013"
+    ],
+    "CAR-025": [
+      "ROL-007"
+    ],
+    "CAR-026": [
+      "ROL-008"
+    ],
+    "CAR-027": [
+      "ROL-003"
+    ]
+  },
+  "excepciones": [
+    [
+      "USR-002",
+      "ROL-001",
+      "Asistente de Gerencia con rol Admin ERP: soporte de gerencia autorizado"
+    ],
+    [
+      "USR-014",
+      "ROL-001",
+      "Administrador de Sistemas con rol Admin ERP: gestión técnica autorizada"
+    ]
+  ]
+}

@@ -1,0 +1,224 @@
+# JJSUMI ERP — FASE 09: FINANZAS Y ADMINISTRACIÓN ECONÓMICA
+
+**Especificación funcional, de datos, interfaz, seguridad y pruebas**  
+**Plataforma objetivo:** Odoo 19 Community  
+**Base existente:** `jjsumi` — protegida  
+**Estado:** Diseño aprobado para implementación  
+**Versión del documento:** 1.0 (Datos Maestros Completos y Explícitos)  
+**Fecha:** 18 de noviembre de 2026  
+
+---
+
+## 0. Reglas obligatorias de la Fase 09
+
+1. Utilizar exclusivamente los modelos nativos de Odoo: `account.move`, `account.move.line`, `account.payment`, `account.journal`, `account.account`, `account.analytic.account`, `account.analytic.tag`, `account.reconcile.model`.
+2. **No se implementará integración con SUNAT, RENIEC ni facturación electrónica** en esta fase. Toda la facturación será de uso interno, administrativo y de demostración de flujos.
+3. No modificar el código fuente original de Odoo. Las extensiones se limitarán a vistas, reportes personalizados (`jjsumi_reports`) o campos adicionales estrictamente necesarios (`x_jjsumi_*`).
+4. Los asientos contables en estado `posted` (publicado) no pueden ser eliminados ni modificados directamente. Las correcciones se realizan mediante asientos de reversa o facturas rectificativas.
+5. La valoración de inventario se alineará estrictamente con la configuración definida en la Fase 03 (`cost_method` y `valuation`), generando asientos automáticos o permitiendo ajustes manuales periódicos según corresponda.
+6. Todos los pagos deben estar vinculados a un diario contable (`account.journal`) y, preferentemente, a una factura o documento origen para garantizar la trazabilidad.
+
+---
+
+## 1. Objetivo y Alcance
+
+Disponer de un control financiero interno robusto, conectado de forma nativa con los módulos de Compras, Ventas, Inventario, Fabricación y Puntos de Venta, permitiendo la gestión de cobros, pagos, gastos, diarios contables y reportes financieros básicos dentro de las capacidades de Odoo 19 Community.
+
+### 1.1 Entregables
+- Plan de Cuentas (PCGE simplificado para operación interna) configurado y cargado.
+- 5 Diarios contables operativos (Ventas, Compras, Banco, Caja General, Varios).
+- Estructura de Cuentas Analíticas por Sucursal y Departamento.
+- Flujo completo de Facturación de Cliente → Registro de Pago → Conciliación.
+- Flujo completo de Factura de Proveedor → Registro de Pago → Conciliación.
+- Registro y pago de gastos internos.
+- Reportes financieros nativos operativos (Balance de Sumas y Saldos, Libro Diario, Libro Mayor, Estado de Resultados básico).
+
+---
+
+## 2. Modelos nativos y campos técnicos (Odoo 19 Community)
+
+| Modelo Nativo | Uso en JJSUMI | Campos técnicos clave |
+| :--- | :--- | :--- |
+| `account.account` | Plan de Cuentas | `code`, `name`, `account_type` (`asset_receivable`, `liability_payable`, `income`, `expense`, `asset_cash`, etc.), `reconcile` (True/False) |
+| `account.journal` | Diarios Contables | `name`, `code`, `type` (`sale`, `purchase`, `cash`, `bank`, `general`), `default_account_id`, `company_id` |
+| `account.move` | Facturas y Asientos | `move_type` (`out_invoice`, `in_invoice`, `out_refund`, `in_refund`, `entry`), `partner_id`, `invoice_date`, `date`, `state` (`draft`, `posted`, `cancel`), `payment_state` |
+| `account.move.line` | Líneas de asiento | `account_id`, `debit`, `credit`, `partner_id`, `analytic_distribution`, `name` |
+| `account.payment` | Registro de Pagos/Cobros | `payment_type` (`inbound`, `outbound`), `partner_id`, `amount`, `journal_id`, `destination_account_id`, `state` |
+| `account.analytic.account` | Cuentas Analíticas | `name`, `code`, `plan_id`, `company_id` |
+| `account.analytic.tag` | Etiquetas Analíticas | `name`, `active_analytic_distribution` |
+
+---
+
+## 3. Plan de Cuentas (PCGE Simplificado para Operación Interna)
+
+*Nota: Se utiliza una estructura simplificada del Plan Contable General Empresarial (PCGE) de Perú, adaptada para operación interna sin exigencias de SUNAT en esta fase.*
+
+| Código | Nombre de la Cuenta | Tipo de Cuenta (`account_type`) | Reconciliable |
+| :--- | :--- | :--- | :--- |
+| **10** | **EFECTIVO Y EQUIVALENTES DE EFECTIVO** | | |
+| 104 | Cajas | `asset_cash` | No |
+| 1041 | Caja Moneda Nacional | `asset_cash` | No |
+| 104101 | Caja General JJSUMI | `asset_cash` | No |
+| 104102 | Caja Puno | `asset_cash` | No |
+| 104103 | Caja Arequipa | `asset_cash` | No |
+| 104104 | Caja Cusco | `asset_cash` | No |
+| 104105 | Caja Tacna | `asset_cash` | No |
+| 1042 | Caja Moneda Extranjera | `asset_cash` | No |
+| 104201 | Caja Dólares Americanos | `asset_cash` | No |
+| 105 | Cuentas Corrientes en Instituciones Financieras | `asset_cash` | No |
+| 1051 | Cuentas Corrientes Operativas | `asset_cash` | No |
+| 105101 | BCP Cuenta Corriente Soles | `asset_cash` | No |
+| **12** | **CUENTAS POR COBRAR COMERCIALES - TERCEROS** | | |
+| 121 | Facturas, boletas y otros comprobantes por cobrar | `asset_receivable` | **Sí** |
+| 1212 | Emitidas en cartera | `asset_receivable` | **Sí** |
+| **40** | **TRIBUTOS, CONTRAPRESTACIONES Y APORTES** | | |
+| 401 | Gobierno Nacional | `liability_current` | No |
+| 4011 | Impuesto General a las Ventas (IGV) | `liability_current` | No |
+| 401111 | IGV - Cuenta Propia (Débito Fiscal) | `liability_current` | No |
+| 401112 | IGV - Compras (Crédito Fiscal) | `asset_current` | No |
+| **42** | **CUENTAS POR PAGAR COMERCIALES - TERCEROS** | | |
+| 421 | Facturas, boletas y otros comprobantes por pagar | `liability_payable` | **Sí** |
+| 4212 | Emitidas | `liability_payable` | **Sí** |
+| **44** | **OTRAS CUENTAS POR PAGAR** | | |
+| 441 | Préstamos de terceros | `liability_payable` | **Sí** |
+| 446 | Reclamos de terceros | `liability_payable` | **Sí** |
+| **60** | **COMPRAS** | | |
+| 601 | Mercaderías | `expense` | No |
+| 602 | Materias Primas | `expense` | No |
+| 609 | Costos de servicios | `expense` | No |
+| **70** | **VENTAS** | | |
+| 701 | Mercaderías | `income` | No |
+| 703 | Productos Terminados | `income` | No |
+| 704 | Servicios | `income` | No |
+| **80** | **GASTOS** | | |
+| 801 | Gastos de Personal | `expense` | No |
+| 802 | Gastos de Servicios Prestados por Terceros | `expense` | No |
+| 803 | Gastos de Mantenimiento y Reparación | `expense` | No |
+
+---
+
+## 4. Diarios Contables (`account.journal`)
+
+| Código | Nombre del Diario | Tipo (`type`) | Cuenta por Defecto (`default_account_id`) | Secuencia |
+| :--- | :--- | :--- | :--- | :--- |
+| VEN-01 | Diario de Ventas | `sale` | 703 (Productos Terminados) | VEN/2026/ |
+| COM-01 | Diario de Compras | `purchase` | 602 (Materias Primas) | COM/2026/ |
+| BAN-01 | Banco BCP Soles | `bank` | 105101 (BCP Cta. Cte. Soles) | BAN/2026/ |
+| CAJ-01 | Caja General Juliaca | `cash` | 104101 (Caja MN) | CAJ/2026/ |
+| CAJ-02 | Caja Puno | `cash` | 104102 (Caja Puno) | CAJ-PUN/2026/ |
+| CAJ-03 | Caja Arequipa | `cash` | 104103 (Caja Arequipa) | CAJ-AQP/2026/ |
+| CAJ-04 | Caja Cusco | `cash` | 104104 (Caja Cusco) | CAJ-CUS/2026/ |
+| CAJ-05 | Caja Tacna | `cash` | 104105 (Caja Tacna) | CAJ-TAC/2026/ |
+| VAR-01 | Diario de Varios / Ajustes | `general` | Sin cuenta por defecto | VAR/2026/ |
+
+*Nota: Los diarios de Caja (CAJ-02 a CAJ-05) se vinculan directamente con las sesiones de POS de las respectivas sucursales definidas en la Fase 08.*
+
+---
+
+## 5. Cuentas Analíticas (`account.analytic.account`)
+
+Permiten desglosar ingresos y gastos por dimensión operativa sin multiplicar el plan de cuentas.
+
+| Código | Nombre | Plan Analítico | Aplicación |
+| :--- | :--- | :--- | :--- |
+| AA-JUL | Sucursal Juliaca | JJSUMI Operaciones | Todos los ingresos/gastos de la sede matriz |
+| AA-PUN | Sucursal Puno | JJSUMI Operaciones | Todos los ingresos/gastos de Puno |
+| AA-AQP | Sucursal Arequipa | JJSUMI Operaciones | Todos los ingresos/gastos de Arequipa |
+| AA-CUS | Sucursal Cusco | JJSUMI Operaciones | Todos los ingresos/gastos de Cusco |
+| AA-TAC | Sucursal Tacna | JJSUMI Operaciones | Todos los ingresos/gastos de Tacna |
+| AA-PROD | Departamento Producción | JJSUMI Departamentos | Costos directos de fabricación |
+| AA-VTA | Departamento Ventas | JJSUMI Departamentos | Gastos comerciales y comisiones |
+| AA-ADM | Departamento Administración | JJSUMI Departamentos | Gastos generales y administrativos |
+
+---
+
+## 6. Flujos de Operación Financiera
+
+### 6.1 Flujo de Cobranza (Cuentas por Cobrar)
+1. **Facturación:** Se valida un `account.move` (tipo `out_invoice`) desde un Pedido de Venta (Fase 05) o POS (Fase 08). Estado: `posted`, `payment_state`: `Not Paid`.
+2. **Registro de Pago:** El usuario hace clic en "Registrar Pago". Se abre el formulario `account.payment`.
+3. **Configuración del Pago:** Se selecciona el `journal_id` (ej. BAN-01 o CAJ-01), el `amount` y la fecha.
+4. **Validación:** Al confirmar, Odoo crea un asiento de pago (Crédito a la cuenta del cliente 121, Débito a la cuenta del diario 104/105) y cambia el `payment_state` de la factura a `Paid` (o `Partial` si el monto es menor).
+5. **Conciliación:** La línea de la factura y la línea del pago quedan marcadas como `reconciled` en el Libro Mayor.
+
+### 6.2 Flujo de Pago a Proveedores (Cuentas por Pagar)
+1. **Factura de Proveedor:** Se valida un `account.move` (tipo `in_invoice`) desde una Orden de Compra (Fase 04). Estado: `posted`, `payment_state`: `Not Paid`.
+2. **Registro de Pago:** Se hace clic en "Registrar Pago".
+3. **Configuración:** Se selecciona el diario de salida (ej. BAN-01 para transferencia, CAJ-01 para efectivo).
+4. **Validación:** Odoo crea el asiento (Débito a la cuenta del proveedor 421, Crédito a la cuenta del diario 104/105) y marca la factura como `Paid`.
+
+### 6.3 Flujo de Gastos Internos
+1. Se crea un `account.move` manual (tipo `entry`) o un gasto rápido desde el módulo de Gastos (si se instala `hr_expense`).
+2. Se imputa la cuenta de gasto (ej. 802 Servicios de Terceros) y la cuenta analítica correspondiente (ej. AA-ADM).
+3. Se registra el pago contra la Caja General o Banco.
+
+### 6.4 Valoración de Inventario (Vinculación con Fase 03)
+- **Si `valuation` = `manual_periodic`:** El contador ejecuta manualmente un asiento de ajuste al final del mes, debitando la cuenta de inventario (ej. 103 Productos Terminados) y acreditando la cuenta de variación de inventario (ej. 713 Variación de Productos Terminados), basado en el reporte de valorización de Odoo.
+- **Si `valuation` = `real_time` (soportado en Community con configuración contable completa):** Odoo genera automáticamente los asientos de entrada (Débito Inventario, Crédito Cuenta Transitoria) y salida (Débito Costo de Ventas, Crédito Inventario) en cada validación de `stock.picking`.
+
+---
+
+## 7. Reglas de Negocio y Validaciones
+
+1. **Obligatoriedad Analítica:** Se configurará una regla (vía `account.analytic.distribution.model` o validación personalizada) que exija la imputación de una cuenta analítica (Sucursal) en todas las líneas de gasto (cuentas tipo `expense`) y venta (cuentas tipo `income`).
+2. **Bloqueo de Fechas:** Se definirá un "Período de Bloqueo" (`account.fiscal.year` o configuración de diario) para evitar la modificación de asientos de meses ya cerrados por la Gerencia General.
+3. **Conciliación Forzosa:** Las cuentas marcadas como `reconcile = True` (121, 421) no pueden tener saldo abierto sin que exista una contrapartida de pago o ajuste que las liquide.
+4. **Integridad de Pagos POS:** Los pagos registrados en las sesiones de POS (Fase 08) deben generar asientos que cuadren exactamente con el cierre de caja validado por el supervisor.
+5. **No Eliminación:** Un `account.move` en estado `posted` no puede ser eliminado. Solo se permite la acción "Revertir" (que crea un asiento en reversa) o "Cancelar" (si no tiene pagos vinculados).
+
+---
+
+## 8. Pruebas de Aceptación (Fase 09)
+
+| ID | Prueba | Resultado esperado |
+| :--- | :--- | :--- |
+| T01 | Verificar Plan de Cuentas | Las cuentas 104101, 1212, 4212, 703, etc., existen con los tipos y banderas de reconciliación correctos. |
+| T02 | Verificar Diarios Contables | Los 9 diarios (VEN-01, COM-01, BAN-01, CAJ-01 a CAJ-05, VAR-01) están activos y con secuencias asignadas. |
+| T03 | Crear y validar factura de cliente | Se genera un `account.move` `out_invoice` con líneas de venta (703) e IGV (401111), estado `posted`. |
+| T04 | Registrar cobro parcial de factura | El `payment_state` de la factura cambia a `Partial`. El asiento de pago concilia la línea cobrada. |
+| T05 | Registrar pago total restante | El `payment_state` cambia a `Paid`. La cuenta 1212 queda con saldo cero para ese cliente. |
+| T06 | Crear y validar factura de proveedor | Se genera un `account.move` `in_invoice` con líneas de compra (602) e IGV (401112), estado `posted`. |
+| T07 | Pagar factura de proveedor por banco | Se crea un `account.payment` `outbound` contra BAN-01. El asiento acredita 105101 y debita 4212. |
+| T08 | Registrar gasto interno con analítica | Se crea un asiento manual debitando 802 y acreditando 104101, exigiendo la selección de la cuenta analítica AA-ADM. |
+| T09 | Intentar eliminar asiento publicado | El sistema muestra un error y bloquea la eliminación. Solo permite "Revertir". |
+| T10 | Ejecutar reporte "Balance de Sumas y Saldos" | El reporte muestra los saldos de las cuentas 104, 121, 421, 703, etc., cuadran con los asientos creados. |
+| T11 | Ejecutar reporte "Libro Mayor" analítico | El reporte filtra correctamente los movimientos asignados a la cuenta analítica AA-PUN. |
+| T12 | Validar cierre de sesión POS (Fase 08) | El cierre de la sesión POS-001 genera un asiento contable que debita CAJ-01 y acredita la cuenta de ventas, sin diferencias. |
+
+---
+
+## 9. Orden exacto de implementación
+
+1. **Auditoría previa:** Verificar que el módulo `account` esté instalado y que la compañía JJSUMI tenga la moneda PEN (Sol) configurada como principal.
+2. **Carga del Plan de Cuentas:** Importar o crear manualmente las cuentas del PCGE simplificado (Sección 3), asegurando que los tipos de cuenta (`account_type`) sean correctos para Odoo 19.
+3. **Configuración de Diarios:** Crear los diarios contables (VEN-01, COM-01, BAN-01, CAJ-01 a CAJ-05, VAR-01) y asignar sus cuentas por defecto y secuencias.
+4. **Configuración de Analíticas:** Crear el plan analítico y las cuentas analíticas por sucursal y departamento (Sección 5).
+5. **Vinculación con Módulos:** 
+   - Vincular el diario VEN-01 a la configuración de Ventas.
+   - Vincular el diario COM-01 a la configuración de Compras.
+   - Vincular los diarios CAJ-XX a las configuraciones de POS correspondientes (Fase 08).
+6. **Configuración de Impuestos:** Asegurar que los impuestos creados en la Fase 02 (IGV 18% Venta/Compra) apunten a las cuentas 401111 y 401112 respectivamente.
+7. **Pruebas de Flujo Integrado:** Ejecutar el ciclo completo: Compra → Factura Proveedor → Pago / Venta → Factura Cliente → Cobro, verificando los asientos generados.
+8. **Generación de Reportes:** Validar que el Balance de Sumas y Saldos y el Libro Mayor reflejen correctamente las operaciones de prueba.
+9. **Validación y Aprobación:** Firmar el acta de aceptación de la Fase 09.
+
+---
+
+## 10. Estado de aprobación
+
+| Elemento | Estado |
+| :--- | :--- |
+| Plan de Cuentas (PCGE Simplificado) | Definido con códigos y tipos de cuenta Odoo 19 |
+| Diarios Contables (9) | Definidos con secuencias y cuentas por defecto |
+| Cuentas Analíticas (Sucursales y Deptos) | Definidas |
+| Flujos de Cobranza y Pago | Mapeados a modelos nativos `account.move` y `account.payment` |
+| Reglas de negocio (no eliminación, analítica obligatoria) | Definidas |
+| Integración con POS, Ventas y Compras | Especificada |
+| Pruebas de aceptación | Diseñadas (12 casos) |
+| Implementación | No iniciada (Pendiente de aprobación de Fases 01 a 08) |
+
+---
+
+**Documento maestro de Fase 09 — JJSUMI ERP — Odoo 19 Community.**  
+**Estado:** Diseño aprobado para implementación. No autoriza por sí mismo cambios en la base de datos.  
+**Próximo paso:** Una vez aprobadas las fases anteriores, proceder con la configuración del plan de cuentas, diarios y pruebas de flujo financiero en el entorno de validación, respetando estrictamente los modelos nativos de Odoo 19.

@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_jjsumi_automatizacion_user,jjsumi_automatizacion user,model_jjsumi_automatizacion,base.group_user,1,1,1,0
+access_jjsumi_automatizacion_admin,jjsumi_automatizacion admin,model_jjsumi_automatizacion,base.group_system,1,1,1,1
+access_jjsumi_automatizacion_log_user,jjsumi_automatizacion_log user,model_jjsumi_automatizacion_log,base.group_user,1,1,1,0
+access_jjsumi_automatizacion_log_admin,jjsumi_automatizacion_log admin,model_jjsumi_automatizacion_log,base.group_system,1,1,1,1
+access_jjsumi_red_publicacion_user,jjsumi_red_publicacion user,model_jjsumi_red_publicacion,base.group_user,1,1,1,0
+access_jjsumi_red_publicacion_admin,jjsumi_red_publicacion admin,model_jjsumi_red_publicacion,base.group_system,1,1,1,1

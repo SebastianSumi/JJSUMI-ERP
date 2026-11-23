@@ -1,0 +1,234 @@
+# JJSUMI ERP — FASE 05: CRM Y VENTAS
+
+**Especificación funcional, de datos, interfaz, seguridad y pruebas**  
+**Plataforma objetivo:** Odoo 19 Community  
+**Base existente:** `jjsumi` — protegida  
+**Estado:** Diseño aprobado para implementación  
+**Versión del documento:** 1.0 (Datos Maestros Completos y Explícitos)  
+**Fecha:** 18 de noviembre de 2026  
+
+---
+
+## 0. Reglas obligatorias de la Fase 05
+
+1. Utilizar exclusivamente los modelos nativos de Odoo: `res.partner`, `crm.lead`, `crm.team`, `crm.stage`, `crm.tag`, `sale.order`, `sale.order.line`, `sale.order.option` (si aplica), `account.move` (facturación interna).
+2. No crear modelos paralelos para CRM o Ventas. Las extensiones se harán mediante campos personalizados (`x_jjsumi_*`) solo si son estrictamente necesarios (ej. `x_jjsumi_comision_pct`).
+3. Los 250 clientes se registrarán como `res.partner` con `customer_rank > 0`.
+4. No se inventarán RUCs reales de terceros. Se utilizará el rango ficticio seguro `20600000050` a `20600000299` claramente identificado como dato de planificación controlada.
+5. Las cotizaciones (`sale.order` en estado `draft` o `sent`) deben vincularse a un `pricelist_id` válido (definido en Fase 02).
+6. Los descuentos en líneas de venta (`sale.order.line.discount`) superiores al 10% requerirán aprobación mediante el flujo `jjsumi_approvals`.
+7. Las devoluciones de venta se gestionarán mediante la creación de un `stock.picking` de tipo "Devoluciones" vinculado al albarán de entrega original, o mediante una factura rectificativa (`account.move` tipo `out_refund`), según el estado de la facturación.
+
+---
+
+## 1. Objetivo y Alcance
+
+Gestionar el proceso comercial de JJSUMI desde la captación del cliente potencial hasta la entrega del producto y el registro de la obligación de pago, integrando CRM, Ventas y la logística de despacho.
+
+### 1.1 Entregables
+- 250 clientes registrados con datos completos, clasificados por sucursal y tipo.
+- 6 equipos de ventas (CRM Teams) configurados y asignados a las 5 sucursales + 1 corporativo.
+- Pipeline de ventas (Etapas) definido con probabilidades y reglas de avance.
+- Flujo completo: Cliente Potencial → Oportunidad → Cotización → Pedido de Venta → Albarán de Entrega → Factura Interna.
+- Reglas de aprobación de descuentos y comisiones de vendedores.
+- Gestión de devoluciones y reclamos vinculados a operaciones originales.
+
+---
+
+## 2. Modelos nativos y campos técnicos (Odoo 19 Community)
+
+| Modelo Nativo | Uso en JJSUMI | Campos técnicos clave |
+| :--- | :--- | :--- |
+| `res.partner` | Clientes y Contactos | `name`, `vat` (RUC), `street`, `city`, `phone`, `email`, `customer_rank`, `property_product_pricelist`, `property_payment_term_id` |
+| `crm.team` | Equipos de Ventas | `name`, `user_id` (Jefe de equipo), `company_id`, `invoice_target` |
+| `crm.stage` | Etapas del Pipeline | `name`, `team_id`, `sequence`, `probability`, `is_won`, `is_closed` |
+| `crm.lead` | Oportunidades y Leads | `name`, `partner_id`, `team_id`, `stage_id`, `probability`, `expected_revenue`, `user_id`, `tag_ids`, `type` (`lead` o `opportunity`) |
+| `crm.tag` | Etiquetas de CRM | `name`, `color` |
+| `sale.order` | Cotizaciones y Pedidos | `partner_id`, `partner_invoice_id`, `partner_shipping_id`, `pricelist_id`, `date_order`, `validity_date`, `state` (`draft`, `sent`, `sale`, `done`, `cancel`), `user_id`, `team_id`, `amount_total` |
+| `sale.order.line` | Líneas de Pedido | `order_id`, `product_id`, `product_uom_qty`, `product_uom`, `price_unit`, `discount`, `tax_id` |
+
+---
+
+## 3. Equipos de Ventas y Pipeline (CRM)
+
+### 3.1 Equipos de Ventas (`crm.team`)
+
+| Código | Nombre del Equipo | Sucursal Asignada | Jefe de Equipo (Usuario) | Objetivo Mensual (PEN) |
+| :--- | :--- | :--- | :--- | :--- |
+| TEAM-JUL | Ventas Juliaca | SEDE-001 | USR-017 (Laura Patricia Rojas) | 150,000 |
+| TEAM-PUN | Ventas Puno | SEDE-002 | USR-018 (Fernando Alberto Huanca) | 80,000 |
+| TEAM-AQP | Ventas Arequipa | SEDE-003 | USR-019 (Gabriela Sofia Vargas) | 100,000 |
+| TEAM-CUS | Ventas Cusco | SEDE-004 | USR-020 (Ricardo Manuel Torres) | 90,000 |
+| TEAM-TAC | Ventas Tacna | SEDE-005 | USR-021 (Claudia Elena Aguilar) | 70,000 |
+| TEAM-CORP | Ventas Corporativas | Todas | USR-034 (Victor Manuel Delgado) | 200,000 |
+
+### 3.2 Etapas del Pipeline (`crm.stage`)
+
+| Código | Nombre de la Etapa | Equipo Aplicable | Probabilidad (%) | Acción Requerida para Avanzar |
+| :--- | :--- | :--- | :--- | :--- |
+| STG-01 | Nuevo | Todos | 10% | Calificar necesidad y presupuesto |
+| STG-02 | Calificado | Todos | 30% | Visita técnica o envío de catálogo |
+| STG-03 | Propuesta Enviada | Todos | 50% | Cotización (`sale.order`) vinculada |
+| STG-04 | Negociación | Todos | 75% | Ajuste de precios o condiciones |
+| STG-05 | Ganado | Todos | 100% | Pedido de venta confirmado (`state=sale`) |
+| STG-06 | Perdido | Todos | 0% | Motivo de pérdida obligatorio (`lost_reason`) |
+
+### 3.3 Etiquetas de CRM (`crm.tag`)
+- `TAG-CRM-01`: Constructora
+- `TAG-CRM-02`: Ferretería
+- `TAG-CRM-03`: Distribuidor
+- `TAG-CRM-04**: Pinturería
+- `TAG-CRM-05`: Cliente Recurrente
+
+---
+
+## 4. Catálogo de Clientes (Resumen Explícito de 50 Clientes Clave)
+
+*Nota: Se detallan 50 clientes explícitos que cubren todas las sucursales y tipos de negocio. Los 200 clientes restantes seguirán exactamente este mismo esquema de datos, generados mediante script de carga masiva con variaciones en el nombre y dirección, utilizando el rango de RUC `20600000100` a `20600000299`.*
+
+| Código | Nombre del Cliente | RUC (Ficticio) | Ciudad | Dirección | Teléfono | Email | Tipo (Etiqueta) | Equipo de Ventas | Lista de Precios |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| CLI-001 | Constructora Andina del Sur S.A.C. | 20600000050 | Juliaca | Av. Independencia 450 | +51 051 321500 | compras@constandina.pe | Constructora | TEAM-JUL | Lista Mayorista |
+| CLI-002 | Ferretería El Martillo E.I.R.L. | 20600000051 | Juliaca | Jr. Deustua 120 | +51 051 321501 | ventas@ferremartillo.pe | Ferretería | TEAM-JUL | Lista Pública |
+| CLI-003 | Distribuidora de Materiales Puno S.A. | 20600000052 | Puno | Av. Sesquicentenario 890 | +51 051 362502 | logistica@distpuno.pe | Distribuidor | TEAM-PUN | Lista Distribuidor |
+| CLI-004 | Pinturerías y Acabados Cusco S.A.C. | 20600000053 | Cusco | Av. Tullumayo 340 | +51 084 234503 | pedidos@pinturiascusco.pe | Pinturería | TEAM-CUS | Lista Pública |
+| CLI-005 | Constructora Arequipa Moderna S.A. | 20600000054 | Arequipa | Av. Ejército 1120 | +51 054 215504 | abastecimiento@constamod.pe | Constructora | TEAM-AQP | Lista Mayorista |
+| CLI-006 | Ferretería Central Tacna S.R.L. | 20600000055 | Tacna | Av. San Martín 560 | +51 052 412505 | ventas@ferretacna.pe | Ferretería | TEAM-TAC | Lista Pública |
+| CLI-007 | Inmobiliaria Altiplano S.A.C. | 20600000056 | Juliaca | Av. Ilave 780 | +51 051 321506 | proyectos@inmoaltiplano.pe | Constructora | TEAM-CORP | Lista Corporativa |
+| CLI-008 | Materiales de Construcción El Sol E.I.R.L. | 20600000057 | Cusco | Av. El Sol 210 | +51 084 234507 | compras@materialesol.pe | Distribuidor | TEAM-CUS | Lista Mayorista |
+| CLI-009 | Ferretería Industrial Puno S.A.C. | 20600000058 | Puno | Jr. Lima 330 | +51 051 362508 | ventas@ferreindpuno.pe | Ferretería | TEAM-PUN | Lista Pública |
+| CLI-010 | Acabados y Decoraciones Arequipa S.A. | 20600000059 | Arequipa | Calle Mercaderes 45 | +51 054 215509 | info@acabadosaqp.pe | Pinturería | TEAM-AQP | Lista Pública |
+| CLI-011 | Constructora del Sur Grande S.A. | 20600000060 | Arequipa | Av. Venezuela 890 | +51 054 215510 | compras@surgrande.pe | Constructora | TEAM-CORP | Lista Corporativa |
+| CLI-012 | Distribuidora Tacna Build S.R.L. | 20600000061 | Tacna | Av. Bolognesi 120 | +51 052 412511 | logistica@tacnabuild.pe | Distribuidor | TEAM-TAC | Lista Distribuidor |
+| CLI-013 | Pinturería Color y Forma E.I.R.L. | 20600000062 | Juliaca | Av. San Martín 110 | +51 051 321512 | ventas@colorforma.pe | Pinturería | TEAM-JUL | Lista Pública |
+| CLI-014 | Ferretería El Constructor Puno S.A.C. | 20600000063 | Puno | Av. Sesquicentenario 450 | +51 051 362513 | pedidos@elconstructor.pe | Ferretería | TEAM-PUN | Lista Mayorista |
+| CLI-015 | Inversiones Inmobiliarias Cusco S.A. | 20600000064 | Cusco | Av. La Cultura 670 | +51 084 234514 | proyectos@invincusco.pe | Constructora | TEAM-CUS | Lista Corporativa |
+| CLI-016 | Materiales de Acabado Arequipa S.R.L. | 20600000065 | Arequipa | Av. Parra 230 | +51 054 215515 | ventas@matcaqp.pe | Distribuidor | TEAM-AQP | Lista Mayorista |
+| CLI-017 | Ferretería La Frontera S.A.C. | 20600000066 | Tacna | Av. 28 de Julio 890 | +51 052 412516 | compras@lafrontera.pe | Ferretería | TEAM-TAC | Lista Pública |
+| CLI-018 | Constructora Juliaca Centro S.A. | 20600000067 | Juliaca | Jr. Ayacucho 340 | +51 051 321517 | abastecimiento@julcentro.pe | Constructora | TEAM-JUL | Lista Mayorista |
+| CLI-019 | Distribuidora de Yesos Puno E.I.R.L. | 20600000068 | Puno | Jr. Arequipa 120 | +51 051 362518 | ventas@distyesos.pe | Distribuidor | TEAM-PUN | Lista Distribuidor |
+| CLI-020 | Pinturerías Unidas Cusco S.A.C. | 20600000069 | Cusco | Av. Tullumayo 890 | +51 084 234519 | info@pintunidas.pe | Pinturería | TEAM-CUS | Lista Pública |
+| CLI-021 | Ferretería y Materiales Arequipa S.A. | 20600000070 | Arequipa | Av. Goyeneche 450 | +51 054 215520 | ventas@ferreaqp.pe | Ferretería | TEAM-AQP | Lista Pública |
+| CLI-022 | Constructora Tacna Nueva S.R.L. | 20600000071 | Tacna | Av. 2 de Mayo 340 | +51 052 412521 | proyectos@tacnanueva.pe | Constructora | TEAM-TAC | Lista Mayorista |
+| CLI-023 | Inmobiliaria Altiplano Sur S.A. | 20600000072 | Juliaca | Av. Ilave 990 | +51 051 321522 | compras@altiplanosur.pe | Constructora | TEAM-CORP | Lista Corporativa |
+| CLI-024 | Distribuidora de Materiales Puno Norte S.A.C. | 20600000073 | Puno | Av. Circunvalación 120 | +51 051 362523 | logistica@puno norte.pe | Distribuidor | TEAM-PUN | Lista Distribuidor |
+| CLI-025 | Pinturería El Pincel Cusco E.I.R.L. | 20600000074 | Cusco | Av. Tullumayo 110 | +51 084 234524 | ventas@elpincel.pe | Pinturería | TEAM-CUS | Lista Pública |
+| CLI-026 | Ferretería Industrial Arequipa S.A. | 20600000075 | Arequipa | Av. Ejército 890 | +51 054 215525 | pedidos@ferreindaqp.pe | Ferretería | TEAM-AQP | Lista Mayorista |
+| CLI-027 | Constructora del Sur Tacna S.A.C. | 20600000076 | Tacna | Av. San Martín 670 | +51 052 412526 | abastecimiento@constacna.pe | Constructora | TEAM-TAC | Lista Corporativa |
+| CLI-028 | Materiales de Construcción Juliaca S.R.L. | 20600000077 | Juliaca | Av. San Román 450 | +51 051 321527 | ventas@matjul.pe | Distribuidor | TEAM-JUL | Lista Mayorista |
+| CLI-029 | Ferretería El Clavo Puno S.A. | 20600000078 | Puno | Jr. Lima 560 | +51 051 362528 | compras@elclavo.pe | Ferretería | TEAM-PUN | Lista Pública |
+| CLI-030 | Pinturerías y Acabados Cusco Sur S.A.C. | 20600000079 | Cusco | Av. La Cultura 890 | +51 084 234529 | info@acabadossur.pe | Pinturería | TEAM-CUS | Lista Pública |
+| CLI-031 | Constructora Arequipa Centro S.A. | 20600000080 | Arequipa | Calle Mercaderes 120 | +51 054 215530 | proyectos@aqpcentro.pe | Constructora | TEAM-CORP | Lista Corporativa |
+| CLI-032 | Distribuidora Tacna Build Pro S.R.L. | 20600000081 | Tacna | Av. Bolognesi 340 | +51 052 412531 | logistica@tacnapro.pe | Distribuidor | TEAM-TAC | Lista Distribuidor |
+| CLI-033 | Ferretería y Pinturas Juliaca E.I.R.L. | 20600000082 | Juliaca | Jr. Deustua 330 | +51 051 321532 | ventas@ferrepint.pe | Ferretería | TEAM-JUL | Lista Pública |
+| CLI-034 | Inversiones Inmobiliarias Puno S.A. | 20600000083 | Puno | Av. Sesquicentenario 670 | +51 051 362533 | compras@invpuno.pe | Constructora | TEAM-PUN | Lista Corporativa |
+| CLI-035 | Materiales de Acabado Cusco S.R.L. | 20600000084 | Cusco | Av. El Sol 450 | +51 084 234534 | ventas@matcusco.pe | Distribuidor | TEAM-CUS | Lista Mayorista |
+| CLI-036 | Ferretería Central Arequipa S.A.C. | 20600000085 | Arequipa | Av. Venezuela 120 | +51 054 215535 | pedidos@ferrecentral.pe | Ferretería | TEAM-AQP | Lista Pública |
+| CLI-037 | Constructora Tacna Moderna S.A. | 20600000086 | Tacna | Av. 28 de Julio 110 | +51 052 412536 | abastecimiento@tacnamod.pe | Constructora | TEAM-TAC | Lista Mayorista |
+| CLI-038 | Distribuidora de Yesos Juliaca S.A.C. | 20600000087 | Juliaca | Av. Independencia 670 | +51 051 321537 | logistica@yesosjul.pe | Distribuidor | TEAM-JUL | Lista Distribuidor |
+| CLI-039 | Pinturería Color y Forma Puno E.I.R.L. | 20600000088 | Puno | Jr. Arequipa 330 | +51 051 362538 | ventas@colorpuno.pe | Pinturería | TEAM-PUN | Lista Pública |
+| CLI-040 | Ferretería Industrial Cusco S.A. | 20600000089 | Cusco | Av. Tullumayo 670 | +51 084 234539 | compras@ferrecusco.pe | Ferretería | TEAM-CUS | Lista Mayorista |
+| CLI-041 | Constructora del Sur Arequipa S.R.L. | 20600000090 | Arequipa | Av. Parra 450 | +51 054 215540 | proyectos@suraqp.pe | Constructora | TEAM-AQP | Lista Corporativa |
+| CLI-042 | Materiales de Construcción Tacna S.A.C. | 20600000091 | Tacna | Av. San Martín 890 | +51 052 412541 | ventas@mattacna.pe | Distribuidor | TEAM-TAC | Lista Mayorista |
+| CLI-043 | Ferretería El Martillo Puno S.A. | 20600000092 | Puno | Av. Circunvalación 340 | +51 051 362542 | pedidos@martillopuno.pe | Ferretería | TEAM-PUN | Lista Pública |
+| CLI-044 | Inmobiliaria Altiplano Cusco S.A. | 20600000093 | Cusco | Av. La Cultura 110 | +51 084 234543 | compras@inmocusco.pe | Constructora | TEAM-CUS | Lista Corporativa |
+| CLI-045 | Pinturerías Unidas Arequipa S.R.L. | 20600000094 | Arequipa | Av. Goyeneche 670 | +51 054 215544 | info@unidasaqp.pe | Pinturería | TEAM-AQP | Lista Pública |
+| CLI-046 | Distribuidora de Materiales Juliaca S.A. | 20600000095 | Juliaca | Av. San Román 670 | +51 051 321545 | logistica@distjul.pe | Distribuidor | TEAM-JUL | Lista Distribuidor |
+| CLI-047 | Constructora Tacna Centro S.A.C. | 20600000096 | Tacna | Av. 2 de Mayo 560 | +51 052 412546 | abastecimiento@tacnacentro.pe | Constructora | TEAM-TAC | Lista Mayorista |
+| CLI-048 | Ferretería y Pinturas Puno S.R.L. | 20600000097 | Puno | Jr. Lima 780 | +51 051 362547 | ventas@ferrepuno.pe | Ferretería | TEAM-PUN | Lista Pública |
+| CLI-049 | Materiales de Acabado Juliaca S.A.C. | 20600000098 | Juliaca | Jr. Ayacucho 560 | +51 051 321548 | pedidos@matjul.pe | Distribuidor | TEAM-JUL | Lista Mayorista |
+| CLI-050 | Pinturería El Pincel Arequipa E.I.R.L. | 20600000099 | Arequipa | Calle Mercaderes 330 | +51 054 215549 | info@elpincelaqp.pe | Pinturería | TEAM-AQP | Lista Pública |
+
+*Regla de generación para CLI-051 a CLI-250:* Se utilizará un script de Python que itere sobre las combinaciones de [Ciudad: Juliaca, Puno, Arequipa, Cusco, Tacna] x [Tipo: Constructora, Ferretería, Distribuidor, Pinturería], asignando RUCs secuenciales desde `20600000100`, direcciones genéricas válidas (ej. "Av. Principal [Número]"), y asignando el `crm.team_id` correspondiente a la ciudad.
+
+---
+
+## 5. Flujo Comercial y Reglas de Negocio
+
+### 5.1 Flujo de Venta Estándar
+1. **Captación:** Se crea un `crm.lead` (Tipo: `lead`). Se asigna a un `team_id` y `user_id`.
+2. **Calificación:** El lead se convierte en `opportunity` (`type='opportunity'`). Se estiman `expected_revenue` y `probability`.
+3. **Cotización:** Desde la oportunidad, se genera un `sale.order` (Estado: `draft`). Se selecciona el `partner_id`, `pricelist_id` y se agregan `sale.order.line`.
+4. **Envío:** El estado cambia a `sent`. Se envía el PDF al cliente.
+5. **Confirmación:** El cliente acepta. El estado cambia a `sale`. Se genera automáticamente un `stock.picking` de tipo "Entregas" (Estado: `assigned` o `waiting`).
+6. **Despacho:** Almacén valida el `stock.picking` (Estado: `done`). El inventario disminuye.
+7. **Facturación:** Desde el `sale.order` o el `stock.picking`, se crea una `account.move` (Tipo: `out_invoice`). Se valida y se registra el pago.
+
+### 5.2 Reglas de Descuentos y Aprobaciones
+- **Descuento ≤ 5%**: Aprobado automáticamente por el Vendedor (`group_jjsumi_salesperson`).
+- **Descuento > 5% y ≤ 15%**: Requiere aprobación del Jefe Comercial / Supervisor (`group_jjsumi_sales_supervisor`).
+- **Descuento > 15%**: Requiere aprobación del Gerente General (`group_jjsumi_general_manager`).
+- *Implementación:* El addon `jjsumi_approvals` interceptará el botón "Confirmar" del `sale.order` si `any(line.discount > 5.0 for line in order.order_line)` y cambiará el estado a `x_pending_approval`.
+
+### 5.3 Devoluciones y Reclamos
+- **Producto no despachado:** Cancelar líneas del `sale.order` o el pedido completo (`state='cancel'`).
+- **Producto despachado, no facturado:** Crear un `stock.picking` de tipo "Devoluciones" con origen en el albarán de entrega. Ubicación destino: `WH-XXX/Devoluciones` o `WH-XXX/Defectuosos`.
+- **Producto facturado:** Crear una `account.move` de tipo `out_refund` (Nota de Crédito) vinculada a la factura original. Odoo gestionará la reversión contable y de inventario si se marca la opción de devolver mercancía.
+
+---
+
+## 6. Comisiones y Seguimiento
+
+### 6.1 Estructura de Comisiones (Campo personalizado `x_jjsumi_comision_pct`)
+Se añadirá un campo decimal `x_jjsumi_comision_pct` en `crm.team` o `hr.employee` (vendedor).
+- **Vendedor de Sucursal:** 2% sobre el monto neto (sin IGV) de ventas cobradas.
+- **Jefe Comercial:** 0.5% sobre el monto neto del equipo a su cargo.
+- *Nota:* El cálculo y pago de comisiones se realizará mediante un reporte personalizado (`jjsumi_reports`) al cierre mensual, no mediante automatización contable directa en esta fase.
+
+### 6.2 Actividades y Seguimiento (`mail.activity`)
+- **Regla:** Toda oportunidad en etapa "Propuesta Enviada" por más de 3 días sin actividad debe generar una actividad de "Llamada de seguimiento" asignada al `user_id` de la oportunidad.
+- **Configuración:** Se definirá en `mail.activity.type` con `delay_count=3`, `delay_unit='days'`.
+
+---
+
+## 7. Pruebas de Aceptación (Fase 05)
+
+| ID | Prueba | Resultado esperado |
+| :--- | :--- | :--- |
+| T01 | Crear cliente CLI-001 | Se guarda con `customer_rank=1`, RUC, dirección y equipo de ventas asignado. |
+| T02 | Crear Lead y convertir a Oportunidad | El `crm.lead` cambia de `type='lead'` a `type='opportunity'`, manteniendo el `partner_id`. |
+| T03 | Generar Cotización desde Oportunidad | Se crea un `sale.order` vinculado (`origin` = nombre de la oportunidad). |
+| T04 | Aplicar descuento del 12% en línea de venta | Al confirmar, el sistema cambia el estado a `x_pending_approval` (requiere aprobación de Supervisor). |
+| T05 | Aprobar cotización con descuento | El estado cambia a `sale`. Se genera un `stock.picking` de salida. |
+| T06 | Validar albarán de entrega | El stock del producto disminuye en la ubicación de la sucursal correspondiente. |
+| T07 | Crear Factura desde Pedido de Venta | Se genera `account.move` tipo `out_invoice` con líneas, impuestos y totales correctos. |
+| T08 | Registrar pago de Factura | El `payment_state` de la factura cambia a `Pagado`. |
+| T09 | Procesar devolución de producto despachado | Se crea `stock.picking` de devolución que incrementa el stock en `WH-XXX/Devoluciones`. |
+| T10 | Verificar restricción de acceso de Vendedor | Un vendedor de Puno no puede ver ni editar oportunidades o pedidos del equipo de Arequipa (Regla de registro `ir.rule`). |
+| T11 | Generar reporte de comisiones | El reporte muestra correctamente el 2% del monto neto cobrado por el vendedor. |
+| T12 | Actividad de seguimiento automática | Una oportunidad estancada por 3 días muestra una actividad de "Llamada" en el Kanban. |
+
+---
+
+## 8. Orden exacto de implementación
+
+1. **Auditoría previa:** Verificar módulos `crm`, `sale`, `sale_management` (si se usa), `account` instalados.
+2. **Configuración de Ventas:** Ajustes → Ventas → Activar "Precios y descuentos en líneas de pedido", "Firmas electrónicas" (opcional), "Notas de crédito".
+3. **Creación de Equipos y Etapas:** Importar o crear manualmente los 6 `crm.team` y las 6 `crm.stage` con sus probabilidades.
+4. **Carga de Clientes:** Importar los 250 clientes vía CSV, mapeando `name`, `vat`, `street`, `city`, `phone`, `email`, `customer_rank`, `property_product_pricelist`, `property_payment_term_id`.
+5. **Asignación de Usuarios a Equipos:** Vincular los 40 usuarios (específicamente vendedores y jefes) a sus respectivos `crm.team`.
+6. **Configuración de Reglas de Descuento:** Implementar/verificar el flujo de aprobación en `jjsumi_approvals` para `sale.order`.
+7. **Configuración de Actividades:** Crear el tipo de actividad "Llamada de seguimiento" con regla de 3 días.
+8. **Pruebas de Flujo:** Ejecutar un ciclo completo: Lead → Oportunidad → Cotización (con descuento) → Aprobación → Pedido → Albarán → Factura → Pago.
+9. **Validación y Aprobación:** Firmar el acta de aceptación de la Fase 05.
+
+---
+
+## 9. Estado de aprobación
+
+| Elemento | Estado |
+| :--- | :--- |
+| 250 Clientes | Definidos (50 explícitos + regla de generación para 200) |
+| 6 Equipos de Ventas | Definidos con objetivos y jefes |
+| Pipeline y Etapas | Definidos con probabilidades |
+| Flujo de Cotización a Factura | Mapeado a modelos nativos de Odoo 19 |
+| Reglas de descuento y aprobación | Definidas |
+| Proceso de devoluciones | Definido |
+| Pruebas de aceptación | Diseñadas (12 casos) |
+| Implementación | No iniciada (Pendiente de aprobación de Fases 01 a 04) |
+
+---
+
+**Documento maestro de Fase 05 — JJSUMI ERP — Odoo 19 Community.**  
+**Estado:** Diseño aprobado para implementación. No autoriza por sí mismo cambios en la base de datos.  
+**Próximo paso:** Una vez aprobadas las fases anteriores, proceder con la carga de clientes y la configuración de los flujos de CRM y Ventas en el entorno de validación, siguiendo estrictamente los modelos y campos nativos detallados.

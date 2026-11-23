@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_jjsumi_quality_point_user,jjsumi.quality.point user,model_jjsumi_quality_point,base.group_user,1,0,0,0
+access_jjsumi_quality_point_admin,jjsumi.quality.point admin,model_jjsumi_quality_point,base.group_system,1,1,1,1
+access_jjsumi_quality_check_user,jjsumi.quality.check user,model_jjsumi_quality_check,base.group_user,1,1,1,0
+access_jjsumi_quality_check_admin,jjsumi.quality.check admin,model_jjsumi_quality_check,base.group_system,1,1,1,1

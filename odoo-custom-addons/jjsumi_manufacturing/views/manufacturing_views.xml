@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mrp_bom_form_jjsumi" model="ir.ui.view">
+        <field name="name">mrp.bom.form.jjsumi</field>
+        <field name="model">mrp.bom</field>
+        <field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='code']" position="after">
+                <field name="jjsumi_version"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="mrp_production_form_jjsumi" model="ir.ui.view">
+        <field name="name">mrp.production.form.jjsumi</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="JJSumi" name="jjsumi">
+                    <group>
+                        <group string="Proceso">
+                            <field name="jjsumi_combustible_real"/>
+                            <field name="jjsumi_merma_bolsas"/>
+                        </group>
+                        <group string="Costos">
+                            <field name="jjsumi_costo_total"/>
+                            <field name="jjsumi_costo_bolsa"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Calidad -->
+    <record id="jjsumi_calidad_view_list" model="ir.ui.view">
+        <field name="name">jjsumi.calidad.list</field>
+        <field name="model">jjsumi.calidad</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="resultado == 'rechazado'" decoration-success="resultado == 'aprobado'">
+                <field name="name"/>
+                <field name="fecha"/>
+                <field name="product_id"/>
+                <field name="production_id"/>
+                <field name="peso_medido"/>
+                <field name="humedad"/>
+                <field name="resultado" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="jjsumi_calidad_view_form" model="ir.ui.view">
+        <field name="name">jjsumi.calidad.form</field>
+        <field name="model">jjsumi.calidad</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="resultado" widget="statusbar" statusbar_visible="pendiente,aprobado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="product_id"/>
+                            <field name="production_id"/>
+                            <field name="fecha"/>
+                            <field name="inspector_id"/>
+                        </group>
+                        <group>
+                            <field name="peso_nominal"/>
+                            <field name="peso_medido"/>
+                            <field name="humedad"/>
+                            <field name="tiempo_fraguado"/>
+                        </group>
+                    </group>
+                    <field name="observaciones" placeholder="Observaciones..."/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="jjsumi_calidad_action" model="ir.actions.act_window">
+        <field name="name">Controles de calidad</field>
+        <field name="res_model">jjsumi.calidad</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_jjsumi_calidad" name="Calidad" parent="jjsumi_base.menu_jjsumi_inventario"
+              action="jjsumi_calidad_action" sequence="20"/>
+</odoo>

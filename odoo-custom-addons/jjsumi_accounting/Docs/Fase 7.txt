@@ -1,0 +1,185 @@
+# JJSUMI ERP — FASE 07: CALIDAD Y MANTENIMIENTO INDUSTRIAL
+
+**Especificación funcional, de datos, interfaz, seguridad y pruebas**  
+**Plataforma objetivo:** Odoo 19 Community  
+**Base existente:** `jjsumi` — protegida  
+**Estado:** Diseño aprobado para implementación  
+**Versión del documento:** 1.0 (Datos Maestros Completos y Explícitos)  
+**Fecha:** 18 de noviembre de 2026  
+
+---
+
+## 0. Reglas obligatorias de la Fase 07
+
+1. **Calidad:** Dado que la aplicación nativa `quality` es exclusiva de Odoo Enterprise, se implementará el módulo propio `jjsumi_quality_ext` que crea los modelos `jjsumi.quality.point` y `jjsumi.quality.check`, integrados nativamente en las vistas de `mrp.production`, `mrp.workorder` y `stock.picking`.
+2. **Mantenimiento:** Se utilizará exclusivamente la aplicación nativa `maintenance` de Odoo 19 Community (`maintenance.equipment`, `maintenance.request`, `maintenance.team`), extendida solo con campos de trazabilidad de costos y repuestos (`jjsumi_maintenance_ext`).
+3. Los puntos de control de calidad bloquearán el avance del flujo (ej. validar una orden de fabricación o una recepción) hasta que el resultado sea "Aprobado".
+4. Un resultado de "Rechazado" en calidad moverá automáticamente el lote a la ubicación `WH-JUL/Defectuosos` o generará una orden de reproceso.
+5. Las órdenes de mantenimiento preventivo se generarán automáticamente mediante las reglas de periodicidad nativas de Odoo (`maintenance.request` con `request_type = 'preventive'`).
+6. No se eliminarán históricos de inspecciones ni órdenes de mantenimiento cerradas. Se archivarán o cancelarán con trazabilidad.
+
+---
+
+## 1. Objetivo y Alcance
+
+Garantizar que las materias primas, los procesos de fabricación y los productos terminados cumplan con los estándares de JJSUMI, y asegurar la disponibilidad operativa de la maquinaria industrial mediante un programa estructurado de mantenimiento preventivo y correctivo.
+
+### 1.1 Entregables
+- 15 Puntos de Control de Calidad definidos y vinculados a operaciones específicas.
+- Modelo propio de inspecciones de calidad integrado en Recepciones y Fabricación.
+- 12 Equipos/Máquinas industriales registrados con planes de mantenimiento.
+- 2 Equipos de trabajo de mantenimiento configurados.
+- Flujo completo de Solicitudes y Órdenes de Trabajo de Mantenimiento.
+- Integración de repuestos de mantenimiento con el inventario (Fase 03).
+
+---
+
+## 2. Modelos nativos y técnicos (Odoo 19 Community)
+
+| Modelo Nativo / Propio | Uso en JJSUMI | Campos técnicos clave |
+| :--- | :--- | :--- |
+| `jjsumi.quality.point` | Definición de qué controlar y cuándo | `name`, `product_id`, `picking_type_id`, `operation_id`, `test_type` (`pass_fail`, `measure`, `text`), `norm_min`, `norm_max`, `company_id` |
+| `jjsumi.quality.check` | Registro real de la inspección | `point_id`, `production_id` / `picking_id`, `lot_id`, `test_type`, `measure`, `result` (`pass`, `fail`, `none`), `user_id`, `check_date` |
+| `maintenance.equipment` | Registro de máquinas y activos | `name`, `category_id`, `serial_no`, `location_id`, `owner_user_id`, `maintenance_team_id`, `maintenance_instructions` |
+| `maintenance.request` | Órdenes de trabajo (preventivo/correctivo) | `name`, `equipment_id`, `maintenance_type` (`preventive`, `corrective`), `schedule_date`, `duration`, `stage_id`, `user_id` |
+| `maintenance.team` | Equipos de técnicos | `name`, `user_id` (Jefe), `member_ids` |
+| `maintenance.equipment.category` | Clasificación de activos | `name`, `parent_id` |
+
+---
+
+## 3. Puntos de Control de Calidad (15 registros explícitos)
+
+*Modelo: `jjsumi.quality.point`. Estos puntos se activarán automáticamente al llegar a la operación o recepción correspondiente.*
+
+| Código | Nombre del Punto de Control | Tipo de Prueba | Aplicación / Momento | Producto / Operación | Norma Mínima | Norma Máxima |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| QP-001 | Humedad de Piedra de Yeso | Medida | Recepción (Stock) | MAT-001 (Piedra de Yeso) | 0.0% | 5.0% |
+| QP-002 | Pureza de Aditivos | Medida | Recepción (Stock) | MAT-003, MAT-004 | 95.0% | 100.0% |
+| QP-003 | Granulometría Post-Trituración | Medida | Fabricación (Operación) | WC-001 (Trituración) | 0.0 mm | 50.0 mm |
+| QP-004 | Temperatura de Calcinación | Medida | Fabricación (Operación) | WC-002 (Calcinación) | 150.0 °C | 180.0 °C |
+| QP-005 | Finura de Molienda | Medida | Fabricación (Operación) | WC-003 (Molienda) | 90.0% (malla 200) | 100.0% |
+| QP-006 | Homogeneidad de Mezcla | Visual (Pasa/Falla) | Fabricación (Operación) | WC-004 (Mezclado) | N/A | N/A |
+| QP-007 | Tiempo de Fraguado Yeso Fino | Medida | Producto Terminado | YES-001, YES-006 | 15.0 min | 20.0 min |
+| QP-008 | Blancura Yeso Premium | Medida | Producto Terminado | YES-006 | 92.0% | 100.0% |
+| QP-009 | Resistencia a Compresión Yeso Ind. | Medida | Producto Terminado | YES-002 | 3.5 MPa | N/A |
+| QP-010 | Espesor de Placa Estándar | Medida | Producto Terminado | PLA-001 | 12.0 mm | 13.0 mm |
+| QP-011 | Rectitud de Bordes de Placa | Visual (Pasa/Falla) | Producto Terminado | PLA-001, PLA-002 | N/A | N/A |
+| QP-012 | Adherencia de Masilla para Juntas | Medida | Producto Terminado | MAS-001 | 0.5 MPa | N/A |
+| QP-013 | Integridad de Empaque en Despacho | Visual (Pasa/Falla) | Despacho (Stock) | Todos los productos terminados | N/A | N/A |
+| QP-014 | Evaluación de Estado en Devoluciones | Visual (Pasa/Falla) | Devoluciones (Stock) | Todos los productos | N/A | N/A |
+| QP-015 | Prueba de Funcionamiento Post-Mantenimiento | Visual (Pasa/Falla) | Mantenimiento | Todos los equipos | N/A | N/A |
+
+---
+
+## 4. Equipos y Máquinas Industriales (12 registros explícitos)
+
+*Modelo: `maintenance.equipment`. Vinculados a los centros de trabajo de la Fase 06.*
+
+| Código | Nombre del Equipo | Categoría | Ubicación | Equipo de Mantenimiento | Frecuencia Preventiva | Responsable (Usuario) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| EQ-001 | Trituradora de Mandíbulas Primaria | Maquinaria Pesada | WH-JUL / Producción | MT-001 (Mecánico) | Cada 250 horas | USR-032 (Oscar Huanca) |
+| EQ-002 | Trituradora de Impacto Secundaria | Maquinaria Pesada | WH-JUL / Producción | MT-001 (Mecánico) | Cada 250 horas | USR-032 (Oscar Huanca) |
+| EQ-003 | Horno Rotativo de Calcinación | Hornos Industriales | WH-JUL / Producción | MT-002 (Eléctrico) | Cada 500 horas | USR-014 (Juan Delgado) |
+| EQ-004 | Calcinador de Lecho Fluidizado | Hornos Industriales | WH-JUL / Producción | MT-002 (Eléctrico) | Cada 500 horas | USR-014 (Juan Delgado) |
+| EQ-005 | Molino de Bolas | Maquinaria Pesada | WH-JUL / Producción | MT-001 (Mecánico) | Cada 300 horas | USR-032 (Oscar Huanca) |
+| EQ-006 | Molino de Martillos | Maquinaria Pesada | WH-JUL / Producción | MT-001 (Mecánico) | Cada 300 horas | USR-032 (Oscar Huanca) |
+| EQ-007 | Mezcladora de Cintilla | Equipos de Proceso | WH-JUL / Producción | MT-001 (Mecánico) | Cada 200 horas | USR-032 (Oscar Huanca) |
+| EQ-008 | Mezcladora de Paletas | Equipos de Proceso | WH-JUL / Producción | MT-001 (Mecánico) | Cada 200 horas | USR-032 (Oscar Huanca) |
+| EQ-009 | Envasadora Automática 25kg | Equipos de Envasado | WH-JUL / Empaquetado | MT-002 (Eléctrico) | Cada 150 horas | USR-014 (Juan Delgado) |
+| EQ-010 | Envasadora Semi-automática 40kg | Equipos de Envasado | WH-JUL / Empaquetado | MT-002 (Eléctrico) | Cada 150 horas | USR-014 (Juan Delgado) |
+| EQ-011 | Montacargas Eléctrico 3T | Vehículos Internos | WH-JUL / Almacén | MT-002 (Eléctrico) | Mensual | USR-014 (Juan Delgado) |
+| EQ-012 | Camión de Reparto 5T | Flota Vehicular | WH-JUL / Logística | MT-001 (Mecánico) | Cada 5,000 km | USR-032 (Oscar Huanca) |
+
+---
+
+## 5. Equipos de Trabajo de Mantenimiento (2 registros)
+
+*Modelo: `maintenance.team`.*
+
+| Código | Nombre del Equipo | Jefe de Equipo (Usuario) | Miembros (Usuarios) | Alcance |
+| :--- | :--- | :--- | :--- | :--- |
+| MT-001 | Mantenimiento Mecánico | USR-033 (Natalia Espinoza) | USR-032, USR-034, USR-035 | Trituradoras, molinos, mezcladoras, vehículos. |
+| MT-002 | Mantenimiento Eléctrico e Instrumentación | USR-014 (Juan Carlos Delgado) | USR-015, USR-016 | Hornos, envasadoras, montacargas, tableros de control. |
+
+---
+
+## 6. Flujos de Operación
+
+### 6.1 Flujo de Control de Calidad en Producción
+1. El operario inicia la Orden de Trabajo (`mrp.workorder`) en Odoo.
+2. Al hacer clic en "Finalizar", el sistema evalúa si existe un `jjsumi.quality.point` para esa operación.
+3. Si existe, se abre un formulario emergente o una vista anidada de `jjsumi.quality.check`.
+4. El inspector de calidad (o el mismo operario, según configuración) ingresa la medida o marca "Pasa/Falla".
+5. **Si es "Pasa":** La orden de trabajo se marca como `done` y permite avanzar a la siguiente operación.
+6. **Si es "Falla":** La orden de trabajo se bloquea. Se crea automáticamente una `maintenance.request` de tipo correctivo o una orden de reproceso, y el lote se marca para cuarentena.
+
+### 6.2 Flujo de Mantenimiento Preventivo
+1. El sistema Odoo genera automáticamente una `maintenance.request` basada en la `maintenance_frequency` del equipo (ej. cada 250 horas o mensual).
+2. La solicitud aparece en el Kanban del `maintenance.team` asignado en estado "Solicitado".
+3. El jefe de equipo la asigna a un técnico (`user_id`) y cambia el estado a "En Progreso".
+4. El técnico ejecuta el trabajo, consume repuestos (vinculando líneas de `stock.move` si se habilita la extensión) y registra el tiempo (`duration`).
+5. Al finalizar, realiza el Punto de Control QP-015 (Prueba de funcionamiento).
+6. Si pasa, cierra la solicitud (`stage_id` = "Hecho"). El contador de horas del equipo se reinicia o actualiza.
+
+---
+
+## 7. Reglas de Negocio y Validaciones
+
+1. **Bloqueo por Calidad:** Una `mrp.production` no puede cambiar a estado `done` si tiene `jjsumi.quality.check` asociados con `result = 'fail'`.
+2. **Obligatoriedad de Lote:** Todo `jjsumi.quality.check` vinculado a producción o recepción debe tener un `lot_id` registrado para garantizar la trazabilidad inversa.
+3. **Consumo de Repuestos:** Si una `maintenance.request` es de tipo `corrective`, debe permitir vincular productos de la categoría `CAT-HER` (Herramientas y Accesorios) o `CAT-MAT` (Repuestos) mediante un movimiento de inventario interno desde `WH-JUL/Stock` a una ubicación de consumo de mantenimiento.
+4. **No Eliminación:** Un `maintenance.request` en estado "Hecho" o "Cancelado" no puede ser eliminado, solo archivado, para conservar el historial de costos y fallas del equipo.
+5. **Permisos:** Solo los usuarios con el rol `group_jjsumi_quality_manager` o `group_jjsumi_maintenance_technician` pueden modificar los resultados de un `quality.check` una vez guardado.
+
+---
+
+## 8. Pruebas de Aceptación (Fase 07)
+
+| ID | Prueba | Resultado esperado |
+| :--- | :--- | :--- |
+| T01 | Verificar creación de 15 puntos de control | Los puntos QP-001 a QP-015 existen con tipos de prueba y normas configuradas. |
+| T02 | Verificar registro de 12 equipos | Los equipos EQ-001 a EQ-012 existen, con equipo de mantenimiento y frecuencia asignada. |
+| T03 | Ejecutar control de calidad en recepción | Al validar una recepción de MAT-001, el sistema solicita el registro de QP-001 (Humedad). |
+| T04 | Rechazar control de calidad en producción | Al registrar "Falla" en QP-004 (Temperatura), la orden de trabajo se bloquea y no permite avanzar. |
+| T05 | Generar solicitud de mantenimiento preventivo | El sistema crea automáticamente una solicitud para EQ-001 al cumplir la frecuencia (simulada). |
+| T06 | Asignar y cerrar orden de mantenimiento | El técnico cambia el estado a "En Progreso", registra duración y la cierra como "Hecho". |
+| T07 | Consumir repuesto en mantenimiento | Al cerrar la orden, se registra un movimiento de stock que reduce la cantidad de un repuesto en WH-JUL. |
+| T08 | Verificar trazabilidad de lote fallido | Desde un `quality.check` fallido, se puede rastrear el `lot_id` y la `production_id` afectada. |
+| T09 | Intentar eliminar orden de mantenimiento cerrada | El sistema bloquea la eliminación y solo permite archivar. |
+| T10 | Validar permisos de calidad | Un usuario con rol "Vendedor" no puede modificar ni aprobar un `quality.check`. |
+| T11 | Prueba de funcionamiento post-mantenimiento | Al cerrar una orden correctiva, el sistema exige completar el punto QP-015. |
+| T12 | Reporte de disponibilidad de equipos | El informe nativo de mantenimiento muestra el tiempo medio entre fallas (MTBF) de EQ-003. |
+
+---
+
+## 9. Orden exacto de implementación
+
+1. **Auditoría previa:** Verificar que el módulo `maintenance` esté instalado. Confirmar que `quality` no está disponible (Community) para proceder con el desarrollo de `jjsumi_quality_ext`.
+2. **Desarrollo/Instalación de `jjsumi_quality_ext`:** Crear modelos `jjsumi.quality.point` y `jjsumi.quality.check`, y añadir los botones/vistas en `mrp.workorder` y `stock.picking`.
+3. **Configuración de Categorías de Equipos:** Crear categorías en `maintenance.equipment.category` (Maquinaria Pesada, Hornos, Equipos de Proceso, Vehículos).
+4. **Creación de Equipos de Mantenimiento:** Registrar MT-001 y MT-002 con sus jefes y miembros.
+5. **Carga de Equipos y Máquinas:** Importar los 12 equipos (EQ-001 a EQ-012) con sus frecuencias y ubicaciones.
+6. **Configuración de Puntos de Control:** Importar los 15 puntos de control (QP-001 a QP-015) vinculados a productos, tipos de operación o ubicaciones.
+7. **Pruebas de Flujo Integrado:** Ejecutar una recepción con control de calidad, una orden de fabricación con control de calidad en operación, y una orden de mantenimiento preventivo con consumo de repuestos.
+8. **Validación y Aprobación:** Firmar el acta de aceptación de la Fase 07.
+
+---
+
+## 10. Estado de aprobación
+
+| Elemento | Estado |
+| :--- | :--- |
+| 15 Puntos de Control de Calidad | Definidos con normas y tipos de prueba |
+| Modelo propio de Calidad (`jjsumi_quality_ext`) | Especificado y alineado a Community |
+| 12 Equipos/Máquinas Industriales | Registrados con frecuencias y responsables |
+| 2 Equipos de Trabajo de Mantenimiento | Definidos con jefes y miembros |
+| Flujos de Calidad y Mantenimiento | Mapeados a modelos nativos y extensiones justificadas |
+| Reglas de negocio y validaciones | Definidas (bloqueo por falla, trazabilidad de lote) |
+| Pruebas de aceptación | Diseñadas (12 casos) |
+| Implementación | No iniciada (Pendiente de aprobación de Fases 01 a 06) |
+
+---
+
+**Documento maestro de Fase 07 — JJSUMI ERP — Odoo 19 Community.**  
+**Estado:** Diseño aprobado para implementación. No autoriza por sí mismo cambios en la base de datos.  
+**Próximo paso:** Una vez aprobadas las fases anteriores, proceder con el desarrollo del módulo `jjsumi_quality_ext` y la carga de los datos maestros de mantenimiento en el entorno de validación.

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="base.main_company" model="res.company" forcecreate="0">
+            <field name="name">JJSumi</field>
+            <field name="street">Av. Canchi Grande L1</field>
+            <field name="city">Juliaca</field>
+            <field name="country_id" ref="base.pe"/>
+            <field name="phone">+51 996 232 341</field>
+            <field name="currency_id" ref="base.PEN"/>
+        </record>
+    </data>
+</odoo>

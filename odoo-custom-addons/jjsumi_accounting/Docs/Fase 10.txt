@@ -1,0 +1,167 @@
+# JJSUMI ERP — FASE 10: RECURSOS HUMANOS Y LOGÍSTICA EMPRESARIAL
+
+**Especificación funcional, de datos, interfaz, seguridad y pruebas**  
+**Plataforma objetivo:** Odoo 19 Community  
+**Base existente:** `jjsumi` — protegida  
+**Estado:** Diseño aprobado para implementación  
+**Versión del documento:** 1.0 (Datos Maestros Completos y Explícitos)  
+**Fecha:** 18 de noviembre de 2026  
+
+---
+
+## 0. Reglas obligatorias de la Fase 10
+
+1. Utilizar exclusivamente los modelos nativos de Odoo: `hr.employee`, `hr.contract`, `hr.leave`, `hr.leave.type`, `hr.attendance`, `fleet.vehicle`, `fleet.vehicle.model`, `fleet.vehicle.log.services`, `fleet.vehicle.log.contract`, `res.partner` (para conductores).
+2. **La nómina peruana completa (boletas de pago, CTS, gratificaciones, AFP/ONP) queda fuera del alcance de esta fase.** Se utilizará `hr.contract` únicamente para el registro del salario base, tipo de contrato y fechas, sin generación de planillas tributarias hasta que se evalúe una localización específica.
+3. No se crearán DNI, direcciones personales o datos bancarios inventados que parezcan reales. Se utilizarán formatos de datos de prueba controlados (ej. DNI `00000001`, direcciones genéricas de sede) o se dejarán vacíos hasta que RR. HH. proporcione el padrón real.
+4. Un empleado no puede tener dos contratos activos (`state = 'open'`) simultáneamente en el mismo período.
+5. Un vehículo no puede ser asignado a un viaje si ya está registrado como "En ruta" o "En mantenimiento".
+6. El odómetro de llegada en un registro de servicio o viaje debe ser siempre mayor o igual al odómetro de salida.
+7. Las solicitudes de ausencias (`hr.leave`) deben ser aprobadas por el responsable del departamento (`hr.department.manager_id`) antes de cambiar a estado `validate`.
+
+---
+
+## 1. Objetivo y Alcance
+
+Administrar el ciclo de vida laboral del personal de JJSUMI (65 empleados) y gestionar la flota de transporte (8 vehículos) utilizada para la distribución de productos entre la planta de Juliaca y las sucursales, garantizando el control de asistencia, ausencias, contratos y los costos operativos del transporte.
+
+### 1.1 Entregables
+- 65 expedientes de empleados vinculados a sus departamentos, cargos y sucursales (definidos en Fase 01).
+- Registro de contratos laborales, asistencia (check-in/out) y tipos de ausencias.
+- 8 vehículos registrados con sus modelos, placas, conductores asignados y odómetros iniciales.
+- Flujo completo de gestión de viajes: Asignación → Salida → Entrega → Llegada → Registro de costos/incidencias.
+- Historial de servicios y mantenimientos de la flota vinculados al módulo de Mantenimiento (Fase 07).
+
+---
+
+## 2. Modelos nativos y campos técnicos (Odoo 19 Community)
+
+| Modelo Nativo | Uso en JJSUMI | Campos técnicos clave |
+| :--- | :--- | :--- |
+| `hr.employee` | Expediente del trabajador | `name`, `department_id`, `job_id`, `work_email`, `work_phone`, `address_id`, `company_id`, `user_id` |
+| `hr.contract` | Contrato laboral | `employee_id`, `date_start`, `date_end`, `wage`, `state` (`draft`, `open`, `close`), `type_id` |
+| `hr.leave.type` | Tipos de ausencia | `name`, `time_type` (`leave`, `other`), `allocation_type` (`no`, `fixed`, `unlimited`), `max_leaves` |
+| `hr.leave` | Solicitud de ausencia | `employee_id`, `holiday_status_id`, `request_date_from`, `request_date_to`, `state` (`draft`, `confirm`, `validate`, `refuse`) |
+| `hr.attendance` | Registro de asistencia | `employee_id`, `check_in`, `check_out`, `worked_hours` |
+| `fleet.vehicle` | Registro de vehículos | `name`, `license_plate`, `model_id`, `driver_id`, `odometer`, `car_value`, `state` (`available`, `assigned`, `maintenance`) |
+| `fleet.vehicle.model` | Marca y modelo | `name`, `brand_id` |
+| `fleet.vehicle.log.services` | Servicios y viajes | `vehicle_id`, `service_type_id`, `date`, `odometer`, `amount`, `notes` |
+
+---
+
+## 3. Catálogo de Vehículos de la Flota (8 registros explícitos)
+
+*Modelo: `fleet.vehicle`. Todos los vehículos pertenecen a la compañía JJSUMI y están asegurados.*
+
+| Código | Placa | Marca / Modelo | Año | Tipo de Vehículo | Conductor Asignado (Empleado) | Odómetro Inicial (km) | Estado |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| VEH-001 | J1A-456 | Hyundai HD78 | 2022 | Camión 5T (Caja cerrada) | EMP-043 (Camila Sofia Delgado) | 45,200 | Disponible |
+| VEH-002 | J1B-789 | Mitsubishi Fuso Canter | 2021 | Camión 3.5T (Plataforma) | EMP-044 (Nicolas Alberto Aguilar) | 62,150 | Disponible |
+| VEH-003 | P1C-123 | Toyota Hilux Double Cab | 2023 | Camioneta 1T | EMP-045 (Fernanda Maria Paredes) | 18,500 | Disponible |
+| VEH-004 | A1D-456 | Nissan NP300 | 2022 | Camioneta 1T | EMP-054 (Julian Alberto Mamani) | 31,200 | En ruta |
+| VEH-005 | C1E-789 | Ford Transit L2H2 | 2023 | Furgón de reparto | EMP-056 (Leonardo Jose Vargas) | 12,800 | Disponible |
+| VEH-006 | T1F-012 | Yamaha FZ 150 | 2024 | Motocicleta (Mensajería) | EMP-062 (Agustin Jose Delgado) | 5,400 | Disponible |
+| VEH-007 | J1G-345 | Toyota Yaris Sedán | 2023 | Automóvil Administrativo | EMP-003 (Roberto Condori Huanca) | 22,100 | Disponible |
+| VEH-008 | A1H-678 | Kia Picanto | 2022 | Automóvil Administrativo | EMP-011 (Rosa Maria Medina Mamani) | 35,600 | En mantenimiento |
+
+---
+
+## 4. Tipos de Ausencias y Contratos (`hr.leave.type` y `hr.contract.type`)
+
+### 4.1 Tipos de Ausencias
+| Código | Nombre | Tipo de tiempo | Asignación | Máximo (días/año) | Requiere Aprobación |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| AUS-001 | Vacaciones Anuales | Ausencia | Fijo | 30 | Sí (Jefe de Dpto.) |
+| AUS-002 | Descanso Médico | Ausencia | Sin asignación | N/A (según certificado) | Sí (RR. HH.) |
+| AUS-003 | Licencia por Paternidad | Ausencia | Fijo | 10 | Sí (RR. HH.) |
+| AUS-004 | Permiso sin goce de haber | Otro | Sin asignación | Variable | Sí (Gerencia General) |
+| AUS-005 | Duelo / Calamidad Doméstica | Ausencia | Fijo | 3 | Sí (Jefe de Dpto.) |
+
+### 4.2 Tipos de Contrato
+| Código | Nombre | Duración | Período de Prueba |
+| :--- | :--- | :--- | :--- |
+| CONT-001 | Plazo Indeterminado | Indefinido | 3 meses |
+| CONT-002 | Plazo Fijo (Temporal) | 1 año | 1 mes |
+| CONT-003 | Prácticas Pre-profesionales | 6 meses | N/A |
+
+---
+
+## 5. Flujos de Operación
+
+### 5.1 Flujo de Gestión de Personal (RR. HH.)
+1. **Ingreso:** Se crea el `hr.employee` (Fase 01) y se le asigna un `hr.contract` en estado `open` con el salario base (`wage`) y fecha de inicio.
+2. **Asistencia:** El empleado registra su entrada (`check_in`) y salida (`check_out`) mediante el módulo de Asistencia (Kiosk mode o manual, según política).
+3. **Ausencia:** El empleado o su jefe crea una `hr.leave`. El estado inicial es `draft` o `confirm`.
+4. **Aprobación:** El responsable del departamento (`manager_id`) valida la solicitud, cambiando el estado a `validate`. El sistema descuenta los días del saldo disponible si aplica.
+
+### 5.2 Flujo de Logística y Distribución
+1. **Solicitud de Viaje:** El almacén o ventas solicita un despacho desde Juliaca hacia una sucursal (ej. Puno).
+2. **Asignación:** El coordinador de distribución (ROL-015) selecciona un vehículo disponible (`state = 'available'`) y un conductor (empleado con licencia válida).
+3. **Salida:** Se crea un registro en `fleet.vehicle.log.services` (Tipo: "Viaje de distribución"). Se registra el `odometer` de salida, la fecha y el destino. El estado del vehículo cambia a `assigned`.
+4. **Llegada:** Al retornar, se actualiza el mismo registro con el `odometer` de llegada, los kilómetros recorridos, el consumo de combustible (costo) y cualquier incidencia (ej. "Demora por clima"). El estado del vehículo vuelve a `available`.
+5. **Costos:** Los costos de combustible, peajes o reparaciones durante el viaje se registran como líneas de servicio o facturas de proveedor vinculadas al vehículo.
+
+---
+
+## 6. Reglas de Negocio y Validaciones
+
+1. **Superposición de Ausencias:** Odoo validará nativamente que un empleado no tenga dos registros de `hr.leave` con fechas superpuestas en estado `validate`.
+2. **Disponibilidad de Vehículo:** No se permitirá asignar un `fleet.vehicle` a un nuevo viaje si su campo `state` es `maintenance` o `assigned`.
+3. **Odómetro Decreciente:** Una restricción de Python (`@api.constrains`) en `fleet.vehicle.log.services` impedirá guardar el registro si el `odometer` de llegada es menor que el `odometer` de salida.
+4. **Confidencialidad de Datos:** Los campos de salario (`wage`) en `hr.contract` y datos bancarios en `hr.employee` solo serán visibles para usuarios con el rol `group_jjsumi_hr_manager` o `group_jjsumi_admin` (Reglas de registro `ir.rule` a nivel de campo o vista).
+5. **Nómina Fuera de Alcance:** El campo `wage` es informativo. No se generarán asientos contables automáticos de planilla ni boletas de pago en esta fase.
+
+---
+
+## 7. Pruebas de Aceptación (Fase 10)
+
+| ID | Prueba | Resultado esperado |
+| :--- | :--- | :--- |
+| T01 | Verificar los 65 empleados | Todos los empleados de la Fase 01 están vinculados a su `department_id` y `job_id`. |
+| T02 | Crear contrato laboral | Se guarda un `hr.contract` para EMP-001 con estado `open` y `wage` definido. |
+| T03 | Registrar asistencia (Check-in/out) | Se crea un registro en `hr.attendance` con `check_in` y `check_out` calculando `worked_hours`. |
+| T04 | Solicitar y aprobar vacaciones | Un empleado solicita 5 días. El estado cambia a `validate` tras la aprobación del jefe. |
+| T05 | Intentar solicitar ausencias superpuestas | El sistema muestra un error de validación y bloquea el guardado. |
+| T06 | Verificar los 8 vehículos | VEH-001 a VEH-008 existen con placa, modelo, conductor y odómetro inicial. |
+| T07 | Asignar vehículo para viaje | El estado de VEH-003 cambia a `assigned` y se vincula al empleado conductor. |
+| T08 | Registrar salida y llegada de viaje | Se crea un `fleet.vehicle.log.services`. El odómetro final es mayor al inicial. El vehículo vuelve a `available`. |
+| T09 | Intentar guardar odómetro de llegada menor | El sistema lanza una restricción y no permite guardar el registro de servicio. |
+| T10 | Acceder a salario de empleado como Vendedor | Un usuario con rol `group_jjsumi_salesperson` no puede ver el campo `wage` en la vista del empleado. |
+| T11 | Vincular mantenimiento a vehículo | Una orden de mantenimiento (Fase 07) actualiza el estado del vehículo a `maintenance` y bloquea su asignación a viajes. |
+| T12 | Reporte de costos por vehículo | El informe nativo de flota muestra el costo total (servicios + contratos) del VEH-001 en el último mes. |
+
+---
+
+## 8. Orden exacto de implementación
+
+1. **Auditoría previa:** Verificar que los módulos `hr`, `hr_attendance`, `hr_holidays` y `fleet` estén instalados.
+2. **Configuración de Tipos:** Crear los tipos de ausencia (`hr.leave.type`) y tipos de contrato (`hr.contract.type`) según la tabla de la sección 4.
+3. **Vinculación de Empleados:** Asegurar que los 65 empleados de la Fase 01 tengan sus expedientes completos y sean marcados como posibles conductores (si aplica) en sus contactos asociados.
+4. **Carga de Flota:** Importar o crear manualmente los 8 vehículos (`fleet.vehicle`) con sus modelos, placas, conductores asignados y odómetros iniciales.
+5. **Configuración de Permisos:** Aplicar reglas de registro (`ir.rule`) para restringir la vista de salarios y datos sensibles solo a RR. HH. y Gerencia.
+6. **Pruebas de Flujo Integrado:** 
+   - Ejecutar un ciclo de asistencia y aprobación de vacaciones.
+   - Ejecutar un ciclo logístico completo: Asignar VEH-003 → Registrar salida (km 18,500) → Simular entrega → Registrar llegada (km 18,850) → Verificar que el vehículo quede disponible.
+7. **Validación y Aprobación:** Firmar el acta de aceptación de la Fase 10.
+
+---
+
+## 9. Estado de aprobación
+
+| Elemento | Estado |
+| :--- | :--- |
+| 65 Expedientes de empleados | Vinculados a departamentos y cargos (Fase 01) |
+| Tipos de ausencia y contrato | Definidos y configurados |
+| 8 Vehículos de la flota | Registrados con datos explícitos y conductores |
+| Flujo de asistencia y ausencias | Mapeado a modelos nativos `hr.attendance` y `hr.leave` |
+| Flujo de logística y viajes | Mapeado a `fleet.vehicle.log.services` |
+| Reglas de confidencialidad (salarios) | Definidas mediante `ir.rule` |
+| Nómina peruana | **Explícitamente fuera de alcance** en esta fase |
+| Pruebas de aceptación | Diseñadas (12 casos) |
+| Implementación | No iniciada (Pendiente de aprobación de Fases 01 a 09) |
+
+---
+
+**Documento maestro de Fase 10 — JJSUMI ERP — Odoo 19 Community.**  
+**Estado:** Diseño aprobado para implementación. No autoriza por sí mismo cambios en la base de datos.  
+**Próximo paso:** Una vez aprobadas las fases anteriores, proceder con la configuración de los tipos de ausencia, la carga de la flota vehicular y las pruebas de flujo de logística en el entorno de validación, respetando estrictamente los modelos nativos de Odoo 19.

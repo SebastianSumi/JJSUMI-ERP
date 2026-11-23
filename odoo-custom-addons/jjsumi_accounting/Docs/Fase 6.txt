@@ -1,0 +1,208 @@
+# JJSUMI ERP — FASE 06: FABRICACIÓN INDUSTRIAL
+
+**Especificación funcional, de datos, interfaz, seguridad y pruebas**  
+**Plataforma objetivo:** Odoo 19 Community  
+**Base existente:** `jjsumi` — protegida  
+**Estado:** Diseño aprobado para implementación  
+**Versión del documento:** 1.0 (Datos Maestros Completos y Explícitos)  
+**Fecha:** 18 de noviembre de 2026  
+
+---
+
+## 0. Reglas obligatorias de la Fase 06
+
+1. Utilizar exclusivamente los modelos nativos de Odoo: `mrp.bom`, `mrp.bom.line`, `mrp.workcenter`, `mrp.production`, `mrp.workorder`, `mrp.routing.workcenter` (operaciones), `stock.lot`, `stock.quant`.
+2. No crear modelos paralelos para fabricación. Las extensiones se harán mediante campos personalizados (`x_jjsumi_*`) solo si son estrictamente necesarios (ej. `x_jjsumi_merma_pct`).
+3. Las fórmulas industriales (Listas de Materiales) iniciales son datos de configuración de referencia para validación del flujo. No se tratarán como recetas técnicas definitivas sin la validación formal del Jefe de Planta de JJSUMI.
+4. Todo producto fabricado (categorías CAT-YES y CAT-MAS) debe tener una Lista de Materiales (BOM) activa y válida.
+5. El seguimiento por lotes (`tracking = 'lot'`) es obligatorio en la generación de Órdenes de Fabricación (OF) para garantizar la trazabilidad completa desde la materia prima hasta el producto terminado.
+6. No se eliminarán Órdenes de Fabricación en estado `done` o `cancel`. Las correcciones se realizan mediante ajustes de inventario o nuevas órdenes de reproceso.
+
+---
+
+## 1. Objetivo y Alcance
+
+Controlar la transformación de materias primas en productos terminados en la planta de Juliaca, garantizando la trazabilidad de consumos, la asignación de recursos (centros de trabajo y máquinas), el control de mermas y la integración total con Inventario y Calidad.
+
+### 1.1 Entregables
+- 6 centros de trabajo configurados con capacidades y costos.
+- 12 máquinas industriales registradas y vinculadas a sus centros de trabajo.
+- 20 Listas de Materiales (BOMs) iniciales con sus componentes y operaciones.
+- Flujo completo: Planificación → Orden de Fabricación → Reserva de componentes → Producción (Órdenes de trabajo) → Control de Calidad → Registro de producto terminado.
+- Gestión de mermas, reprocesos y subproductos (si aplica).
+- Cálculo de costos de fabricación según la configuración soportada por Odoo 19 Community.
+
+---
+
+## 2. Modelos nativos y campos técnicos (Odoo 19 Community)
+
+| Modelo Nativo | Uso en JJSUMI | Campos técnicos clave |
+| :--- | :--- | :--- |
+| `mrp.workcenter` | Centros de trabajo y máquinas | `name`, `code`, `time_efficiency`, `default_capacity`, `costs_hour`, `company_id`, `active` |
+| `mrp.bom` | Lista de Materiales (Receta) | `product_tmpl_id`, `product_qty`, `product_uom_id`, `type` (`normal`), `bom_line_ids`, `operation_ids`, `company_id` |
+| `mrp.bom.line` | Componentes de la BOM | `bom_id`, `product_id`, `product_qty`, `product_uom_id`, `operation_id` |
+| `mrp.routing.workcenter` | Operaciones de la BOM | `bom_id`, `workcenter_id`, `name`, `sequence`, `time_cycle` (minutos), `workorder_count` |
+| `mrp.production` | Orden de Fabricación (OF) | `product_id`, `product_qty`, `bom_id`, `date_start`, `date_finished`, `state` (`draft`, `confirmed`, `progress`, `to_close`, `done`, `cancel`), `lot_producing_id` |
+| `mrp.workorder` | Órdenes de Trabajo (por operación) | `production_id`, `workcenter_id`, `name`, `state` (`pending`, `ready`, `progress`, `done`, `cancel`), `duration` |
+
+*Nota: En Odoo 19 Community, la vista Gantt de Órdenes de Trabajo es Enterprise, pero las vistas Lista y Kanban son totalmente funcionales para la gestión de producción.*
+
+---
+
+## 3. Centros de Trabajo (6)
+
+| Código | Nombre del Centro | Descripción | Capacidad por defecto | Costo por hora (PEN) | Eficiencia (%) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| WC-001 | Trituración | Recepción y trituración de piedra de yeso | 10 Toneladas/hora | 150.00 | 85% |
+| WC-002 | Calcinación | Proceso térmico de deshidratación del yeso | 8 Toneladas/hora | 300.00 | 90% |
+| WC-003 | Molienda | Pulverización y clasificación granulométrica | 6 Toneladas/hora | 200.00 | 88% |
+| WC-004 | Mezclado | Incorporación de aditivos y homogeneización | 5 Toneladas/hora | 120.00 | 95% |
+| WC-005 | Envasado | Llenado, sellado y paletizado de sacos | 120 Sacos/hora | 80.00 | 92% |
+| WC-006 | Control de Calidad | Inspección de materias primas y producto terminado | 5 Lotes/hora | 100.00 | 100% |
+
+---
+
+## 4. Máquinas Industriales (12)
+
+Cada máquina se registra como un recurso o se vincula directamente al nombre del centro de trabajo si se gestiona a nivel de centro. Para trazabilidad de mantenimiento (Fase 07), se documentan así:
+
+| Código | Nombre de la Máquina | Centro de Trabajo Asignado | Estado Inicial |
+| :--- | :--- | :--- | :--- |
+| MAQ-001 | Trituradora de Mandíbulas Primaria | WC-001 Trituración | Operativa |
+| MAQ-002 | Trituradora de Impacto Secundaria | WC-001 Trituración | Operativa |
+| MAQ-003 | Horno Rotativo de Calcinación | WC-002 Calcinación | Operativa |
+| MAQ-004 | Calcinador de Lecho Fluidizado | WC-002 Calcinación | Operativa |
+| MAQ-005 | Molino de Bolas | WC-003 Molienda | Operativa |
+| MAQ-006 | Molino de Martillos | WC-003 Molienda | Operativa |
+| MAQ-007 | Mezcladora de Cintilla | WC-004 Mezclado | Operativa |
+| MAQ-008 | Mezcladora de Paletas | WC-004 Mezclado | Operativa |
+| MAQ-009 | Envasadora Automática 25kg | WC-005 Envasado | Operativa |
+| MAQ-010 | Envasadora Semi-automática 40kg | WC-005 Envasado | Operativa |
+| MAQ-011 | Báscula de Camión y Tolvas | WC-006 Control de Calidad | Operativa |
+| MAQ-012 | Equipos de Laboratorio de Pruebas | WC-006 Control de Calidad | Operativa |
+
+---
+
+## 5. Listas de Materiales (BOMs) — 20 Registros Explícitos
+
+*Nota: Las cantidades son de configuración inicial. `type` = `normal` para todos. Todas las BOMs están vinculadas a la compañía JJSUMI y utilizan las unidades de medida definidas en la Fase 02.*
+
+### 5.1 Detalle de las 20 BOMs
+
+| Código BOM | Producto Final | Cantidad a Producir | Componentes (Producto, Cantidad, UoM) | Operaciones (Centro de Trabajo, Tiempo min) |
+| :--- | :--- | :--- | :--- | :--- |
+| BOM-001 | YES-001 (Yeso Fino Extra Andino 25kg) | 1 Saco | MAT-002 (Piedra Triturada): 26 kg<br>MAT-003 (Aditivo A-100): 0.2 kg<br>MAT-007 (Bolsa 25kg): 1 und | WC-001 (10'), WC-002 (30'), WC-003 (20'), WC-004 (10'), WC-005 (5'), WC-006 (10') |
+| BOM-002 | YES-002 (Yeso Industrial 40kg) | 1 Saco | MAT-002 (Piedra Triturada): 41 kg<br>MAT-004 (Aditivo B-200): 0.3 kg<br>MAT-008 (Bolsa 40kg): 1 und | WC-001 (15'), WC-002 (35'), WC-003 (25'), WC-004 (10'), WC-005 (8'), WC-006 (10') |
+| BOM-003 | YES-003 (Yeso Fraguado Rápido 25kg) | 1 Saco | MAT-002 (Piedra Triturada): 25.5 kg<br>MAT-011 (Acelerador): 0.5 kg<br>MAT-007 (Bolsa 25kg): 1 und | WC-001 (10'), WC-002 (25'), WC-003 (20'), WC-004 (10'), WC-005 (5'), WC-006 (10') |
+| BOM-004 | YES-004 (Yeso para Moldes 25kg) | 1 Saco | MAT-002 (Piedra Triturada): 25.2 kg<br>MAT-003 (Aditivo A-100): 0.3 kg<br>MAT-007 (Bolsa 25kg): 1 und | WC-001 (10'), WC-002 (40'), WC-003 (30'), WC-004 (15'), WC-005 (5'), WC-006 (15') |
+| BOM-005 | YES-005 (Yeso Proyectado 30kg) | 1 Saco | MAT-002 (Piedra Triturada): 30.5 kg<br>MAT-003 (Aditivo A-100): 0.4 kg<br>MAT-008 (Bolsa 40kg)*: 1 und | WC-001 (10'), WC-002 (30'), WC-003 (25'), WC-004 (10'), WC-005 (8'), WC-006 (10') |
+| BOM-006 | YES-006 (Yeso Blanco Premium 20kg) | 1 Saco | MAT-001 (Piedra Natural): 20.5 kg<br>MAT-003 (Aditivo A-100): 0.2 kg<br>MAT-007 (Bolsa 25kg)*: 1 und | WC-001 (15'), WC-002 (45'), WC-003 (30'), WC-004 (10'), WC-005 (5'), WC-006 (15') |
+| BOM-007 | YES-007 (Yeso Grueso de Construcción 40kg) | 1 Saco | MAT-002 (Piedra Triturada): 40.5 kg<br>MAT-008 (Bolsa 40kg): 1 und | WC-001 (10'), WC-002 (30'), WC-003 (15'), WC-005 (8'), WC-006 (10') |
+| BOM-008 | YES-008 (Yeso Agrícola 50kg) | 1 Saco | MAT-001 (Piedra Natural): 50.5 kg<br>MAT-008 (Bolsa 40kg)*: 1 und | WC-001 (10'), WC-002 (20'), WC-003 (10'), WC-005 (10'), WC-006 (5') |
+| BOM-009 | YES-009 (Yeso en Polvo a Granel) | 1 Tonelada | MAT-001 (Piedra Natural): 1.05 Ton | WC-001 (60'), WC-002 (120'), WC-003 (90'), WC-006 (30') |
+| BOM-010 | YES-010 (Yeso Estuco Fino 25kg) | 1 Saco | MAT-002 (Piedra Triturada): 25.3 kg<br>MAT-003 (Aditivo A-100): 0.2 kg<br>MAT-007 (Bolsa 25kg): 1 und | WC-001 (10'), WC-002 (35'), WC-003 (35'), WC-004 (10'), WC-005 (5'), WC-006 (10') |
+| BOM-011 | YES-011 (Yeso para Tabiquería 30kg) | 1 Saco | MAT-002 (Piedra Triturada): 30.5 kg<br>MAT-007 (Bolsa 25kg)*: 1 und | WC-001 (10'), WC-002 (30'), WC-003 (20'), WC-005 (8'), WC-006 (10') |
+| BOM-012 | YES-012 (Yeso Ignífugo 25kg) | 1 Saco | MAT-002 (Piedra Triturada): 24 kg<br>MAT-010 (Aditivo Ignífugo): 1.5 kg<br>MAT-007 (Bolsa 25kg): 1 und | WC-001 (10'), WC-002 (30'), WC-003 (20'), WC-004 (15'), WC-005 (5'), WC-006 (15') |
+| BOM-013 | YES-013 (Yeso Acústico 25kg) | 1 Saco | MAT-002 (Piedra Triturada): 23 kg<br>MAT-011 (Fibra Acústica): 2.5 kg<br>MAT-007 (Bolsa 25kg): 1 und | WC-001 (10'), WC-002 (30'), WC-003 (20'), WC-004 (20'), WC-005 (5'), WC-006 (15') |
+| BOM-014 | YES-014 (Yeso de Alta Dureza 20kg) | 1 Saco | MAT-002 (Piedra Triturada): 20.5 kg<br>MAT-004 (Aditivo B-200): 0.3 kg<br>MAT-007 (Bolsa 25kg)*: 1 und | WC-001 (10'), WC-002 (40'), WC-003 (30'), WC-004 (10'), WC-005 (5'), WC-006 (15') |
+| BOM-015 | YES-015 (Yeso para Revestimiento 25kg) | 1 Saco | MAT-002 (Piedra Triturada): 25.2 kg<br>MAT-003 (Aditivo A-100): 0.3 kg<br>MAT-007 (Bolsa 25kg): 1 und | WC-001 (10'), WC-002 (30'), WC-003 (25'), WC-004 (10'), WC-005 (5'), WC-006 (10') |
+| BOM-016 | YES-016 (Yeso Nivelador de Pisos 25kg) | 1 Saco | MAT-002 (Piedra Triturada): 24 kg<br>MAT-012 (Aditivo Autonivelante): 1.5 kg<br>MAT-007 (Bolsa 25kg): 1 und | WC-001 (10'), WC-002 (30'), WC-003 (30'), WC-004 (15'), WC-005 (5'), WC-006 (15') |
+| BOM-017 | YES-017 (Yeso para Restauración 10kg) | 1 Saco | MAT-002 (Piedra Triturada): 10.2 kg<br>MAT-003 (Aditivo A-100): 0.1 kg<br>MAT-007 (Bolsa 25kg)*: 1 und | WC-001 (10'), WC-002 (45'), WC-003 (40'), WC-004 (10'), WC-005 (5'), WC-006 (20') |
+| BOM-018 | YES-018 (Yeso con Fibra 25kg) | 1 Saco | MAT-002 (Piedra Triturada): 24 kg<br>MAT-013 (Fibra de Vidrio): 1.5 kg<br>MAT-007 (Bolsa 25kg): 1 und | WC-001 (10'), WC-002 (30'), WC-003 (20'), WC-004 (20'), WC-005 (5'), WC-006 (15') |
+| BOM-019 | YES-019 (Yeso Impermeabilizado 25kg) | 1 Saco | MAT-002 (Piedra Triturada): 24.5 kg<br>MAT-014 (Aditivo Hidrofugante): 1 kg<br>MAT-007 (Bolsa 25kg): 1 und | WC-001 (10'), WC-002 (30'), WC-003 (20'), WC-004 (15'), WC-005 (5'), WC-006 (15') |
+| BOM-020 | YES-020 (Yeso Calcinación Controlada 40kg)| 1 Saco | MAT-002 (Piedra Triturada): 40.5 kg<br>MAT-008 (Bolsa 40kg): 1 und | WC-001 (15'), WC-002 (50'), WC-003 (30'), WC-005 (8'), WC-006 (15') |
+
+*(Nota: Donde se indica `*`, se utiliza la bolsa de mayor capacidad disponible por simplicidad de inventario de empaque, o se asume la variante de bolsa correcta según la Fase 02).*
+
+---
+
+## 6. Rutas y Operaciones de Fabricación
+
+### 6.1 Configuración de Rutas
+- **Ruta de Fabricación:** Se activará la ruta "Fabricar" (`mrp.route_warehouse0_manufacture`) en las categorías CAT-YES y CAT-MAS.
+- **Reabastecimiento:** Las materias primas (CAT-MAT) se reabastecerán mediante la ruta "Comprar" (`stock.route_warehouse0_buy`).
+
+### 6.2 Flujo de Órdenes de Trabajo (Workorders)
+Para cada Orden de Fabricación confirmada, Odoo generará automáticamente las Órdenes de Trabajo basadas en las `operation_ids` de la BOM:
+1. **Trituración:** El operario registra el inicio, la duración real y la cantidad procesada.
+2. **Calcinación:** Se registra la temperatura (campo personalizado `x_jjsumi_temperatura` si se requiere) y el tiempo de ciclo.
+3. **Molienda:** Se valida la granulometría alcanzada.
+4. **Mezclado:** Se confirman los aditivos agregados.
+5. **Envasado:** Se escanean los lotes de bolsas utilizadas y se genera el lote del producto terminado.
+6. **Control de Calidad:** Se bloquea el producto hasta que la inspección (Fase 07) sea aprobada.
+
+---
+
+## 7. Gestión de Mermas, Reprocesos y Subproductos
+
+### 7.1 Mermas (`x_jjsumi_merma_pct`)
+- Se configurará un campo decimal en `mrp.production` para registrar el porcentaje de merma real vs. planificada.
+- Las mermas se registrarán como consumos adicionales de materia prima o como productos de desecho movidos a la ubicación `WH-JUL/Defectuosos` mediante un movimiento de inventario ajustado al cerrar la OF.
+
+### 7.2 Reprocesos
+- Si un lote falla en Control de Calidad, se creará una nueva Orden de Fabricación de tipo "Reproceso" que tome el lote fallido como componente de entrada y aplique las operaciones de Molienda/Mezclado nuevamente.
+
+### 7.3 Subproductos
+- Si la trituración genera polvo residual aprovechable, se configurará como subproducto en la BOM (`mrp.bom.byproduct`) que ingresa automáticamente al inventario como un producto secundario (ej. "Polvo de Yeso Residual") con un costo asignado proporcional.
+
+---
+
+## 8. Reglas de Negocio y Validaciones
+
+1. **Bloqueo por Stock:** No se podrá confirmar una Orden de Fabricación si los componentes no están disponibles en la ubicación `WH-JUL/Stock/Materia_Prima` (a menos que se permita reserva parcial).
+2. **Trazabilidad de Lotes:** Al registrar la producción, el campo `lot_producing_id` es obligatorio para todos los productos con `tracking = 'lot'`.
+3. **Secuencia de Operaciones:** No se podrá marcar como "Hecha" una Orden de Trabajo si la anterior en la secuencia no está completada.
+4. **Costos:** El costo del producto terminado se calculará sumando el costo de los componentes consumidos + (tiempo real en centros de trabajo * costo por hora del centro).
+
+---
+
+## 9. Pruebas de Aceptación (Fase 06)
+
+| ID | Prueba | Resultado esperado |
+| :--- | :--- | :--- |
+| T01 | Verificar creación de 6 centros de trabajo | WC-001 a WC-006 existen con costos y capacidades configuradas. |
+| T02 | Verificar 12 máquinas industriales | Registradas y vinculadas a sus respectivos centros de trabajo. |
+| T03 | Crear BOM para YES-001 | La BOM se guarda con 3 componentes y 6 operaciones vinculadas. |
+| T04 | Generar Orden de Fabricación (OF) para YES-001 | La OF se crea en estado `draft` con la lista de componentes y trabajo calculada. |
+| T05 | Confirmar OF | El estado cambia a `confirmed` y se reservan los componentes en inventario. |
+| T06 | Validar restricción de stock | Si no hay stock de MAT-002, la OF muestra alerta de "Falta de material" y no permite avanzar a `progress`. |
+| T07 | Registrar Órdenes de Trabajo (Workorders) | El operario inicia, pausa y finaliza cada operación, registrando duración real. |
+| T08 | Registrar lote de producto terminado | Al finalizar la OF, el sistema exige ingresar un `lot_producing_id` (ej. LOT-20261118-001). |
+| T09 | Cerrar Orden de Fabricación | El estado cambia a `done`. El stock de componentes disminuye y el stock de YES-001 aumenta en `WH-JUL/Stock/Producto_Terminado`. |
+| T10 | Registrar merma en OF | Se ajusta el consumo real de materia prima, reflejando un costo ligeramente mayor al estándar. |
+| T11 | Verificar trazabilidad inversa | Desde el lote de YES-001, se puede rastrear hasta los lotes de MAT-002 y MAT-007 utilizados. |
+| T12 | Intentar eliminar OF en estado `done` | El sistema bloquea la eliminación; solo permite archivar o mantener el historial. |
+
+---
+
+## 10. Orden exacto de implementación
+
+1. **Auditoría previa:** Verificar que el módulo `mrp` (Fabricación) esté instalado y activo.
+2. **Configuración de Fabricación:** Ajustes → Fabricación → Activar "Órdenes de trabajo", "Trazabilidad de lotes", "Subproductos" (si aplica).
+3. **Creación de Centros de Trabajo:** Importar o crear manualmente los 6 centros de trabajo (`mrp.workcenter`) con sus costos y capacidades.
+4. **Registro de Máquinas:** Documentar las 12 máquinas en los centros de trabajo (o como recursos si se usa el módulo de mantenimiento).
+5. **Creación de Listas de Materiales (BOMs):** Importar las 20 BOMs (`mrp.bom` y `mrp.bom.line`) con sus operaciones (`mrp.routing.workcenter`).
+6. **Configuración de Rutas:** Asegurar que las categorías CAT-YES y CAT-MAS tengan la ruta "Fabricar" activada.
+7. **Pruebas de Flujo:** Ejecutar una Orden de Fabricación completa (BOM-001) desde `draft` hasta `done`, validando reservas, workorders y generación de lote.
+8. **Validación de Costos:** Verificar que el costo del producto terminado refleje los componentes y el tiempo de centro de trabajo.
+9. **Validación y Aprobación:** Firmar el acta de aceptación de la Fase 06.
+
+---
+
+## 11. Estado de aprobación
+
+| Elemento | Estado |
+| :--- | :--- |
+| 6 Centros de Trabajo | Definidos con capacidades y costos |
+| 12 Máquinas Industriales | Registradas y asignadas |
+| 20 Listas de Materiales (BOMs) | Definidas con componentes y operaciones |
+| Rutas y Operaciones | Mapeadas a modelos nativos de Odoo 19 |
+| Gestión de mermas y reprocesos | Definida |
+| Pruebas de aceptación | Diseñadas (12 casos) |
+| Implementación | No iniciada (Pendiente de aprobación de Fases 01 a 05) |
+
+---
+
+**Documento maestro de Fase 06 — JJSUMI ERP — Odoo 19 Community.**  
+**Estado:** Diseño aprobado para implementación. No autoriza por sí mismo cambios en la base de datos.  
+**Próximo paso:** Una vez aprobadas las fases anteriores, proceder con la configuración de centros de trabajo y la carga de las 20 BOMs en el entorno de validación, siguiendo estrictamente los modelos nativos de `mrp` detallados.

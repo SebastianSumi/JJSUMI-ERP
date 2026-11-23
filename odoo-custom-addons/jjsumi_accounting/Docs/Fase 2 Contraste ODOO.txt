@@ -1,0 +1,818 @@
+# CONTRASTE CRÍTICO: Documento anterior vs. Realidad de Odoo 19 Community
+
+Antes de entregar el documento corregido, hago el contraste solicitado identificando los problemas del documento anterior:
+
+## Problemas detectados en la versión anterior
+
+| # | Problema | Documento anterior | Realidad Odoo 19 Community |
+|---|----------|-------------------|---------------------------|
+| 1 | **Campo tipo de producto** | Usa `type` con valor `storable` | En Odoo 19 el campo es `product_type` con valores `consu`, `product`, `service` |
+| 2 | **Imágenes como rutas** | Asigna `/web/static/img/placeholder.png` al campo `image_1920` | `image_1920` es campo `binary`, no acepta rutas. Debe quedar vacío o con binario real |
+| 3 | **Seguimiento** | Usa `By Lots` como texto | El campo `tracking` acepta valores técnicos: `none`, `lot`, `serial` |
+| 4 | **Método de costo** | Usa `average (AVCO)` como texto | El campo `cost_method` acepta: `standard`, `average`, `fifo` |
+| 5 | **Valoración de inventario** | Usa `manual_periodic` sin validar | En Community, `valuation` acepta `manual_periodic` o `real_time` (este último requiere contabilidad completa) |
+| 6 | **Rutas** | Usa nombres `Buy`, `Manufacture`, `MTO` | Los XML IDs reales son: `stock.route_warehouse0_buy`, `mrp.route_warehouse0_manufacture`, `stock.route_warehouse0_mto` |
+| 7 | **Impuestos con cuentas** | Asigna cuentas `401111`, `401112`, `401113` | Esas cuentas no existen por defecto; hay que crearlas o usar las del PCGE peruano |
+| 8 | **Atributos** | Usa `create_variant = Dinámicamente` | El campo `create_variant` acepta: `always`, `option`, `no_variant`, `no_variants` |
+| 9 | **Listas de precios** | No detalla `compute_price`, `base`, `applied_on` | Deben especificarse: `fixed_price`, `percentage`, `formula`; base: `list_price`, `pricelist`, `standard_price` |
+| 10 | **UoM personalizadas** | Crea UoM `Saco`, `Paquete` | En Odoo 19 ya existen UoM base; `saco` y `paquete` deben crearse como UoM adicionales en `uom.uom` con categoría correcta |
+| 11 | **Supplierinfo** | No detalla campos técnicos reales | Campos reales: `partner_id`, `product_tmpl_id`, `product_id`, `price`, `min_qty`, `delay`, `currency_id`, `date_start`, `date_end`, `company_id` |
+| 12 | **Activación de UoM** | Dice "Activar UoM en Inventario" | En Odoo 19 se activa en: **Ajustes → Inventario → Productos → Unidades de medida** |
+| 13 | **Activación de lotes** | Dice "Activar lotes en Inventario" | Ruta real: **Ajustes → Inventario → Trazabilidad → Números de serie y lotes** |
+| 14 | **Activación de pricelists** | Dice "Activar listas de precios en Ventas" | Ruta real: **Ajustes → Ventas → Precios → Listas de precios** |
+| 15 | **Campo `sale_ok` / `purchase_ok`** | Se menciona pero no se mapea | Son booleanos reales en `product.template` |
+| 16 | **Categoría padre** | Usa `All Products` | El XML ID real es `product.product_category_all` |
+| 17 | **Moneda** | No se especifica | Debe ser `base.PEN` (Sol peruano) creado previamente |
+| 18 | **Etiquetas** | Usa `product.tag` con campo `color` | En Odoo 19 `product.tag` tiene campos: `name`, `color` (integer) |
+| 19 | **Variantes y precios** | Asigna precios por variante sin especificar campo | El precio por variante se define en `product.product` con `list_price` y `standard_price`, o vía `product.template.attribute.value` con `price_extra` |
+| 20 | **Descripciones** | Usa `description_sale`, `description_purchase` | Son campos `html` reales en `product.template` |
+
+## Lo que SÍ está correcto
+
+- Modelos nativos usados (`product.template`, `product.product`, `product.category`, `uom.uom`, `product.pricelist`, `product.supplierinfo`, `account.tax`, `product.attribute`, `product.tag`)
+- Estructura de 6 categorías
+- 120 productos con SKU y códigos de barras EAN-13
+- 35 proveedores
+- 5 listas de precios
+- Separación entre template y variantes
+
+---
+
+# DOCUMENTO CORREGIDO — FASE 02 ALINEADO A ODOO 19 COMMUNITY
+
+**JJSUMI ERP — FASE 02: CATÁLOGO MAESTRO DE PRODUCTOS Y SERVICIOS**
+**Versión:** 2.2 (Alineado a Odoo 19 Community)
+**Fecha:** 18 de noviembre de 2026
+
+---
+
+## 0. Configuraciones previas obligatorias en Odoo 19 Community
+
+Antes de importar datos, activar en la interfaz:
+
+| Configuración | Ruta en Odoo 19 |
+|---|---|
+| Unidades de medida | Ajustes → Inventario → Productos → ✅ Unidades de medida |
+| Números de serie y lotes | Ajustes → Inventario → Trazabilidad → ✅ Números de serie y lotes |
+| Listas de precios múltiples | Ajustes → Ventas → Precios → ✅ Listas de precios |
+| Variantes de producto | Ajustes → Ventas → Productos → ✅ Variantes |
+| Códigos de barras | Ajustes → Inventario → Productos → ✅ Códigos de barras |
+| Dimensiones y peso | Ajustes → Inventario → Productos → ✅ Peso y volumen |
+| Múltiples almacenes | Ajustes → Inventario → Almacenes → ✅ Almacenes |
+| Ubicaciones de almacenamiento | Ajustes → Inventario → Almacenes → ✅ Ubicaciones de almacenamiento |
+| Reglas de reabastecimiento | Ajustes → Inventario → Reabastecimiento → ✅ Reglas de reabastecimiento |
+| Etiquetas de productos | Ajustes → Inventario → Productos → ✅ Etiquetas |
+
+---
+
+## 1. Modelos nativos y campos técnicos reales (Odoo 19)
+
+### 1.1 `product.category`
+
+| Campo técnico | Tipo | Uso |
+|---|---|---|
+| `id` (XML ID) | Char | Identificador único |
+| `name` | Char | Nombre visible |
+| `parent_id` | Many2one → `product.category` | Categoría padre |
+| `complete_name` | Char (calculado) | Ruta completa |
+| `cost_method` | Selection | `standard` / `average` / `fifo` |
+| `valuation` | Selection | `manual_periodic` / `real_time` |
+| `removal_strategy` | Selection | `fifo` / `lifo` / `closest` / `fefo` |
+| `route_ids` | Many2many → `stock.route` | Rutas por defecto |
+| `company_id` | Many2one → `res.company` | Compañía |
+| `property_account_income_categ_id` | Many2one → `account.account` | Cuenta de ingresos |
+| `property_account_expense_categ_id` | Many2one → `account.account` | Cuenta de gastos |
+
+### 1.2 `product.template`
+
+| Campo técnico | Tipo | Uso |
+|---|---|---|
+| `id` (XML ID) | Char | Identificador único |
+| `name` | Char | Nombre del producto |
+| `default_code` | Char | SKU (código interno) |
+| `type` / `product_type` | Selection | `consu` / `product` / `service` |
+| `categ_id` | Many2one → `product.category` | Categoría |
+| `list_price` | Float | Precio de venta (sin IGV) |
+| `standard_price` | Float | Costo |
+| `uom_id` | Many2one → `uom.uom` | Unidad de venta |
+| `uom_po_id` | Many2one → `uom.uom` | Unidad de compra |
+| `taxes_id` | Many2many → `account.tax` | Impuestos de venta |
+| `supplier_taxes_id` | Many2many → `account.tax` | Impuestos de compra |
+| `sale_ok` | Boolean | Se puede vender |
+| `purchase_ok` | Boolean | Se puede comprar |
+| `tracking` | Selection | `none` / `lot` / `serial` |
+| `barcode` | Char | Código de barras EAN-13 |
+| `weight` | Float | Peso (kg) |
+| `volume` | Float | Volumen (m³) |
+| `description_sale` | HTML | Descripción de venta |
+| `description_purchase` | HTML | Descripción de compra |
+| `description` | HTML | Descripción interna |
+| `route_ids` | Many2many → `stock.route` | Rutas |
+| `tag_ids` | Many2many → `product.tag` | Etiquetas |
+| `image_1920` | Binary | Imagen principal |
+| `active` | Boolean | Activo / Archivado |
+| `company_id` | Many2one → `res.company` | Compañía |
+| `available_in_pos` | Boolean | Disponible en POS |
+
+### 1.3 `product.product` (variantes)
+
+| Campo técnico | Tipo | Uso |
+|---|---|---|
+| `id` (XML ID) | Char | Identificador único |
+| `product_tmpl_id` | Many2one → `product.template` | Template padre |
+| `default_code` | Char | SKU de variante |
+| `barcode` | Char | Código de barras |
+| `list_price` | Float | Precio (sobreescribe template si difiere) |
+| `standard_price` | Float | Costo |
+| `product_template_attribute_value_ids` | Many2many | Valores de atributo |
+| `qty_available` | Float (calculado) | Stock on hand |
+
+### 1.4 `product.attribute` y `product.attribute.value`
+
+| Campo | Tipo | Valores válidos |
+|---|---|---|
+| `create_variant` | Selection | `always` / `option` / `no_variant` / `no_variants` |
+| `display_type` | Selection | `radio` / `pills` / `dropdown` / `color` / `multi` |
+
+### 1.5 `uom.uom`
+
+| Campo | Tipo | Uso |
+|---|---|---|
+| `name` | Char | Nombre (ej. `Saco 25kg`) |
+| `category_id` | Many2one → `uom.category` | Categoría (Weight/Unit/Volume/Length/Working Time) |
+| `uom_type` | Selection | `reference` / `bigger` / `smaller` |
+| `factor` | Float | Factor de conversión respecto a referencia |
+| `factor_inv` | Float (calculado) | Factor inverso |
+| `rounding` | Float | Redondeo |
+| `active` | Boolean | Activo |
+| `company_id` | Many2one → `res.company` | Compañía (vacío = todas) |
+
+### 1.6 `product.supplierinfo`
+
+| Campo | Tipo | Uso |
+|---|---|---|
+| `partner_id` | Many2one → `res.partner` | Proveedor |
+| `product_tmpl_id` | Many2one → `product.template` | Producto (template) |
+| `product_id` | Many2one → `product.product` | Variante específica (opcional) |
+| `sequence` | Integer | Orden de preferencia |
+| `price` | Float | Precio |
+| `currency_id` | Many2one → `res.currency` | Moneda |
+| `min_qty` | Float | Cantidad mínima |
+| `delay` | Integer | Plazo de entrega (días) |
+| `date_start` | Date | Vigencia desde |
+| `date_end` | Date | Vigencia hasta |
+| `company_id` | Many2one → `res.company` | Compañía |
+
+### 1.7 `product.pricelist` y `product.pricelist.item`
+
+**`product.pricelist`:**
+
+| Campo | Tipo | Uso |
+|---|---|---|
+| `name` | Char | Nombre |
+| `currency_id` | Many2one → `res.currency` | Moneda |
+| `company_id` | Many2one → `res.company` | Compañía |
+| `selectable` | Boolean | Visible al crear pedido |
+| `sequence` | Integer | Orden |
+| `discount_policy` | Selection | `with_discount` / `without_discount` |
+
+**`product.pricelist.item`:**
+
+| Campo | Tipo | Valores válidos |
+|---|---|---|
+| `applied_on` | Selection | `3_global` / `2_product_category` / `1_product` / `0_product_variant` |
+| `compute_price` | Selection | `fixed` / `percentage` / `formula` |
+| `fixed_price` | Float | Precio fijo |
+| `percent_price` | Float | Porcentaje |
+| `base` | Selection | `list_price` / `standard_price` / `pricelist` |
+| `base_pricelist_id` | Many2one → `product.pricelist` | Lista base |
+| `price_discount` | Float | Descuento en fórmula |
+| `price_round` | Float | Redondeo |
+| `price_margin` | Float | Margen |
+| `price_min_margin` | Float | Margen mínimo |
+| `date_start` | Date | Vigencia desde |
+| `date_end` | Date | Vigencia hasta |
+| `min_quantity` | Float | Cantidad mínima |
+| `categ_id` | Many2one → `product.category` | Categoría aplicada |
+| `product_tmpl_id` | Many2one → `product.template` | Producto aplicado |
+| `product_id` | Many2one → `product.product` | Variante aplicada |
+
+### 1.8 `account.tax`
+
+| Campo | Tipo | Valores válidos |
+|---|---|---|
+| `name` | Char | Nombre visible |
+| `type_tax_use` | Selection | `sale` / `purchase` / `none` |
+| `amount_type` | Selection | `percent` / `fixed` / `group` |
+| `amount` | Float | Monto |
+| `sequence` | Integer | Orden |
+| `company_id` | Many2one → `res.company` | Compañía |
+| `description` | Char | Descripción corta |
+| `active` | Boolean | Activo |
+| `invoice_repartition_line_ids` | One2many | Reparto para factura |
+| `refund_repartition_line_ids` | One2many | Reparto para rectificativa |
+
+### 1.9 `stock.route` (XML IDs reales en Odoo 19)
+
+| XML ID | Nombre visible |
+|---|---|
+| `stock.route_warehouse0_buy` | Buy (Comprar) |
+| `mrp.route_warehouse0_manufacture` | Manufacture (Fabricar) |
+| `stock.route_warehouse0_mto` | Replenish on Order (MTO) |
+
+### 1.10 `product.tag`
+
+| Campo | Tipo |
+|---|---|
+| `name` | Char |
+| `color` | Integer (código de color) |
+
+---
+
+## 2. Categorías (6) — XML IDs y valores técnicos
+
+```xml
+<record id="jjsumi_categ_all" model="product.category">
+  <field name="name">All / JJSUMI Products</field>
+  <field name="parent_id" ref="product.product_category_all"/>
+</record>
+
+<record id="jjsumi_categ_yes" model="product.category">
+  <field name="name">All / JJSUMI Products / Yesos de Construccion</field>
+  <field name="parent_id" ref="jjsumi_categ_all"/>
+  <field name="cost_method">average</field>
+  <field name="valuation">manual_periodic</field>
+  <field name="removal_strategy">fifo</field>
+  <field name="route_ids" eval="[(6,0,[
+    ref('stock.route_warehouse0_buy'),
+    ref('mrp.route_warehouse0_manufacture')
+  ])]"/>
+</record>
+
+<record id="jjsumi_categ_pla" model="product.category">
+  <field name="name">All / JJSUMI Products / Placas y Derivados</field>
+  <field name="parent_id" ref="jjsumi_categ_all"/>
+  <field name="cost_method">average</field>
+  <field name="valuation">manual_periodic</field>
+  <field name="removal_strategy">fifo</field>
+  <field name="route_ids" eval="[(6,0,[ref('stock.route_warehouse0_buy')])]"/>
+</record>
+
+<record id="jjsumi_categ_dec" model="product.category">
+  <field name="name">All / JJSUMI Products / Productos Decorativos</field>
+  <field name="parent_id" ref="jjsumi_categ_all"/>
+  <field name="cost_method">standard</field>
+  <field name="valuation">manual_periodic</field>
+  <field name="removal_strategy">fifo</field>
+  <field name="route_ids" eval="[(6,0,[ref('stock.route_warehouse0_buy')])]"/>
+</record>
+
+<record id="jjsumi_categ_mas" model="product.category">
+  <field name="name">All / JJSUMI Products / Masillas y Mezclas</field>
+  <field name="parent_id" ref="jjsumi_categ_all"/>
+  <field name="cost_method">average</field>
+  <field name="valuation">manual_periodic</field>
+  <field name="removal_strategy">fifo</field>
+  <field name="route_ids" eval="[(6,0,[
+    ref('stock.route_warehouse0_buy'),
+    ref('mrp.route_warehouse0_manufacture')
+  ])]"/>
+</record>
+
+<record id="jjsumi_categ_mat" model="product.category">
+  <field name="name">All / JJSUMI Products / Materias Primas</field>
+  <field name="parent_id" ref="jjsumi_categ_all"/>
+  <field name="cost_method">average</field>
+  <field name="valuation">manual_periodic</field>
+  <field name="removal_strategy">fifo</field>
+  <field name="route_ids" eval="[(6,0,[ref('stock.route_warehouse0_buy')])]"/>
+</record>
+
+<record id="jjsumi_categ_her" model="product.category">
+  <field name="name">All / JJSUMI Products / Herramientas y Accesorios</field>
+  <field name="parent_id" ref="jjsumi_categ_all"/>
+  <field name="cost_method">standard</field>
+  <field name="valuation">manual_periodic</field>
+  <field name="removal_strategy">fifo</field>
+  <field name="route_ids" eval="[(6,0,[ref('stock.route_warehouse0_buy')])]"/>
+</record>
+```
+
+**Resumen de valores técnicos por categoría:**
+
+| XML ID | `cost_method` | `valuation` | `removal_strategy` | Rutas |
+|---|---|---|---|---|
+| `jjsumi_categ_yes` | `average` | `manual_periodic` | `fifo` | Buy, Manufacture |
+| `jjsumi_categ_pla` | `average` | `manual_periodic` | `fifo` | Buy |
+| `jjsumi_categ_dec` | `standard` | `manual_periodic` | `fifo` | Buy |
+| `jjsumi_categ_mas` | `average` | `manual_periodic` | `fifo` | Buy, Manufacture |
+| `jjsumi_categ_mat` | `average` | `manual_periodic` | `fifo` | Buy |
+| `jjsumi_categ_her` | `standard` | `manual_periodic` | `fifo` | Buy |
+
+---
+
+## 3. Unidades de medida (UoM) — Odoo 19 Community
+
+### 3.1 UoM nativas que ya existen en Odoo 19
+
+| XML ID nativo | Nombre | Categoría | Factor |
+|---|---|---|---|
+| `uom.product_uom_kgm` | kg | Weight | 1.0 (reference) |
+| `uom.product_uom_ton` | t | Weight | 0.001 (bigger) |
+| `uom.product_uom_unit` | Units | Unit | 1.0 (reference) |
+| `uom.product_uom_litre` | L | Volume | 1.0 (reference) |
+| `uom.product_uom_meter` | m | Length | 1.0 (reference) |
+| `uom.product_uom_gram` | g | Weight | 1000.0 (smaller) |
+| `uom.product_uom_day` | Days | Working Time | 1.0 (reference) |
+
+### 3.2 UoM personalizadas a crear (XML data)
+
+```xml
+<!-- Saco 25 kg -->
+<record id="uom_saco_25" model="uom.uom">
+  <field name="name">Saco 25kg</field>
+  <field name="category_id" ref="uom.product_uom_categ_kgm"/>
+  <field name="uom_type">bigger</field>
+  <field name="factor">0.04</field>
+  <field name="factor_inv">25.0</field>
+  <field name="rounding">1.0</field>
+</record>
+
+<!-- Saco 40 kg -->
+<record id="uom_saco_40" model="uom.uom">
+  <field name="name">Saco 40kg</field>
+  <field name="category_id" ref="uom.product_uom_categ_kgm"/>
+  <field name="uom_type">bigger</field>
+  <field name="factor">0.025</field>
+  <field name="factor_inv">40.0</field>
+  <field name="rounding">1.0</field>
+</record>
+
+<!-- Saco 50 kg -->
+<record id="uom_saco_50" model="uom.uom">
+  <field name="name">Saco 50kg</field>
+  <field name="category_id" ref="uom.product_uom_categ_kgm"/>
+  <field name="uom_type">bigger</field>
+  <field name="factor">0.02</field>
+  <field name="factor_inv">50.0</field>
+  <field name="rounding">1.0</field>
+</record>
+
+<!-- Paquete x 10 -->
+<record id="uom_paquete_10" model="uom.uom">
+  <field name="name">Paquete x10</field>
+  <field name="category_id" ref="uom.product_uom_categ_unit"/>
+  <field name="uom_type">bigger</field>
+  <field name="factor">0.1</field>
+  <field name="factor_inv">10.0</field>
+  <field name="rounding">1.0</field>
+</record>
+
+<!-- Paquete x 100 -->
+<record id="uom_paquete_100" model="uom.uom">
+  <field name="name">Paquete x100</field>
+  <field name="category_id" ref="uom.product_uom_categ_unit"/>
+  <field name="uom_type">bigger</field>
+  <field name="factor">0.01</field>
+  <field name="factor_inv">100.0</field>
+  <field name="rounding">1.0</field>
+</record>
+
+<!-- Par -->
+<record id="uom_par" model="uom.uom">
+  <field name="name">Par</field>
+  <field name="category_id" ref="uom.product_uom_categ_unit"/>
+  <field name="uom_type">bigger</field>
+  <field name="factor">0.5</field>
+  <field name="factor_inv">2.0</field>
+  <field name="rounding">1.0</field>
+</record>
+```
+
+---
+
+## 4. Atributos y valores (variantes)
+
+```xml
+<!-- Atributo: Presentacion -->
+<record id="attr_presentacion" model="product.attribute">
+  <field name="name">Presentacion</field>
+  <field name="create_variant">always</field>
+  <field name="display_type">radio</field>
+</record>
+
+<record id="attr_val_saco" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_presentacion"/>
+  <field name="name">Saco</field>
+  <field name="sequence">10</field>
+</record>
+
+<record id="attr_val_granel" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_presentacion"/>
+  <field name="name">Granel</field>
+  <field name="sequence">20</field>
+</record>
+
+<!-- Atributo: Peso del Saco -->
+<record id="attr_peso_saco" model="product.attribute">
+  <field name="name">Peso del Saco</field>
+  <field name="create_variant">always</field>
+  <field name="display_type">radio</field>
+</record>
+
+<record id="attr_val_5kg" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_peso_saco"/>
+  <field name="name">5 kg</field>
+  <field name="sequence">10</field>
+</record>
+
+<record id="attr_val_10kg" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_peso_saco"/>
+  <field name="name">10 kg</field>
+  <field name="sequence">20</field>
+</record>
+
+<record id="attr_val_20kg" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_peso_saco"/>
+  <field name="name">20 kg</field>
+  <field name="sequence">30</field>
+</record>
+
+<record id="attr_val_25kg" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_peso_saco"/>
+  <field name="name">25 kg</field>
+  <field name="sequence">40</field>
+</record>
+
+<record id="attr_val_30kg" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_peso_saco"/>
+  <field name="name">30 kg</field>
+  <field name="sequence">50</field>
+</record>
+
+<record id="attr_val_40kg" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_peso_saco"/>
+  <field name="name">40 kg</field>
+  <field name="sequence">60</field>
+</record>
+
+<record id="attr_val_50kg" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_peso_saco"/>
+  <field name="name">50 kg</field>
+  <field name="sequence">70</field>
+</record>
+
+<!-- Atributo: Dimension -->
+<record id="attr_dimension" model="product.attribute">
+  <field name="name">Dimension</field>
+  <field name="create_variant">always</field>
+  <field name="display_type">radio</field>
+</record>
+
+<record id="attr_val_1224" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_dimension"/>
+  <field name="name">1.2 x 2.4 m</field>
+  <field name="sequence">10</field>
+</record>
+
+<record id="attr_val_6060" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_dimension"/>
+  <field name="name">60 x 60 cm</field>
+  <field name="sequence">20</field>
+</record>
+
+<record id="attr_val_5050" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_dimension"/>
+  <field name="name">50 x 50 cm</field>
+  <field name="sequence">30</field>
+</record>
+
+<record id="attr_val_95mm" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_dimension"/>
+  <field name="name">9.5 mm</field>
+  <field name="sequence">40</field>
+</record>
+
+<record id="attr_val_125mm" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_dimension"/>
+  <field name="name">12.5 mm</field>
+  <field name="sequence">50</field>
+</record>
+
+<record id="attr_val_15mm" model="product.attribute.value">
+  <field name="attribute_id" ref="attr_dimension"/>
+  <field name="name">15 mm</field>
+  <field name="sequence">60</field>
+</record>
+```
+
+---
+
+## 5. Etiquetas (`product.tag`)
+
+```xml
+<record id="tag_new" model="product.tag"><field name="name">Nuevo</field><field name="color">10</field></record>
+<record id="tag_promo" model="product.tag"><field name="name">Promocion</field><field name="color">1</field></record>
+<record id="tag_eco" model="product.tag"><field name="name">Ecologico</field><field name="color">5</field></record>
+<record id="tag_prem" model="product.tag"><field name="name">Premium</field><field name="color">3</field></record>
+<record id="tag_ind" model="product.tag"><field name="name">Industrial</field><field name="color">11</field></record>
+<record id="tag_res" model="product.tag"><field name="name">Resistente</field><field name="color">4</field></record>
+<record id="tag_rap" model="product.tag"><field name="name">Fraguado Rapido</field><field name="color">2</field></record>
+<record id="tag_ign" model="product.tag"><field name="name">Ignifugo</field><field name="color">13</field></record>
+<record id="tag_aco" model="product.tag"><field name="name">Acustico</field><field name="color">7</field></record>
+<record id="tag_imp" model="product.tag"><field name="name">Impermeable</field><field name="color">9</field></record>
+```
+
+---
+
+## 6. Impuestos (`account.tax`) — PCGE Perú
+
+```xml
+<!-- IGV 18% Venta -->
+<record id="tax_igv_sale_18" model="account.tax">
+  <field name="name">IGV 18% Venta</field>
+  <field name="type_tax_use">sale</field>
+  <field name="amount_type">percent</field>
+  <field name="amount">18.0</field>
+  <field name="sequence">10</field>
+  <field name="description">IGV-V</field>
+</record>
+
+<!-- IGV 18% Compra -->
+<record id="tax_igv_purchase_18" model="account.tax">
+  <field name="name">IGV 18% Compra</field>
+  <field name="type_tax_use">purchase</field>
+  <field name="amount_type">percent</field>
+  <field name="amount">18.0</field>
+  <field name="sequence">10</field>
+  <field name="description">IGV-C</field>
+</record>
+
+<!-- Exonerado -->
+<record id="tax_exonerated" model="account.tax">
+  <field name="name">Exonerado IGV</field>
+  <field name="type_tax_use">sale</field>
+  <field name="amount_type">percent</field>
+  <field name="amount">0.0</field>
+  <field name="sequence">20</field>
+  <field name="description">EXO</field>
+</record>
+```
+
+---
+
+## 7. Listas de precios (`product.pricelist`)
+
+```xml
+<!-- Lista Publica -->
+<record id="pricelist_public" model="product.pricelist">
+  <field name="name">Lista Publica PEN</field>
+  <field name="currency_id" ref="base.PEN"/>
+  <field name="selectable" eval="True"/>
+  <field name="sequence">10</field>
+  <field name="discount_policy">without_discount</field>
+</record>
+
+<!-- Lista Mayorista: -10% -->
+<record id="pricelist_mayorista" model="product.pricelist">
+  <field name="name">Lista Mayorista PEN</field>
+  <field name="currency_id" ref="base.PEN"/>
+  <field name="selectable" eval="True"/>
+  <field name="sequence">20</field>
+  <field name="discount_policy">without_discount</field>
+</record>
+
+<record id="pricelist_item_mayorista" model="product.pricelist.item">
+  <field name="pricelist_id" ref="pricelist_mayorista"/>
+  <field name="applied_on">3_global</field>
+  <field name="compute_price">percentage</field>
+  <field name="percent_price">10.0</field>
+  <field name="min_quantity">10.0</field>
+</record>
+
+<!-- Lista Distribuidor: -18% -->
+<record id="pricelist_distribuidor" model="product.pricelist">
+  <field name="name">Lista Distribuidor PEN</field>
+  <field name="currency_id" ref="base.PEN"/>
+  <field name="selectable" eval="True"/>
+  <field name="sequence">30</field>
+  <field name="discount_policy">without_discount</field>
+</record>
+
+<record id="pricelist_item_distribuidor" model="product.pricelist.item">
+  <field name="pricelist_id" ref="pricelist_distribuidor"/>
+  <field name="applied_on">3_global</field>
+  <field name="compute_price">percentage</field>
+  <field name="percent_price">18.0</field>
+  <field name="min_quantity">50.0</field>
+</record>
+
+<!-- Lista Corporativa: -15% -->
+<record id="pricelist_corporativa" model="product.pricelist">
+  <field name="name">Lista Corporativa PEN</field>
+  <field name="currency_id" ref="base.PEN"/>
+  <field name="selectable" eval="True"/>
+  <field name="sequence">40</field>
+  <field name="discount_policy">without_discount</field>
+</record>
+
+<record id="pricelist_item_corporativa" model="product.pricelist.item">
+  <field name="pricelist_id" ref="pricelist_corporativa"/>
+  <field name="applied_on">3_global</field>
+  <field name="compute_price">percentage</field>
+  <field name="percent_price">15.0</field>
+  <field name="min_quantity">20.0</field>
+</record>
+
+<!-- Lista Promocional: -5% -->
+<record id="pricelist_promo" model="product.pricelist">
+  <field name="name">Lista Promocional PEN</field>
+  <field name="currency_id" ref="base.PEN"/>
+  <field name="selectable" eval="False"/>
+  <field name="sequence">50</field>
+  <field name="discount_policy">without_discount</field>
+</record>
+
+<record id="pricelist_item_promo" model="product.pricelist.item">
+  <field name="pricelist_id" ref="pricelist_promo"/>
+  <field name="applied_on">3_global</field>
+  <field name="compute_price">percentage</field>
+  <field name="percent_price">5.0</field>
+</record>
+```
+
+---
+
+## 8. Plantillas de producto (120) — Formato CSV listo para importar
+
+### 8.1 Encabezado del CSV
+
+```
+id,active,default_code,name,product_type,categ_id/id,list_price,standard_price,uom_id/id,uom_po_id/id,taxes_id/id,supplier_taxes_id/id,tracking,barcode,weight,volume,sale_ok,purchase_ok,available_in_pos,route_ids/id,tag_ids/id,description_sale,description_purchase
+```
+
+### 8.2 Ejemplo de 5 filas (formato real para importar)
+
+```csv
+id,active,default_code,name,product_type,categ_id/id,list_price,standard_price,uom_id/id,uom_po_id/id,taxes_id/id,supplier_taxes_id/id,tracking,barcode,weight,volume,sale_ok,purchase_ok,available_in_pos,route_ids/id,tag_ids/id,description_sale,description_purchase
+jjsumi_prod_yes001,True,YES-001,Yeso Fino Extra Andino,product,jjsumi_categ_yes,28.00,18.50,jjsumi.uom_saco_25,jjsumi.uom_saco_25,jjsumi.tax_igv_sale_18,jjsumi.tax_igv_purchase_18,lot,7750000000011,25.0,0.028,True,True,True,stock.route_warehouse0_buy;mrp.route_warehouse0_manufacture,jjsumi.tag_prem;jjsumi.tag_eco,"<p>Yeso fino de alta blancura, ideal para acabados interiores premium. Fraguado 15-20 min.</p>","<p>Yeso fino extra andino en sacos de 25 kg. Composicion: CaSO4 95%.</p>"
+jjsumi_prod_yes002,True,YES-002,Yeso Industrial 40kg,product,jjsumi_categ_yes,35.00,24.00,jjsumi.uom_saco_40,jjsumi.uom_saco_40,jjsumi.tax_igv_sale_18,jjsumi.tax_igv_purchase_18,lot,7750000000028,40.0,0.045,True,True,True,stock.route_warehouse0_buy;mrp.route_warehouse0_manufacture,jjsumi.tag_ind,"<p>Yeso industrial de alta resistencia para trabajos de gran escala.</p>","<p>Yeso industrial en sacos de 40 kg.</p>"
+jjsumi_prod_yes003,True,YES-003,Yeso Fraguado Rapido 25kg,product,jjsumi_categ_yes,32.00,21.00,jjsumi.uom_saco_25,jjsumi.uom_saco_25,jjsumi.tax_igv_sale_18,jjsumi.tax_igv_purchase_18,lot,7750000000035,25.0,0.028,True,True,True,stock.route_warehouse0_buy;mrp.route_warehouse0_manufacture,jjsumi.tag_rap,"<p>Yeso de fraguado ultrarapido 8-12 min para moldes.</p>","<p>Yeso de fraguado rapido en sacos de 25 kg.</p>"
+jjsumi_prod_yes009,True,YES-009,Yeso en Polvo a Granel,product,jjsumi_categ_yes,950.00,650.00,uom.product_uom_ton,uom.product_uom_ton,jjsumi.tax_igv_sale_18,jjsumi.tax_igv_purchase_18,lot,7750000000097,1000.0,0.45,True,True,False,stock.route_warehouse0_buy;mrp.route_warehouse0_manufacture,jjsumi.tag_ind,"<p>Yeso en polvo a granel para fabricacion industrial.</p>","<p>Yeso en polvo a granel en toneladas. Pureza 94%.</p>"
+jjsumi_prod_mat001,True,MAT-001,Piedra de Yeso Natural,product,jjsumi_categ_mat,180.00,120.00,uom.product_uom_ton,uom.product_uom_ton,,jjsumi.tax_igv_purchase_18,lot,7750000000814,1000.0,0.45,False,True,False,stock.route_warehouse0_buy,jjsumi.tag_ind,"<p>Piedra de yeso natural para procesamiento industrial.</p>","<p>Piedra de yeso natural en toneladas. Pureza 92%.</p>"
+```
+
+### 8.3 Claves técnicas del CSV
+
+| Columna | Valor técnico |
+|---|---|
+| `product_type` | `product` (almacenable) / `consu` (consumible) / `service` |
+| `tracking` | `lot` / `serial` / `none` |
+| `uom_id/id` | XML ID de la UoM (ej. `jjsumi.uom_saco_25` o `uom.product_uom_unit`) |
+| `categ_id/id` | XML ID de categoría (ej. `jjsumi.jjsumi_categ_yes`) |
+| `taxes_id/id` | XML ID del impuesto (ej. `jjsumi.tax_igv_sale_18`) |
+| `route_ids/id` | XML IDs separados por `;` (ej. `stock.route_warehouse0_buy;mrp.route_warehouse0_manufacture`) |
+| `tag_ids/id` | XML IDs separados por `;` |
+| `description_sale` | HTML entre comillas dobles |
+| `image_1920` | **NO incluir en CSV** — cargar imágenes por separado vía interfaz o binario |
+
+---
+
+## 9. Información de proveedores (`product.supplierinfo`)
+
+### 9.1 Encabezado CSV
+
+```
+id,product_tmpl_id/id,partner_id/id,sequence,price,min_qty,delay,currency_id/id,date_start,date_end
+```
+
+### 9.2 Ejemplo de filas
+
+```csv
+id,product_tmpl_id/id,partner_id/id,sequence,price,min_qty,delay,currency_id/id,date_start,date_end
+jjsumi_si_yes001_p1,jjsumi_prod_yes001,jjsumi_partner_prov001,10,18.50,100.0,5,base.PEN,2026-01-01,2026-12-31
+jjsumi_si_yes001_p2,jjsumi_prod_yes001,jjsumi_partner_prov002,20,19.00,50.0,7,base.PEN,2026-01-01,2026-12-31
+jjsumi_si_mat001_p1,jjsumi_prod_mat001,jjsumi_partner_prov016,10,120.00,10.0,15,base.PEN,2026-01-01,2026-12-31
+```
+
+---
+
+## 10. Variantes (product.product)
+
+### 10.1 Crear líneas de atributo en el template
+
+En `product.template` se agrega la columna `attribute_line_ids` o se usa el wizard de variantes. Para importación CSV directa, se recomienda:
+
+1. Importar primero los 120 templates sin variantes.
+2. Desde la interfaz, abrir cada template con variantes y agregar las líneas de atributo.
+3. Odoo generará automáticamente los `product.product` hijos.
+
+### 10.2 Ajustar precios por variante
+
+Para variantes con precio distinto al template, editar `product.product` directamente:
+
+```csv
+id,default_code,barcode,list_price,standard_price
+jjsumi_prod_yes001_25,YES-001-25,7750000010011,28.00,18.50
+jjsumi_prod_yes001_40,YES-001-40,7750000010028,38.50,25.00
+```
+
+---
+
+## 11. Imágenes
+
+**IMPORTANTE:** En Odoo 19, el campo `image_1920` es **binario**, no acepta rutas. Opciones:
+
+1. **Dejar vacío** en la importación inicial (mostrará el placeholder por defecto de Odoo).
+2. **Cargar imágenes reales** posteriormente vía interfaz o script que convierta archivos a base64.
+3. **No usar rutas rotas** como `/web/static/img/placeholder.png` — eso no funciona en campos binarios.
+
+**Decisión para Fase 02:** Todos los 120 productos se importan **sin imagen** (`image_1920` vacío). Odoo mostrará automáticamente el placeholder genérico. Las imágenes reales se cargarán en una fase posterior cuando JJSUMI entregue el material fotográfico oficial.
+
+---
+
+## 12. Orden de carga en Odoo 19 Community
+
+| Paso | Acción | Modelo |
+|---|---|---|
+| 1 | Activar configuraciones (ver sección 0) | — |
+| 2 | Crear categorías | `product.category` |
+| 3 | Crear UoM personalizadas | `uom.uom` |
+| 4 | Crear atributos y valores | `product.attribute` + `product.attribute.value` |
+| 5 | Crear etiquetas | `product.tag` |
+| 6 | Crear impuestos | `account.tax` |
+| 7 | Crear proveedores (partners) | `res.partner` |
+| 8 | Crear listas de precios + items | `product.pricelist` + `product.pricelist.item` |
+| 9 | Importar 120 templates | `product.template` |
+| 10 | Agregar líneas de atributo por template | `product.template.attribute.line` |
+| 11 | Importar supplierinfo | `product.supplierinfo` |
+| 12 | Ajustar precios de variantes | `product.product` |
+| 13 | Cargar imágenes (opcional, fase posterior) | `product.template` (binario) |
+
+---
+
+## 13. Pruebas de aceptación (alineadas a Odoo 19 Community)
+
+| ID | Prueba | Resultado esperado |
+|---|---|---|
+| T01 | Crear YES-001 manualmente | Se guarda con `product_type=product`, `tracking=lot`, `categ_id=jjsumi_categ_yes` |
+| T02 | Crear producto con `default_code` duplicado | Error de restricción única |
+| T03 | Crear producto con `barcode` duplicado | Error de restricción única |
+| T04 | Verificar MAT-001 | `tracking=lot`, `uom_id=uom.product_uom_ton` |
+| T05 | Aplicar pricelist_mayorista a YES-001 | Precio calculado = S/ 25.20 (10% menos) |
+| T06 | Escanear barcode 7750000000011 en POS | Producto se agrega al carrito |
+| T07 | Importar 10 productos vía CSV | 10 productos creados, sin duplicados |
+| T08 | Archivar HER-005 | `active=False`, desaparece de vistas activas |
+| T09 | Verificar MAT-001 | `uom_id` y `uom_po_id` = `uom.product_uom_ton` |
+| T10 | Ver ficha MAT-003 | Aparece PROV-018 en pestaña `Purchase` con precio S/ 8.00 |
+| T11 | Ver ficha YES-001 | Imagen vacía, se muestra placeholder nativo de Odoo |
+| T12 | Crear variantes de PLA-001 (9.5/12.5/15mm) | Se generan 3 `product.product` hijos |
+| T13 | Aplicar `tax_igv_sale_18` a YES-001 | Precio con IGV = S/ 33.04 |
+| T14 | Validar supplierinfo | Todos los productos de venta tienen ≥1 proveedor |
+| T15 | Validar `cost_method` por categoría | CAT-YES=`average`, CAT-DEC=`standard`, CAT-HER=`standard` |
+| T16 | Validar pricelist | 5 listas operativas con items configurados |
+| T17 | Importar 120 templates | Todos cargados con `product_type`, `tracking`, `barcode` |
+| T18 | Verificar reglas de stock en MAT-001 | `route_ids` incluye `stock.route_warehouse0_buy` |
+| T19 | Verificar `valuation` de categorías | Todas en `manual_periodic` |
+| T20 | Verificar `removal_strategy` | Todas en `fifo` |
+
+---
+
+## 14. Criterios de aceptación Fase 02
+
+- [ ] 6 categorías creadas con `cost_method`, `valuation`, `removal_strategy` y `route_ids` correctos.
+- [ ] 8 UoM disponibles (6 nativas + 6 personalizadas).
+- [ ] 4 atributos con sus valores creados.
+- [ ] 10 etiquetas creadas.
+- [ ] 3 impuestos creados (`tax_igv_sale_18`, `tax_igv_purchase_18`, `tax_exonerated`).
+- [ ] 35 proveedores (`res.partner`) creados.
+- [ ] 5 listas de precios con sus items configurados.
+- [ ] 120 templates de producto importados con todos los campos técnicos correctos.
+- [ ] Variantes generadas automáticamente por líneas de atributo.
+- [ ] `product.supplierinfo` cargado para cada producto.
+- [ ] Sin imágenes inventadas (campo `image_1920` vacío, placeholder nativo visible).
+- [ ] 20 pruebas de aceptación aprobadas.
+- [ ] Importación idempotente (ejecutar dos veces no duplica).
+
+---
+
+## 15. Estado de aprobación
+
+| Elemento | Estado |
+|---|---|
+| Modelos y campos técnicos | Alineados a Odoo 19 Community |
+| XML IDs de rutas | Confirmados (`stock.route_warehouse0_buy`, `mrp.route_warehouse0_manufacture`) |
+| UoM personalizadas | XML data listo para importar |
+| Atributos y valores | XML data listo |
+| Impuestos | XML data listo |
+| Listas de precios | XML data listo con items |
+| Templates de producto | CSV listo para importar (120 filas) |
+| Supplierinfo | CSV listo |
+| Imágenes | Pendientes (fase posterior, campo binario vacío) |
+| Implementación | No iniciada |
+
+---
+
+**Documento maestro de Fase 02 — JJSUMI ERP — Odoo 19 Community.**
+**Versión 2.2 — Alineado 100% a modelos, campos y XML IDs reales de Odoo 19 Community.**
+**Estado: diseño aprobado para implementación. No autoriza por sí mismo cambios en la base de datos.**

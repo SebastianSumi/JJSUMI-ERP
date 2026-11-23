@@ -1,0 +1,383 @@
+.o_jjsumi_home {
+    min-height: 100%;
+    padding: clamp(20px, 3vw, 40px);
+    background:
+        radial-gradient(circle at 12% 8%, rgba(201, 162, 39, .08), transparent 34%),
+        radial-gradient(circle at 88% 18%, rgba(29, 71, 114, .08), transparent 38%),
+        #f2f5fa;
+    color: #0f172a;
+    overflow: auto;
+
+    .o_jjsumi_hero {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        padding: clamp(24px, 3.5vw, 38px);
+        border-radius: 22px;
+        color: #fff;
+        background: linear-gradient(125deg, #0b1628 0%, #132a4e 55%, #1d4477 100%);
+        border: 1px solid rgba(255, 255, 255, .1);
+        box-shadow: 0 20px 45px rgba(11, 22, 40, .18);
+        overflow: hidden;
+
+        &::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 5%, #c9a227 50%, transparent 95%);
+        }
+    }
+
+    .o_jjsumi_brand {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .o_jjsumi_brand_mark {
+        width: 64px;
+        height: 64px;
+        display: grid;
+        place-items: center;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #d4af37 0%, #b88b14 100%);
+        color: #0b1628;
+        font-size: 32px;
+        font-weight: 900;
+        box-shadow: 0 10px 24px rgba(201, 162, 39, .35);
+    }
+
+    .o_jjsumi_eyebrow {
+        font-size: 10.5px;
+        letter-spacing: .18em;
+        font-weight: 800;
+        color: #e4c158;
+        text-transform: uppercase;
+    }
+
+    .o_jjsumi_brand h1 {
+        margin: 4px 0 2px;
+        color: #fff;
+        font-size: clamp(26px, 3vw, 36px);
+        font-weight: 800;
+        letter-spacing: -.02em;
+    }
+
+    .o_jjsumi_brand p {
+        margin: 0;
+        color: rgba(255, 255, 255, .78);
+        font-size: 14px;
+    }
+
+    .o_jjsumi_hero_note {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 18px;
+        border: 1px solid rgba(228, 193, 88, .35);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, .08);
+        backdrop-filter: blur(6px);
+        font-size: 13px;
+        color: #f8fafc;
+
+        .fa {
+            color: #e4c158;
+            font-size: 15px;
+        }
+    }
+
+    .o_jjsumi_section_head {
+        margin: 30px 0 18px;
+
+        .o_jjsumi_eyebrow {
+            color: #a9861b;
+        }
+
+        h2 {
+            margin: 6px 0 4px;
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -.015em;
+        }
+
+        p {
+            margin: 0;
+            color: #64748b;
+            font-size: 13.5px;
+        }
+    }
+
+    .o_jjsumi_cards {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .o_jjsumi_card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        width: 100%;
+        min-height: 112px;
+        padding: 18px 18px;
+        border: 1px solid #e2e8f0;
+        border-top: 3px solid var(--card-color);
+        border-radius: 16px;
+        background: #ffffff;
+        text-align: left;
+        color: #0f172a;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, .04);
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+
+        &:hover {
+            transform: translateY(-4px);
+            border-color: var(--card-color);
+            box-shadow: 0 16px 32px rgba(15, 23, 42, .1);
+
+            .o_jjsumi_card_arrow {
+                transform: translateX(4px);
+                color: var(--card-color);
+            }
+
+            .o_jjsumi_card_icon {
+                transform: scale(1.06);
+            }
+        }
+
+        &:focus-visible {
+            outline: 3px solid #c9a227;
+            outline-offset: 2px;
+        }
+    }
+
+    .o_jjsumi_card_icon {
+        display: grid;
+        place-items: center;
+        flex: 0 0 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--card-color) 0%, var(--card-color-2) 100%);
+        color: #ffffff;
+        font-size: 21px;
+        box-shadow: 0 8px 18px var(--card-shadow);
+        transition: transform .2s ease;
+    }
+
+    .o_jjsumi_card_text {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        flex-direction: column;
+        gap: 4px;
+
+        strong {
+            font-size: 15.5px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        small {
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+    }
+
+    .o_jjsumi_card_arrow {
+        color: #cbd5e1;
+        font-size: 14px;
+        transition: transform .2s ease, color .2s ease;
+    }
+
+    .o_tone_navy   { --card-color: #1e3a5f; --card-color-2: #2d558a; --card-shadow: rgba(30, 58, 95, .26); }
+    .o_tone_blue   { --card-color: #2563eb; --card-color-2: #3b82f6; --card-shadow: rgba(37, 99, 235, .25); }
+    .o_tone_cyan   { --card-color: #0891b2; --card-color-2: #06b6d4; --card-shadow: rgba(8, 145, 178, .25); }
+    .o_tone_teal   { --card-color: #0d9488; --card-color-2: #14b8a6; --card-shadow: rgba(13, 148, 136, .25); }
+    .o_tone_orange { --card-color: #ea580c; --card-color-2: #f97316; --card-shadow: rgba(234, 88, 12, .25); }
+    .o_tone_purple { --card-color: #7c3aed; --card-color-2: #8b5cf6; --card-shadow: rgba(124, 58, 237, .25); }
+    .o_tone_green  { --card-color: #16a34a; --card-color-2: #22c55e; --card-shadow: rgba(22, 163, 74, .25); }
+    .o_tone_slate  { --card-color: #475569; --card-color-2: #64748b; --card-shadow: rgba(71, 85, 105, .24); }
+    .o_tone_pink   { --card-color: #db2777; --card-color-2: #ec4899; --card-shadow: rgba(219, 39, 119, .25); }
+    .o_tone_indigo { --card-color: #4f46e5; --card-color-2: #6366f1; --card-shadow: rgba(79, 70, 229, .25); }
+    .o_tone_amber  { --card-color: #d97706; --card-color-2: #f59e0b; --card-shadow: rgba(217, 119, 6, .25); }
+    .o_tone_gray   { --card-color: #334155; --card-color-2: #475569; --card-shadow: rgba(51, 65, 85, .22); }
+    .o_tone_gold   { --card-color: #b48a14; --card-color-2: #d4af37; --card-shadow: rgba(201, 162, 39, .32); }
+
+    .o_jjsumi_footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 34px;
+        padding-top: 16px;
+        border-top: 1px solid #dbe2ec;
+        color: #64748b;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .o_jjsumi_home .o_jjsumi_cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .o_jjsumi_home .o_jjsumi_cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .o_jjsumi_home .o_jjsumi_hero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 600px) {
+    .o_jjsumi_home .o_jjsumi_cards {
+        grid-template-columns: 1fr;
+    }
+    .o_jjsumi_home .o_jjsumi_footer {
+        flex-direction: column;
+    }
+}
+
+/* ---------- Buscador, pulso rápido, grupos y badges ---------- */
+.o_jjsumi_home {
+    .o_jjsumi_hero_actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .o_jjsumi_search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, .12);
+        border: 1px solid rgba(255, 255, 255, .24);
+        min-width: 240px;
+
+        .fa { color: #e4c158; font-size: 13px; }
+        input {
+            background: transparent;
+            border: 0;
+            outline: none;
+            color: #fff;
+            font-size: 13px;
+            width: 100%;
+            &::placeholder { color: rgba(255, 255, 255, .65); }
+        }
+        .o_jjsumi_search_clear {
+            background: transparent;
+            border: 0;
+            color: rgba(255, 255, 255, .75);
+            cursor: pointer;
+            padding: 0 2px;
+        }
+    }
+
+    .o_jjsumi_web_btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 12px;
+        border: 1px solid #d4af37;
+        background: linear-gradient(135deg, #d4af37 0%, #b88b14 100%);
+        color: #0b1628;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform .15s ease, opacity .15s ease;
+        &:hover { transform: translateY(-1px); opacity: .95; }
+    }
+
+    .o_jjsumi_pulse {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 20px;
+    }
+
+    .o_jjsumi_pulse_item {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, .03);
+
+        .o_pulse_label {
+            color: #64748b;
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+        strong {
+            color: #0f172a;
+            font-size: 20px;
+            font-weight: 800;
+        }
+    }
+
+    .o_jjsumi_group {
+        margin-top: 26px;
+        .o_jjsumi_section_head {
+            margin: 0 0 12px;
+            h2 {
+                margin: 0;
+                font-size: 15px;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: .08em;
+                color: #475569;
+            }
+        }
+    }
+
+    .o_jjsumi_card_top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .o_jjsumi_badge {
+        font-size: 10.5px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: var(--card-color);
+        border: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+
+    .o_jjsumi_empty {
+        text-align: center;
+        padding: 48px 20px;
+        background: #fff;
+        border: 1px dashed #cbd5e1;
+        border-radius: 16px;
+        margin-top: 24px;
+        color: #64748b;
+    }
+}
+
+@media (max-width: 900px) {
+    .o_jjsumi_home .o_jjsumi_pulse {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

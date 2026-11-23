@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_jjsumi_calidad_user,jjsumi_calidad user,model_jjsumi_calidad,base.group_user,1,1,1,0
+access_jjsumi_calidad_admin,jjsumi_calidad admin,model_jjsumi_calidad,base.group_system,1,1,1,1

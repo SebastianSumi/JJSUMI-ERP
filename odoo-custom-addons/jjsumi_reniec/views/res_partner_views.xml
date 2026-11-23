@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_jjsumi_reniec" model="ir.ui.view">
+        <field name="name">res.partner.form.jjsumi.reniec</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="l10n_latam_base.view_partner_latam_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='vat']" position="after">
+                <button name="action_jjsumi_consultar_reniec"
+                        type="object"
+                        string="Consultar RENIEC/SUNAT"
+                        icon="fa-search"
+                        class="btn-link oe_inline ms-1"/>
+            </xpath>
+            <xpath expr="//field[@name='vat']" position="after">
+                <field name="jjsumi_reniec_estado"
+                       invisible="not jjsumi_reniec_estado"
+                       class="text-success small d-block"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

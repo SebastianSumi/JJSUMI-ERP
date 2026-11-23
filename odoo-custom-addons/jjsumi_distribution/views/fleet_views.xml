@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="jjsumi_fleet_log_viaje_form" model="ir.ui.view">
+        <field name="name">fleet.vehicle.log.services.form.jjsumi.viaje</field>
+        <field name="model">fleet.vehicle.log.services</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_log_services_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Viaje de distribución">
+                    <field name="x_jjsumi_destino"/>
+                    <field name="x_jjsumi_odo_salida"/>
+                    <field name="x_jjsumi_odo_llegada"/>
+                    <field name="x_jjsumi_km_recorridos"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

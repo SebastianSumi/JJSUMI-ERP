@@ -1,0 +1,88 @@
+{
+  "id": "jjsumiBscCierreDiario1",
+  "name": "JJSUMI BSC - Cierre y Resumen Ejecutivo Diario",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 23 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-cierre-diario",
+      "name": "Todos los días 23:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://127.0.0.1:3000/bsc/n8n-resumen",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-jjsumi-secret",
+              "value": "jjsumi-odoo-bsc-sync-2026"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-bsc-resumen",
+      "name": "Consultar Resumen BSC (Finanzas + SUNAT + Stock)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst empresas = data.empresas || [];\nconst filas = empresas.map(e => {\n  const k = e.kpis || {};\n  return `- ${e.nombre}: Ventas S/ ${k.K3?.real ?? 0} | Margen ${k.K1?.real ?? 0}% | IGV Neto S/ ${k.K14?.real ?? 0} | RUC Habido ${k.K15?.real ?? 100}% | CxC Vencida ${k.K17?.real ?? 0}% | Quiebre Stock ${k.K19?.real ?? 0}% | Inv. S/ ${k.K20?.real ?? 0}`;\n}).join('\\n');\n\nconst texto = `RESUMEN EJECUTIVO DIARIO JJSUMI (Odoo -> BSC)\\nFecha: ${data.generadoEn}\\nAlertas críticas activas: ${data.totalAlertasCriticas ?? 0}\\n\\nINDICADORES POR SEDE:\\n${filas}`;\nreturn [{ json: { subject: `Cierre Diario BSC JJSUMI (${data.totalAlertasCriticas ?? 0} alertas críticas)`, text: texto } }];"
+      },
+      "id": "code-formatear-cierre",
+      "name": "Formatear Reporte Diario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "jetersucasaire@gmail.com",
+        "toEmail": "jetersucasaire@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {}
+      },
+      "id": "smtp-cierre-diario",
+      "name": "Enviar Resumen Ejecutivo a Gerencia",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [920, 300],
+      "credentials": {
+        "smtp": {
+          "id": "jjsumiSmtpGmail1",
+          "name": "Gmail SMTP JJSUMI"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Todos los días 23:00": {
+      "main": [[{ "node": "Consultar Resumen BSC (Finanzas + SUNAT + Stock)", "type": "main", "index": 0 }]]
+    },
+    "Consultar Resumen BSC (Finanzas + SUNAT + Stock)": {
+      "main": [[{ "node": "Formatear Reporte Diario", "type": "main", "index": 0 }]]
+    },
+    "Formatear Reporte Diario": {
+      "main": [[{ "node": "Enviar Resumen Ejecutivo a Gerencia", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" }
+}

@@ -1,0 +1,20 @@
+{
+    'name': 'JJSumi Menús por aplicación',
+    'version': '19.0.1.0.0',
+    'summary': 'Publica los menús JJSUMI dentro de las apps nativas (CRM, Ventas, Compras, Inventario, Fabricación, Mantenimiento, POS, Finanzas, RR. HH., Vacaciones, Flota)',
+    'author': 'JJSumi',
+    'category': 'JJSumi',
+    'depends': [
+        'base', 'crm', 'sales_team', 'sale_management', 'purchase', 'purchase_requisition',
+        'stock', 'mrp', 'maintenance', 'point_of_sale', 'account', 'analytic', 'hr', 'hr_holidays',
+        'hr_attendance', 'fleet', 'jjsumi_base', 'jjsumi_core', 'jjsumi_org', 'jjsumi_security',
+        'jjsumi_sales', 'jjsumi_purchase_ext', 'jjsumi_quality_ext', 'jjsumi_maintenance_ext',
+        'jjsumi_distribution', 'jjsumi_hr_ext', 'jjsumi_pos_ext', 'jjsumi_accounting',
+        'jjsumi_manufacturing', 'jjsumi_catalog_ext',
+    ],
+    'data': ['views/actions.xml', 'views/menus.xml'],
+    'post_init_hook': 'post_init_hook',
+    'installable': True,
+    'application': False,
+    'license': 'LGPL-3',
+}

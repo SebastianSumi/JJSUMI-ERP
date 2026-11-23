@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="homepage" name="JJSumi Home">
+            <t t-call="website.layout">
+                <main class="jjsumi_page">
+                    <!-- Hero -->
+                    <section class="jjsumi_hero">
+                        <div class="container position-relative">
+                            <div class="row align-items-center g-5">
+                                <div class="col-lg-8 mx-auto text-center">
+                                    <span class="jjsumi_pill_badge">
+                                        <i class="fa fa-star me-2"/>Juliaca · Puno · Arequipa · Cusco · Tacna
+                                    </span>
+                                    <h1>
+                                        Yeso y materiales de construcción
+                                        <span class="jjsumi_text_gold">directo de fábrica</span>
+                                    </h1>
+                                    <p class="jjsumi_lead">
+                                        Calidad industrial para obras, ferreterías y distribuidores en todo el Sur del Perú.
+                                        Compra en línea en minutos o solicita despacho programado con flota propia.
+                                    </p>
+                                    <div class="jjsumi_hero_actions">
+                                        <a class="jjsumi_btn_gold" href="/shop">
+                                            <i class="fa fa-shopping-cart me-2"/>Ir a la Tienda (/shop)
+                                        </a>
+                                        <a class="jjsumi_btn_ghost" href="#como-llegar">
+                                            <i class="fa fa-map-marker me-2"/>Sucursales y Mapa
+                                        </a>
+                                        <a class="jjsumi_btn_ghost" href="#cotizar">
+                                            Cotizar por volumen
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Barra flotante de confianza -->
+                    <section class="container">
+                        <div class="jjsumi_stats_card">
+                            <div class="row g-4 text-center text-md-start">
+                                <div class="col-6 col-md-3">
+                                    <div class="jjsumi_stat_item">
+                                        <div class="jjsumi_stat_icon"><i class="fa fa-building"/></div>
+                                        <div>
+                                            <strong>6 Sedes Activas</strong>
+                                            <span>Planta y 5 sucursales</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="jjsumi_stat_item">
+                                        <div class="jjsumi_stat_icon"><i class="fa fa-gift"/></div>
+                                        <div>
+                                            <strong>Promo 200 + 3</strong>
+                                            <span>Bolsas gratis por volumen</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="jjsumi_stat_item">
+                                        <div class="jjsumi_stat_icon"><i class="fa fa-truck"/></div>
+                                        <div>
+                                            <strong>Flota Propia</strong>
+                                            <span>Hasta 300 bolsas / viaje</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="jjsumi_stat_item">
+                                        <div class="jjsumi_stat_icon"><i class="fa fa-file-pdf-o"/></div>
+                                        <div>
+                                            <strong>Portal 24/7</strong>
+                                            <span>Pedidos, boletas y favoritos</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Productos estrella -->
+                    <section class="container py-5 mt-3" id="productos">
+                        <div class="text-center mb-5">
+                            <p class="jjsumi_eyebrow_dark">Catálogo destacado</p>
+                            <h2 class="jjsumi_h2">Presentaciones de alto rendimiento</h2>
+                            <p class="jjsumi_section_note">Además contamos con placas drywall, perfiles, masillas, selladores y herramientas en nuestra tienda.</p>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="jjsumi_card jjsumi_card_featured d-flex flex-column">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="jjsumi_weight">Bolsa de 30 kg</span>
+                                        <span class="jjsumi_tag_pop">Mayor rendimiento</span>
+                                    </div>
+                                    <h3>Yeso Construcción 30 kg</h3>
+                                    <p class="flex-grow-1">Máxima cobertura y fraguado uniforme para obras medianas, tarrajeo y grandes volúmenes.</p>
+                                    <ul class="jjsumi_specs">
+                                        <li><i class="fa fa-check"/> Alta pureza y trabajabilidad</li>
+                                        <li><i class="fa fa-check"/> Stock permanente en 5 sucursales</li>
+                                    </ul>
+                                    <div class="jjsumi_price">S/ 8.00 <span>por bolsa · precio directo</span></div>
+                                    <a class="jjsumi_btn_gold text-center mt-3" href="/shop">Pedir en tienda</a>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="jjsumi_card d-flex flex-column">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="jjsumi_weight">Bolsa de 26 kg</span>
+                                        <span class="jjsumi_tag_best">Más vendido</span>
+                                    </div>
+                                    <h3>Yeso Construcción 26 kg</h3>
+                                    <p class="flex-grow-1">El equilibrio ideal entre rendimiento y maniobrabilidad en obra. Preferido por maestros y ferreterías.</p>
+                                    <ul class="jjsumi_specs">
+                                        <li><i class="fa fa-check"/> Acabado fino y parejo</li>
+                                        <li><i class="fa fa-check"/> Aplica promoción 200+3</li>
+                                    </ul>
+                                    <div class="jjsumi_price">S/ 7.00 <span>por bolsa · precio directo</span></div>
+                                    <a class="jjsumi_btn_gold text-center mt-3" href="/shop">Pedir en tienda</a>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="jjsumi_card d-flex flex-column">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="jjsumi_weight">Bolsa de 23 kg</span>
+                                    </div>
+                                    <h3>Yeso Construcción 23 kg</h3>
+                                    <p class="flex-grow-1">Presentación práctica y ligera para acabados puntuales, molduras y reparaciones rápidas.</p>
+                                    <ul class="jjsumi_specs">
+                                        <li><i class="fa fa-check"/> Fácil traslado y almacenamiento</li>
+                                        <li><i class="fa fa-check"/> Entrega local desde 50 bolsas</li>
+                                    </ul>
+                                    <div class="jjsumi_price">S/ 6.00 <span>por bolsa · precio directo</span></div>
+                                    <a class="jjsumi_btn_gold text-center mt-3" href="/shop">Pedir en tienda</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-5">
+                            <a class="jjsumi_btn_outline_dark" href="/shop">
+                                Explorar los 101 productos en la Tienda <i class="fa fa-arrow-right ms-2"/>
+                            </a>
+                        </div>
+                    </section>
+
+                    <!-- Promoción -->
+                    <section class="container my-4">
+                        <div class="jjsumi_promo_box">
+                            <div class="row align-items-center g-4">
+                                <div class="col-md-3 text-center">
+                                    <div class="jjsumi_promo_badge">
+                                        <strong>200 + 3</strong>
+                                        <span>BOLSAS GRATIS</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="jjsumi_eyebrow mb-1">Promoción vigente en todas las sedes</p>
+                                    <h3>Por cada 200 bolsas, llévate 3 sin costo</h3>
+                                    <p class="mb-0">Válido en pedidos locales (desde 50 bolsas) y envíos interciudad (desde 200 bolsas).</p>
+                                </div>
+                                <div class="col-md-3 text-md-end text-center">
+                                    <a class="jjsumi_btn_gold w-100 text-center" href="/shop">Armar mi pedido</a>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Cómo llegar / Sucursales con Google Maps (público sin login) -->
+                    <section class="container py-5" id="como-llegar">
+                        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+                        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"/>
+                        <div class="text-center mb-4">
+                            <p class="jjsumi_eyebrow_dark">Ubicaciones y rutas</p>
+                            <h2 class="jjsumi_h2">¿Cómo llegar a nuestras sucursales?</h2>
+                            <p class="jjsumi_section_note mb-3">
+                                Detecta tu ubicación para ordenar las sucursales más cercanas, verlas en el mapa y abrir la ruta en Google Maps (sin iniciar sesión).
+                            </p>
+                            <button type="button" id="jjsumi_btn_locate" class="jjsumi_btn_gold border-0">
+                                <i class="fa fa-crosshairs me-2"/>Buscar sucursales cerca de mí
+                            </button>
+                            <div id="jjsumi_geo_status" class="small text-muted mt-2"/>
+                        </div>
+
+                        <div id="jjsumi_branches_row" class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="jjsumi_branch_card is-nearest" data-name="JJSumi Planta Principal (Juliaca)" data-address="Av. Canchi Grande L1, Juliaca, Peru" data-lat="-15.4995" data-lng="-70.1333">
+                                    <span class="jjsumi_weight">Planta Principal · Juliaca</span>
+                                    <h4>Planta Principal Juliaca</h4>
+                                    <p class="small text-muted mb-1"><i class="fa fa-map-marker me-1 text-warning"/>Av. Canchi Grande L1, Juliaca</p>
+                                    <p class="jjsumi_branch_dist small fw-bold text-success d-none mb-2"/>
+                                    <div class="d-flex gap-2 flex-wrap mt-2">
+                                        <a class="btn btn-sm btn-warning fw-semibold jjsumi_btn_directions"
+                                           href="https://www.google.com/maps/dir/?api=1&amp;destination=Av.+Canchi+Grande+L1,+Juliaca,+Peru&amp;travelmode=driving"
+                                           target="_blank" rel="noopener">
+                                            <i class="fa fa-location-arrow me-1"/>Cómo llegar
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary jjsumi_btn_map">Ver mapa</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="jjsumi_branch_card" data-name="Sucursal Juliaca" data-address="Av. Ilave 123, Juliaca, Peru" data-lat="-15.4906" data-lng="-70.1292">
+                                    <span class="jjsumi_weight">Sucursal · Juliaca</span>
+                                    <h4>Sucursal Juliaca</h4>
+                                    <p class="small text-muted mb-1"><i class="fa fa-map-marker me-1 text-warning"/>Av. Ilave 123, Juliaca</p>
+                                    <p class="jjsumi_branch_dist small fw-bold text-success d-none mb-2"/>
+                                    <div class="d-flex gap-2 flex-wrap mt-2">
+                                        <a class="btn btn-sm btn-warning fw-semibold jjsumi_btn_directions"
+                                           href="https://www.google.com/maps/dir/?api=1&amp;destination=Av.+Ilave+123,+Juliaca,+Peru&amp;travelmode=driving"
+                                           target="_blank" rel="noopener">
+                                            <i class="fa fa-location-arrow me-1"/>Cómo llegar
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary jjsumi_btn_map">Ver mapa</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="jjsumi_branch_card" data-name="Sucursal Puno" data-address="Jr. Lima 456, Puno, Peru" data-lat="-15.8402" data-lng="-70.0279">
+                                    <span class="jjsumi_weight">Sucursal · Puno</span>
+                                    <h4>Sucursal Puno</h4>
+                                    <p class="small text-muted mb-1"><i class="fa fa-map-marker me-1 text-warning"/>Jr. Lima 456, Puno</p>
+                                    <p class="jjsumi_branch_dist small fw-bold text-success d-none mb-2"/>
+                                    <div class="d-flex gap-2 flex-wrap mt-2">
+                                        <a class="btn btn-sm btn-warning fw-semibold jjsumi_btn_directions"
+                                           href="https://www.google.com/maps/dir/?api=1&amp;destination=Jr.+Lima+456,+Puno,+Peru&amp;travelmode=driving"
+                                           target="_blank" rel="noopener">
+                                            <i class="fa fa-location-arrow me-1"/>Cómo llegar
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary jjsumi_btn_map">Ver mapa</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="jjsumi_branch_card" data-name="Sucursal Arequipa" data-address="Av. Ejercito 789, Arequipa, Peru" data-lat="-16.3911" data-lng="-71.5476">
+                                    <span class="jjsumi_weight">Sucursal · Arequipa</span>
+                                    <h4>Sucursal Arequipa</h4>
+                                    <p class="small text-muted mb-1"><i class="fa fa-map-marker me-1 text-warning"/>Av. Ejército 789, Arequipa</p>
+                                    <p class="jjsumi_branch_dist small fw-bold text-success d-none mb-2"/>
+                                    <div class="d-flex gap-2 flex-wrap mt-2">
+                                        <a class="btn btn-sm btn-warning fw-semibold jjsumi_btn_directions"
+                                           href="https://www.google.com/maps/dir/?api=1&amp;destination=Av.+Ejercito+789,+Arequipa,+Peru&amp;travelmode=driving"
+                                           target="_blank" rel="noopener">
+                                            <i class="fa fa-location-arrow me-1"/>Cómo llegar
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary jjsumi_btn_map">Ver mapa</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="jjsumi_branch_card" data-name="Sucursal Cusco" data-address="Av. El Sol 321, Cusco, Peru" data-lat="-13.5186" data-lng="-71.9765">
+                                    <span class="jjsumi_weight">Sucursal · Cusco</span>
+                                    <h4>Sucursal Cusco</h4>
+                                    <p class="small text-muted mb-1"><i class="fa fa-map-marker me-1 text-warning"/>Av. El Sol 321, Cusco</p>
+                                    <p class="jjsumi_branch_dist small fw-bold text-success d-none mb-2"/>
+                                    <div class="d-flex gap-2 flex-wrap mt-2">
+                                        <a class="btn btn-sm btn-warning fw-semibold jjsumi_btn_directions"
+                                           href="https://www.google.com/maps/dir/?api=1&amp;destination=Av.+El+Sol+321,+Cusco,+Peru&amp;travelmode=driving"
+                                           target="_blank" rel="noopener">
+                                            <i class="fa fa-location-arrow me-1"/>Cómo llegar
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary jjsumi_btn_map">Ver mapa</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="jjsumi_branch_card" data-name="Sucursal Tacna" data-address="Av. Jorge Basadre 654, Tacna, Peru" data-lat="-18.0146" data-lng="-70.2536">
+                                    <span class="jjsumi_weight">Sucursal · Tacna</span>
+                                    <h4>Sucursal Tacna</h4>
+                                    <p class="small text-muted mb-1"><i class="fa fa-map-marker me-1 text-warning"/>Av. Jorge Basadre 654, Tacna</p>
+                                    <p class="jjsumi_branch_dist small fw-bold text-success d-none mb-2"/>
+                                    <div class="d-flex gap-2 flex-wrap mt-2">
+                                        <a class="btn btn-sm btn-warning fw-semibold jjsumi_btn_directions"
+                                           href="https://www.google.com/maps/dir/?api=1&amp;destination=Av.+Jorge+Basadre+654,+Tacna,+Peru&amp;travelmode=driving"
+                                           target="_blank" rel="noopener">
+                                            <i class="fa fa-location-arrow me-1"/>Cómo llegar
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary jjsumi_btn_map">Ver mapa</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="jjsumi_map" class="jjsumi_map_box"/>
+                    </section>
+
+                    <!-- Formulario rápido de cotización (split card) -->
+                    <section class="jjsumi_quote_section py-5" id="cotizar">
+                        <div class="container">
+                            <div class="jjsumi_quote_split">
+                                <div class="row g-0">
+                                    <div class="col-lg-4 jjsumi_quote_aside">
+                                        <p class="jjsumi_eyebrow mb-2">Atención comercial</p>
+                                        <h3>¿Necesitas un pedido mayorista?</h3>
+                                        <p class="mb-4">
+                                            Cotiza directo con la sucursal de tu ciudad. Tu solicitud ingresa al instante a nuestro CRM y un asesor te contacta.
+                                        </p>
+                                        <ul class="list-unstyled jjsumi_aside_list">
+                                            <li><i class="fa fa-phone"/> +51 996 232 341</li>
+                                            <li><i class="fa fa-map-marker"/> Av. Canchi Grande L1, Juliaca</li>
+                                            <li><i class="fa fa-clock-o"/> Lun – Sáb · 7:30 am a 6:30 pm</li>
+                                        </ul>
+                                        <a class="jjsumi_btn_gold w-100 text-center mt-3" href="https://wa.me/51996232341" target="_blank" rel="noopener">
+                                            <i class="fa fa-whatsapp me-2"/>Chatear por WhatsApp
+                                        </a>
+                                    </div>
+                                    <div class="col-lg-8 jjsumi_quote_form_wrap">
+                                        <h4 class="mb-3 fw-bold" style="color:#101F3A;">Solicitar cotización rápida</h4>
+                                        <t t-if="request.params.get('cotizado')">
+                                            <div class="alert alert-success" role="alert">
+                                                ¡Gracias! Tu solicitud fue registrada. Un asesor de la sucursal elegida se comunicará contigo pronto.
+                                            </div>
+                                        </t>
+                                        <form action="/jjsumi/cotizar" method="post">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Nombre o Empresa *</label>
+                                                    <input type="text" name="name" class="form-control" required="required" placeholder="Ej. Constructora Andina S.A.C."/>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Teléfono / WhatsApp *</label>
+                                                    <input type="text" name="phone" class="form-control" required="required" placeholder="Ej. 996 232 341"/>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Correo electrónico</label>
+                                                    <input type="email" name="email" class="form-control" placeholder="correo@empresa.com"/>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Sucursal</label>
+                                                    <select name="sucursal" class="form-select">
+                                                        <option value="Juliaca">Juliaca</option>
+                                                        <option value="Puno">Puno</option>
+                                                        <option value="Arequipa">Arequipa</option>
+                                                        <option value="Cusco">Cusco</option>
+                                                        <option value="Tacna">Tacna</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Bolsas aprox.</label>
+                                                    <input type="number" name="cantidad" class="form-control" min="1" placeholder="200"/>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label">Mensaje o dirección de obra</label>
+                                                    <textarea name="mensaje" class="form-control" rows="3" placeholder="Indícanos presentación y lugar de entrega..."/>
+                                                </div>
+                                                <div class="col-12 text-end mt-3">
+                                                    <button type="submit" class="jjsumi_btn_gold border-0">
+                                                        Enviar solicitud <i class="fa fa-paper-plane ms-2"/>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+            </t>
+        </template>
+
+        <!-- Pie de página corporativo + botón flotante WhatsApp -->
+        <template id="footer_jjsumi" name="JJSumi Footer" inherit_id="website.layout">
+            <xpath expr="//div[@id='footer']" position="replace">
+                <div id="footer" class="jjsumi_footer" t-if="not no_footer">
+                    <div class="container">
+                        <div class="row g-4 pb-3">
+                            <div class="col-md-5">
+                                <p class="jjsumi_footer-brand">JJSumi</p>
+                                <p>
+                                    Fabricación y distribución de yeso y materiales de construcción.
+                                    Juliaca · Puno · Arequipa · Cusco · Tacna.
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                <h4>Contacto</h4>
+                                <ul class="list-unstyled mb-0">
+                                    <li>Av. Canchi Grande L1, Juliaca</li>
+                                    <li><a href="tel:+51996232341">+51 996 232 341</a></li>
+                                    <li><a href="https://wa.me/51996232341" target="_blank" rel="noopener">WhatsApp</a></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-3">
+                                <h4>Enlaces</h4>
+                                <ul class="list-unstyled mb-0">
+                                    <li><a href="/shop">Tienda en línea</a></li>
+                                    <li><a href="/my">Mis pedidos y boletas</a></li>
+                                    <li><a href="#como-llegar">Sucursales y mapa</a></li>
+                                    <li><a href="#cotizar">Cotizar</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="jjsumi_footer-bottom d-flex flex-wrap justify-content-between gap-2">
+                            <span>© JJSumi — Todos los derechos reservados</span>
+                            <span>Juliaca · Puno · Arequipa · Cusco · Tacna</span>
+                        </div>
+                    </div>
+                    <a class="jjsumi_wa_float" href="https://wa.me/51996232341" target="_blank" rel="noopener" title="Cotizar por WhatsApp">
+                        <i class="fa fa-whatsapp"/>
+                    </a>
+                </div>
+            </xpath>
+        </template>
+
+        <record id="website_page_home" model="website.page">
+            <field name="name">Inicio</field>
+            <field name="url">/</field>
+            <field name="view_id" ref="homepage"/>
+            <field name="is_published" eval="True"/>
+        </record>
+    </data>
+</odoo>

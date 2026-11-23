@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_jjsumi_clientes" model="ir.actions.act_window">
+        <field name="name">Clientes JJSUMI</field>
+        <field name="res_model">res.partner</field>
+        <field name="domain">[('ref', '=like', 'CLI-%')]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_proveedores" model="ir.actions.act_window">
+        <field name="name">Proveedores JJSUMI</field>
+        <field name="res_model">res.partner</field>
+        <field name="domain">[('ref', '=like', 'PROV-%')]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_pedidos_descuento" model="ir.actions.act_window">
+        <field name="name">Pedidos con descuento por aprobar</field>
+        <field name="res_model">sale.order</field>
+        <field name="domain">[('jjsumi_aprobacion_requerida', '!=', 'ninguna'), ('jjsumi_aprobado', '=', False), ('state', 'in', ['draft', 'sent'])]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_oc_aprobar" model="ir.actions.act_window">
+        <field name="name">Órdenes de compra por aprobar</field>
+        <field name="res_model">purchase.order</field>
+        <field name="domain">[('state', '=', 'to approve')]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_transferencias_sucursal" model="ir.actions.act_window">
+        <field name="name">Transferencias entre sucursales</field>
+        <field name="res_model">stock.picking</field>
+        <field name="domain">[('picking_type_id.sequence_code', '=', 'TRF')]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_boms" model="ir.actions.act_window">
+        <field name="name">Listas de materiales JJSUMI</field>
+        <field name="res_model">mrp.bom</field>
+        <field name="domain">[('code', '=like', 'BOM-%')]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_equipos" model="ir.actions.act_window">
+        <field name="name">Equipos JJSUMI</field>
+        <field name="res_model">maintenance.equipment</field>
+        <field name="domain">[('x_jjsumi_codigo', '=like', 'EQ-%')]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_preventivos" model="ir.actions.act_window">
+        <field name="name">Preventivos (horas / km)</field>
+        <field name="res_model">maintenance.request</field>
+        <field name="domain">[('maintenance_type', '=', 'preventive')]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_pos" model="ir.actions.act_window">
+        <field name="name">Puntos de venta JJSUMI (POS-001 a POS-008)</field>
+        <field name="res_model">pos.config</field>
+        <field name="domain">[('name', '=like', 'POS-%')]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_empleados" model="ir.actions.act_window">
+        <field name="name">Empleados JJSUMI</field>
+        <field name="res_model">hr.employee</field>
+        <field name="domain">[('jjsumi_code', '=like', 'EMP-%')]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_vehiculos" model="ir.actions.act_window">
+        <field name="name">Vehículos JJSUMI</field>
+        <field name="res_model">fleet.vehicle</field>
+        <field name="domain">[('license_plate', '!=', False)]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_viajes" model="ir.actions.act_window">
+        <field name="name">Viajes de distribución</field>
+        <field name="res_model">fleet.vehicle.log.services</field>
+        <field name="domain">[('x_jjsumi_destino', '!=', False)]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_diarios" model="ir.actions.act_window">
+        <field name="name">Diarios JJSUMI</field>
+        <field name="res_model">account.journal</field>
+        <field name="domain">[('code', 'in', ['VEN01','COM01','BAN01','CAJ01','CAJ02','CAJ03','CAJ04','CAJ05','VAR01'])]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_jjsumi_parametros" model="ir.actions.act_window">
+        <field name="name">Parámetros JJSUMI (bonificación, transporte, mínimos)</field>
+        <field name="res_model">ir.config_parameter</field>
+        <field name="domain">[('key', '=like', 'jjsumi.%')]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

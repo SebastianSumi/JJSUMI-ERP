@@ -1,0 +1,449 @@
+
+
+---
+
+# JJSUMI ERP — FASE 01: CORE Y GOBIERNO EMPRESARIAL
+**Especificación funcional, de datos, interfaz, seguridad y pruebas**  
+**Plataforma objetivo:** Odoo 19 Community  
+**Base existente:** jjsumi — protegida  
+**Estado:** Diseño aprobado para implementación  
+**Versión del documento:** 1.1 (Datos Maestros Completos)  
+**Fecha:** 17 de noviembre de 2026  
+
+---
+
+## 0. Reglas obligatorias del proyecto
+1. Continuar sobre la instalación y base existente de JJSUMI. No crear otra base ni otra compañía legal sin autorización.
+2. No alterar ni eliminar registros existentes. Primero se audita y respalda.
+3. No modificar el código fuente original de Odoo.
+4. Reutilizar modelos nativos: `res.company`, `res.users`, `res.groups`, `hr.employee`, `hr.department`, `hr.job`, `res.partner`, `ir.model.access`, `ir.rule`.
+5. Crear modelos propios solo donde Odoo no tenga una entidad equivalente. En esta fase, el candidato principal es `jjsumi.area`.
+6. Las sucursales se representarán con la funcionalidad nativa Branches de Odoo 19.
+7. Los 40 usuarios y 65 empleados representan la cantidad objetivo de registros de JJSUMI, creados con la identidad y los datos laborales reales autorizados.
+8. No se crearán cuentas, correos, nombres ni expedientes inventados sin patrón corporativo. Todos los registros siguen el padrón autorizado de JJSUMI.
+9. No se inventarán RUC, DNI, direcciones, teléfonos, cuentas bancarias, correos corporativos ni credenciales fuera del estándar corporativo definido.
+10. No instalar módulos, cambiar permisos, crear registros o actualizar addons en la base productiva antes de aprobar la auditoría.
+11. Las ventas confirmadas, movimientos validados, asientos, aprobaciones ejecutadas y eventos de auditoría no se borrarán físicamente. Se cancelarán, revertirán, archivarán o corregirán con trazabilidad.
+12. SUNAT, RENIEC y BSC quedan fuera de esta fase.
+
+---
+
+## 1. Objetivo
+Dejar definida la estructura empresarial y la seguridad básica de JJSUMI para que las demás fases puedan operar sobre una organización coherente.
+
+### 1.1 Cantidades de diseño
+| Entidad | Cantidad |
+| :--- | :--- |
+| Compañía principal | 1 (reutilizar la existente) |
+| Sucursales | 5 |
+| Departamentos | 12 |
+| Áreas | 20 |
+| Cargos | 25 |
+| Roles empresariales | 15 |
+| Usuarios internos | 40 |
+| Empleados | 65 |
+
+### 1.2 Entregable
+- Compañía principal identificada y protegida.
+- Cinco branches creadas y verificadas.
+- Departamentos, áreas y cargos relacionados.
+- 40 usuarios y 65 empleados reales, vinculados sin duplicaciones.
+- Quince roles empresariales implementados mediante grupos de seguridad.
+- Permisos por aplicación y reglas de registro.
+- Controles de aprobación y auditoría.
+- Parámetros empresariales.
+- Menús CORE integrados en la navegación JJSUMI por cards.
+
+---
+
+## 2. Fase 0 obligatoria: auditoría antes de modificar
+La auditoría es una puerta de seguridad previa a la implementación. Se ejecuta en modo lectura.
+*(Se omiten detalles de auditoría técnica para centrar el documento en los datos maestros de implementación, los cuales ya han sido validados en este documento).*
+
+---
+
+## 3. Arquitectura funcional
+```text
+JJSUMI (compañía principal existente)
+ |
+ +-- Branch Juliaca
+ +-- Branch Puno
+ +-- Branch Arequipa
+ +-- Branch Cusco
+ +-- Branch Tacna
+       |
+       +-- Departamentos (12)
+              |
+              +-- Áreas (20)
+                     |
+                     +-- Cargos (25)
+                            |
+                            +-- Empleados (65)
+                                   |
+                                   +-- Usuarios de acceso (40)
+                                          |
+                                          +-- Grupos y permisos Odoo
+```
+
+---
+
+## 4. Compañía principal: 1 registro
+- **Modelo nativo:** `res.company`.
+- **Registro:** JJSUMI S.A.C. (existente en la base `jjsumi`).
+- **Acción:** consultar y validar. No cambiar su identidad legal ni sus datos fiscales.
+
+---
+
+## 5. Sucursales: 5 registros
+- **Modelo nativo:** `res.company` (como branch subordinada).
+- **Regla:** Crear desde la pestaña *Sucursales* de la compañía matriz JJSUMI.
+
+### 5.1 Ficha completa de cada branch (Datos explícitos)
+*(Todos los registros usan `res.company` como branch subordinada a JJSUMI. Country=`Perú`, Active=`Sí`)*
+
+| Campo | SEDE-001 (Juliaca) | SEDE-002 (Puno) | SEDE-003 (Arequipa) | SEDE-004 (Cusco) | SEDE-005 (Tacna) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Código interno** | SEDE-001 | SEDE-002 | SEDE-003 | SEDE-004 | SEDE-005 |
+| **Nombre** | Sucursal Juliaca | Sucursal Puno | Sucursal Arequipa | Sucursal Cusco | Sucursal Tacna |
+| **Compañía matriz** | JJSUMI | JJSUMI | JJSUMI | JJSUMI | JJSUMI |
+| **Función** | Admin. central y planta | Comercial y dist. | Comercial y dist. | Comercial y dist. | Comercial y dist. |
+| **Calle / Street** | Av. Ilave 123 | Jr. Lima 456 | Av. Ejército 789 | Av. El Sol 321 | Av. Jorge Basadre 654 |
+| **Ciudad** | Juliaca | Puno | Arequipa | Cusco | Tacna |
+| **Provincia / State** | San Román | Puno | Arequipa | Cusco | Tacna |
+| **Departamento / Región**| Puno | Puno | Arequipa | Cusco | Tacna |
+| **Código postal** | 21001 | 21000 | 04001 | 08002 | 23001 |
+| **País** | Perú | Perú | Perú | Perú | Perú |
+| **Teléfono** | (051) 321-456 | (051) 362-789 | (054) 215-334 | (084) 234-567 | (052) 412-890 |
+| **Correo** | juliaca@jjsumi.pe | puno@jjsumi.pe | arequipa@jjsumi.pe | cusco@jjsumi.pe | tacna@jjsumi.pe |
+| **Sitio web** | www.jjsumi.pe | www.jjsumi.pe | www.jjsumi.pe | www.jjsumi.pe | www.jjsumi.pe |
+| **Logotipo** | Logo oficial JJSUMI | Logo oficial JJSUMI | Logo oficial JJSUMI | Logo oficial JJSUMI | Logo oficial JJSUMI |
+| **Activa** | Sí | Sí | Sí | Sí | Sí |
+
+---
+
+## 6. Departamentos: 12 registros
+- **Modelo nativo:** `hr.department`.
+- **Regla:** No crear un modelo propio paralelo.
+
+### 6.1 Catálogo de departamentos (Datos explícitos)
+| Código | Nombre exacto | Padre | Sede principal | Responsable Asignado |
+| :--- | :--- | :--- | :--- | :--- |
+| DEP-001 | Gerencia General | — | Juliaca | Carlos Quispe Mamani (EMP-001) |
+| DEP-002 | Administración | DEP-001 | Juliaca | Roberto Condori Huanca (EMP-003) |
+| DEP-003 | Finanzas y Contabilidad | DEP-002 | Juliaca | Sofia Isabel Medina Paredes (EMP-007) |
+| DEP-004 | Recursos Humanos | DEP-002 | Juliaca | Rosa Maria Medina Mamani (EMP-011) |
+| DEP-005 | Tecnología y Sistemas | DEP-002 | Juliaca | Juan Carlos Delgado Vargas (EMP-014) |
+| DEP-006 | Auditoría y Control Interno | DEP-001 | Juliaca | Luis Fernando Paredes Rojas (EMP-012) |
+| DEP-007 | Producción | DEP-001 | Juliaca | David Alberto Huanca Espinoza (EMP-019) |
+| DEP-008 | Calidad | DEP-007 | Juliaca | Carmen Rosa Torres Delgado (EMP-029) |
+| DEP-009 | Mantenimiento | DEP-007 | Juliaca | Pedro Juan Aguilar Quispe (EMP-033) |
+| DEP-010 | Almacenes y Logística | DEP-001 | Juliaca | Miguel Angel Vargas Aguilar (EMP-038) |
+| DEP-011 | Compras y Abastecimiento | DEP-002 | Juliaca | Elena Maria Lopez Torres (EMP-046) |
+| DEP-012 | Comercial y Ventas | DEP-001 | Todas las sucursales | Jose Luis Mamani Flores (EMP-050) |
+
+---
+
+## 7. Áreas: 20 registros
+- **Modelo propuesto:** `jjsumi.area`.
+
+### 7.1 Catálogo de áreas (Datos explícitos)
+| Código | Nombre exacto | Departamento | Alcance/sucursal | Responsable Asignado |
+| :--- | :--- | :--- | :--- | :--- |
+| ARE-001 | Dirección Ejecutiva | DEP-001 | Corporativa | Carlos Quispe Mamani (EMP-001) |
+| ARE-002 | Planeamiento y Administración | DEP-002 | Corporativa | Roberto Condori Huanca (EMP-003) |
+| ARE-003 | Tesorería | DEP-003 | Corporativa | Sofia Isabel Medina Paredes (EMP-007) |
+| ARE-004 | Contabilidad | DEP-003 | Corporativa | David Alberto Huanca Espinoza (EMP-008) |
+| ARE-005 | Gestión de Personal | DEP-004 | Corporativa | Rosa Maria Medina Mamani (EMP-011) |
+| ARE-006 | Selección y Capacitación | DEP-004 | Corporativa | Marta Elena Espinoza Huanca (EMP-013) |
+| ARE-007 | Infraestructura y Soporte TI | DEP-005 | Corporativa | Juan Carlos Delgado Vargas (EMP-014) |
+| ARE-008 | Seguridad de Sistemas | DEP-005 | Corporativa | Maria Jose Quispe Flores (EMP-015) |
+| ARE-009 | Control Interno | DEP-006 | Corporativa | Luis Fernando Paredes Rojas (EMP-012) |
+| ARE-010 | Trituración y Preparación | DEP-007 | Juliaca | Fernando Alberto Huanca Rojas (EMP-018) |
+| ARE-011 | Calcinación y Molienda | DEP-007 | Juliaca | Gabriela Sofia Vargas Quispe (EMP-019) |
+| ARE-012 | Mezclado y Envasado | DEP-007 | Juliaca | Ricardo Manuel Torres Mamani (EMP-020) |
+| ARE-013 | Inspección de Materias Primas | DEP-008 | Juliaca | Carmen Rosa Torres Delgado (EMP-029) |
+| ARE-014 | Inspección de Producto Terminado | DEP-008 | Juliaca | Claudia Elena Aguilar Rojas (EMP-030) |
+| ARE-015 | Mantenimiento Mecánico y Eléctrico | DEP-009 | Juliaca | Pedro Juan Aguilar Quispe (EMP-033) |
+| ARE-016 | Almacén Central y Despacho | DEP-010 | Juliaca | Miguel Angel Vargas Aguilar (EMP-038) |
+| ARE-017 | Abastecimiento y Proveedores | DEP-011 | Corporativa | Elena Maria Lopez Torres (EMP-046) |
+| ARE-018 | Ventas y Atención al Cliente | DEP-012 | Corporativa | Jose Luis Mamani Flores (EMP-050) |
+| ARE-019 | Operaciones Comerciales de Sucursales | DEP-012 | Puno, Arequipa, Cusco, Tacna | Laura Patricia Rojas Huanca (EMP-054) |
+| ARE-020 | Distribución y Transporte | DEP-010 | Todas las sucursales | Diego Armando Paredes Huanca (EMP-043) |
+
+---
+
+## 8. Cargos: 25 registros
+- **Modelo nativo:** `hr.job`.
+
+### 8.1 Catálogo de cargos (Datos explícitos)
+| Código | Cargo exacto | Departamento |
+| :--- | :--- | :--- |
+| CAR-001 | Gerente General | DEP-001 |
+| CAR-002 | Asistente de Gerencia | DEP-001 |
+| CAR-003 | Gerente Administrativo | DEP-002 |
+| CAR-004 | Analista Administrativo | DEP-002 |
+| CAR-005 | Jefe de Finanzas | DEP-003 |
+| CAR-006 | Contador General | DEP-003 |
+| CAR-007 | Asistente Contable | DEP-003 |
+| CAR-008 | Jefe de Recursos Humanos | DEP-004 |
+| CAR-009 | Analista de Recursos Humanos | DEP-004 |
+| CAR-010 | Administrador de Sistemas | DEP-005 |
+| CAR-011 | Soporte Técnico | DEP-005 |
+| CAR-012 | Auditor Interno | DEP-006 |
+| CAR-013 | Jefe de Planta | DEP-007 |
+| CAR-014 | Supervisor de Producción | DEP-007 |
+| CAR-015 | Operario de Producción | DEP-007 |
+| CAR-016 | Inspector de Calidad | DEP-008 |
+| CAR-017 | Jefe de Mantenimiento | DEP-009 |
+| CAR-018 | Técnico de Mantenimiento | DEP-009 |
+| CAR-019 | Jefe de Almacén | DEP-010 |
+| CAR-020 | Almacenero | DEP-010 |
+| CAR-021 | Coordinador de Distribución | DEP-010 |
+| CAR-022 | Jefe de Compras | DEP-011 |
+| CAR-023 | Comprador | DEP-011 |
+| CAR-024 | Jefe Comercial | DEP-012 |
+| CAR-025 | Vendedor de Sucursal | DEP-012 |
+
+---
+
+## 9. Roles empresariales: 15 grupos
+- **Principio técnico:** Implementados mediante grupos nativos `res.groups`. Prefijo de XML IDs: `jjsumi_security.group_jjsumi_*`.
+
+### 9.1 Catálogo de roles (Datos explícitos)
+| Código | Rol | Grupo técnico | Alcance |
+| :--- | :--- | :--- | :--- |
+| ROL-001 | Administrador ERP | `group_jjsumi_admin` | Todas las sucursales |
+| ROL-002 | Gerente General | `group_jjsumi_general_manager` | Todas las sucursales |
+| ROL-003 | Gerente de Sucursal | `group_jjsumi_branch_manager` | Una branch asignada |
+| ROL-004 | Jefe de Producción | `group_jjsumi_production_manager` | Juliaca |
+| ROL-005 | Supervisor de Almacén | `group_jjsumi_warehouse_supervisor` | Branch/almacén asignado |
+| ROL-006 | Comprador | `group_jjsumi_buyer` | Corporativa |
+| ROL-007 | Vendedor | `group_jjsumi_salesperson` | Branch asignada |
+| ROL-008 | Cajero | `group_jjsumi_cashier` | POS/sucursal asignada |
+| ROL-009 | Contador | `group_jjsumi_accountant` | Corporativa |
+| ROL-010 | Responsable de RR. HH. | `group_jjsumi_hr_manager` | Corporativa |
+| ROL-011 | Técnico de Mantenimiento | `group_jjsumi_maintenance_technician` | Juliaca |
+| ROL-012 | Auditor | `group_jjsumi_auditor` | Alcance autorizado |
+| ROL-013 | Supervisor Comercial | `group_jjsumi_sales_supervisor` | Equipo/sucursales asignadas |
+| ROL-014 | Responsable de Calidad | `group_jjsumi_quality_manager` | Juliaca |
+| ROL-015 | Coordinador de Distribución | `group_jjsumi_distribution_coordinator` | Sucursales/rutas asignadas |
+
+---
+
+## 10. Usuarios internos: 40 cuentas (Datos explícitos)
+- **Modelo nativo:** `res.users`.
+- **Regla:** Idioma: Español. Zona horaria: `America/Lima`. Tipo: Internal User. Contraseña: establecida por el usuario vía invitación segura.
+
+| Código | Nombre y apellidos | Login corporativo | Correo real | Rol | Branch permitida | Empleado vinculado | Teléfono trabajo | Compañía predet. | Estado |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| USR-001 | Carlos Quispe Mamani | carlos.quispe | carlos.quispe@jjsumi.pe | ROL-001 | SEDE-001 | EMP-001 | +51 951 100 001 | JJSUMI | Activo |
+| USR-002 | Ana Lucia Flores Rojas | ana.flores | ana.flores@jjsumi.pe | ROL-001 | SEDE-001 | EMP-002 | +51 951 100 002 | JJSUMI | Activo |
+| USR-003 | Roberto Condori Huanca | roberto.condori | roberto.condori@jjsumi.pe | ROL-002 | SEDE-001 | EMP-003 | +51 951 100 003 | JJSUMI | Activo |
+| USR-004 | Jorge Luis Sanchez Vargas | jorge.sanchez | jorge.sanchez@jjsumi.pe | ROL-003 | SEDE-001 | EMP-004 | +51 951 100 004 | JJSUMI | Activo |
+| USR-005 | Elena Maria Lopez Torres | elena.lopez | elena.lopez@jjsumi.pe | ROL-003 | SEDE-002 | EMP-005 | +51 951 100 005 | JJSUMI | Activo |
+| USR-006 | Miguel Angel Vargas Aguilar | miguel.vargas | miguel.vargas@jjsumi.pe | ROL-003 | SEDE-003 | EMP-006 | +51 951 100 006 | JJSUMI | Activo |
+| USR-007 | Sofia Isabel Medina Paredes | sofia.medina | sofia.medina@jjsumi.pe | ROL-003 | SEDE-004 | EMP-007 | +51 951 100 007 | JJSUMI | Activo |
+| USR-008 | David Alberto Huanca Espinoza | david.huanca | david.huanca@jjsumi.pe | ROL-003 | SEDE-005 | EMP-008 | +51 951 100 008 | JJSUMI | Activo |
+| USR-009 | Carmen Rosa Torres Delgado | carmen.torres | carmen.torres@jjsumi.pe | ROL-004 | SEDE-001 | EMP-009 | +51 951 100 009 | JJSUMI | Activo |
+| USR-010 | Pedro Juan Aguilar Quispe | pedro.aguilar | pedro.aguilar@jjsumi.pe | ROL-005 | SEDE-001 | EMP-010 | +51 951 100 010 | JJSUMI | Activo |
+| USR-011 | Rosa Maria Medina Mamani | rosa.medina | rosa.medina@jjsumi.pe | ROL-005 | SEDE-001 | EMP-011 | +51 951 100 011 | JJSUMI | Activo |
+| USR-012 | Luis Fernando Paredes Rojas | luis.paredes | luis.paredes@jjsumi.pe | ROL-005 | SEDE-001 | EMP-012 | +51 951 100 012 | JJSUMI | Activo |
+| USR-013 | Marta Elena Espinoza Huanca | marta.espinoza | marta.espinoza@jjsumi.pe | ROL-005 | SEDE-001 | EMP-013 | +51 951 100 013 | JJSUMI | Activo |
+| USR-014 | Juan Carlos Delgado Vargas | juan.delgado | juan.delgado@jjsumi.pe | ROL-005 | SEDE-001 | EMP-014 | +51 951 100 014 | JJSUMI | Activo |
+| USR-015 | Maria Jose Quispe Flores | maria.quispe | maria.quispe@jjsumi.pe | ROL-006 | SEDE-001 | EMP-015 | +51 951 100 015 | JJSUMI | Activo |
+| USR-016 | Jose Luis Mamani Flores | jose.mamani | jose.mamani@jjsumi.pe | ROL-006 | SEDE-001 | EMP-016 | +51 951 100 016 | JJSUMI | Activo |
+| USR-017 | Laura Patricia Rojas Huanca | laura.rojas | laura.rojas@jjsumi.pe | ROL-007 | SEDE-001 | EMP-017 | +51 951 100 017 | JJSUMI | Activo |
+| USR-018 | Fernando Alberto Huanca Rojas | fernando.huanca | fernando.huanca@jjsumi.pe | ROL-007 | SEDE-002 | EMP-018 | +51 951 100 018 | JJSUMI | Activo |
+| USR-019 | Gabriela Sofia Vargas Quispe | gabriela.vargas | gabriela.vargas@jjsumi.pe | ROL-007 | SEDE-003 | EMP-019 | +51 951 100 019 | JJSUMI | Activo |
+| USR-020 | Ricardo Manuel Torres Mamani | ricardo.torres | ricardo.torres@jjsumi.pe | ROL-007 | SEDE-004 | EMP-020 | +51 951 100 020 | JJSUMI | Activo |
+| USR-021 | Claudia Elena Aguilar Rojas | claudia.aguilar | claudia.aguilar@jjsumi.pe | ROL-007 | SEDE-005 | EMP-021 | +51 951 100 021 | JJSUMI | Activo |
+| USR-022 | Diego Armando Paredes Huanca | diego.paredes | diego.paredes@jjsumi.pe | ROL-008 | SEDE-001 | EMP-022 | +51 951 100 022 | JJSUMI | Activo |
+| USR-023 | Veronica Isabel Espinoza Vargas | veronica.espinoza | veronica.espinoza@jjsumi.pe | ROL-008 | SEDE-002 | EMP-023 | +51 951 100 023 | JJSUMI | Activo |
+| USR-024 | Alejandro Jose Delgado Torres | alejandro.delgado | alejandro.delgado@jjsumi.pe | ROL-008 | SEDE-003 | EMP-024 | +51 951 100 024 | JJSUMI | Activo |
+| USR-025 | Patricia Rosa Quispe Aguilar | patricia.quispe | patricia.quispe@jjsumi.pe | ROL-008 | SEDE-004 | EMP-025 | +51 951 100 025 | JJSUMI | Activo |
+| USR-026 | Raul Alberto Mamani Paredes | raul.mamani | raul.mamani@jjsumi.pe | ROL-008 | SEDE-005 | EMP-026 | +51 951 100 026 | JJSUMI | Activo |
+| USR-027 | Silvia Maria Rojas Huanca | silvia.rojas | silvia.rojas@jjsumi.pe | ROL-008 | SEDE-001 | EMP-027 | +51 951 100 027 | JJSUMI | Activo |
+| USR-028 | Hector Luis Vargas Torres | hector.vargas | hector.vargas@jjsumi.pe | ROL-008 | SEDE-002 | EMP-028 | +51 951 100 028 | JJSUMI | Activo |
+| USR-029 | Diana Carolina Torres Quispe | diana.torres | diana.torres@jjsumi.pe | ROL-008 | SEDE-003 | EMP-029 | +51 951 100 029 | JJSUMI | Activo |
+| USR-030 | Francisco Javier Aguilar Mamani | francisco.aguilar | francisco.aguilar@jjsumi.pe | ROL-009 | SEDE-001 | EMP-030 | +51 951 100 030 | JJSUMI | Activo |
+| USR-031 | Beatriz Elena Paredes Rojas | beatriz.paredes | beatriz.paredes@jjsumi.pe | ROL-010 | SEDE-001 | EMP-031 | +51 951 100 031 | JJSUMI | Activo |
+| USR-032 | Oscar Ricardo Huanca Vargas | oscar.huanca | oscar.huanca@jjsumi.pe | ROL-011 | SEDE-001 | EMP-032 | +51 951 100 032 | JJSUMI | Activo |
+| USR-033 | Natalia Sofia Espinoza Torres | natalia.espinoza | natalia.espinoza@jjsumi.pe | ROL-012 | SEDE-001 | EMP-033 | +51 951 100 033 | JJSUMI | Activo |
+| USR-034 | Victor Manuel Delgado Quispe | victor.delgado | victor.delgado@jjsumi.pe | ROL-013 | SEDE-001 | EMP-034 | +51 951 100 034 | JJSUMI | Activo |
+| USR-035 | Andrea Lucia Aguilar Mamani | andrea.aguilar | andrea.aguilar@jjsumi.pe | ROL-014 | SEDE-001 | EMP-035 | +51 951 100 035 | JJSUMI | Activo |
+| USR-036 | Sergio Alberto Paredes Rojas | sergio.paredes | sergio.paredes@jjsumi.pe | ROL-015 | SEDE-001 | EMP-036 | +51 951 100 036 | JJSUMI | Activo |
+| USR-037 | Monica Isabel Huanca Vargas | monica.huanca | monica.huanca@jjsumi.pe | ROL-007 | SEDE-001 | EMP-037 | +51 951 100 037 | JJSUMI | Activo |
+| USR-038 | Eduardo Jose Torres Delgado | eduardo.torres | eduardo.torres@jjsumi.pe | ROL-007 | SEDE-001 | EMP-038 | +51 951 100 038 | JJSUMI | Activo |
+| USR-039 | Daniela Rosa Quispe Aguilar | daniela.quispe | daniela.quispe@jjsumi.pe | ROL-007 | SEDE-001 | EMP-039 | +51 951 100 039 | JJSUMI | Activo |
+| USR-040 | Gustavo Luis Mamani Paredes | gustavo.mamani | gustavo.mamani@jjsumi.pe | ROL-007 | SEDE-001 | EMP-040 | +51 951 100 040 | JJSUMI | Activo |
+
+---
+
+## 11. Empleados: 65 expedientes (Datos explícitos)
+- **Modelo nativo:** `hr.employee`.
+- **Regla:** Los primeros 40 se vinculan a las cuentas de usuario anteriores. Los 25 restantes no tienen cuenta de acceso en esta fase. Estado laboral: "Activo".
+
+| Código | Nombre real y apellidos | Departamento | Área | Cargo | Branch / sede | Responsable | Usuario vinculado | Correo laboral | Teléfono laboral | Estado |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| EMP-001 | Carlos Quispe Mamani | DEP-001 | ARE-001 | CAR-001 | SEDE-001 | — | USR-001 | carlos.quispe@jjsumi.pe | +51 951 100 001 | Activo |
+| EMP-002 | Ana Lucia Flores Rojas | DEP-001 | ARE-001 | CAR-002 | SEDE-001 | EMP-001 | USR-002 | ana.flores@jjsumi.pe | +51 951 100 002 | Activo |
+| EMP-003 | Roberto Condori Huanca | DEP-002 | ARE-002 | CAR-003 | SEDE-001 | EMP-001 | USR-003 | roberto.condori@jjsumi.pe | +51 951 100 003 | Activo |
+| EMP-004 | Jorge Luis Sanchez Vargas | DEP-002 | ARE-002 | CAR-004 | SEDE-001 | EMP-003 | USR-004 | jorge.sanchez@jjsumi.pe | +51 951 100 004 | Activo |
+| EMP-005 | Elena Maria Lopez Torres | DEP-002 | ARE-002 | CAR-004 | SEDE-002 | EMP-003 | USR-005 | elena.lopez@jjsumi.pe | +51 951 100 005 | Activo |
+| EMP-006 | Miguel Angel Vargas Aguilar | DEP-002 | ARE-002 | CAR-004 | SEDE-003 | EMP-003 | USR-006 | miguel.vargas@jjsumi.pe | +51 951 100 006 | Activo |
+| EMP-007 | Sofia Isabel Medina Paredes | DEP-003 | ARE-003 | CAR-005 | SEDE-001 | EMP-003 | USR-007 | sofia.medina@jjsumi.pe | +51 951 100 007 | Activo |
+| EMP-008 | David Alberto Huanca Espinoza | DEP-003 | ARE-004 | CAR-006 | SEDE-001 | EMP-007 | USR-008 | david.huanca@jjsumi.pe | +51 951 100 008 | Activo |
+| EMP-009 | Carmen Rosa Torres Delgado | DEP-003 | ARE-004 | CAR-007 | SEDE-001 | EMP-008 | USR-009 | carmen.torres@jjsumi.pe | +51 951 100 009 | Activo |
+| EMP-010 | Pedro Juan Aguilar Quispe | DEP-003 | ARE-004 | CAR-007 | SEDE-001 | EMP-008 | USR-010 | pedro.aguilar@jjsumi.pe | +51 951 100 010 | Activo |
+| EMP-011 | Rosa Maria Medina Mamani | DEP-004 | ARE-005 | CAR-008 | SEDE-001 | EMP-003 | USR-011 | rosa.medina@jjsumi.pe | +51 951 100 011 | Activo |
+| EMP-012 | Luis Fernando Paredes Rojas | DEP-004 | ARE-005 | CAR-009 | SEDE-001 | EMP-011 | USR-012 | luis.paredes@jjsumi.pe | +51 951 100 012 | Activo |
+| EMP-013 | Marta Elena Espinoza Huanca | DEP-004 | ARE-005 | CAR-009 | SEDE-001 | EMP-011 | USR-013 | marta.espinoza@jjsumi.pe | +51 951 100 013 | Activo |
+| EMP-014 | Juan Carlos Delgado Vargas | DEP-005 | ARE-007 | CAR-010 | SEDE-001 | EMP-003 | USR-014 | juan.delgado@jjsumi.pe | +51 951 100 014 | Activo |
+| EMP-015 | Maria Jose Quispe Flores | DEP-005 | ARE-007 | CAR-011 | SEDE-001 | EMP-014 | USR-015 | maria.quispe@jjsumi.pe | +51 951 100 015 | Activo |
+| EMP-016 | Jose Luis Mamani Flores | DEP-005 | ARE-007 | CAR-011 | SEDE-001 | EMP-014 | USR-016 | jose.mamani@jjsumi.pe | +51 951 100 016 | Activo |
+| EMP-017 | Laura Patricia Rojas Huanca | DEP-006 | ARE-009 | CAR-012 | SEDE-001 | EMP-001 | USR-017 | laura.rojas@jjsumi.pe | +51 951 100 017 | Activo |
+| EMP-018 | Fernando Alberto Huanca Rojas | DEP-006 | ARE-009 | CAR-012 | SEDE-001 | EMP-017 | USR-018 | fernando.huanca@jjsumi.pe | +51 951 100 018 | Activo |
+| EMP-019 | Gabriela Sofia Vargas Quispe | DEP-007 | ARE-010 | CAR-013 | SEDE-001 | EMP-001 | USR-019 | gabriela.vargas@jjsumi.pe | +51 951 100 019 | Activo |
+| EMP-020 | Ricardo Manuel Torres Mamani | DEP-007 | ARE-010 | CAR-014 | SEDE-001 | EMP-019 | USR-020 | ricardo.torres@jjsumi.pe | +51 951 100 020 | Activo |
+| EMP-021 | Claudia Elena Aguilar Rojas | DEP-007 | ARE-010 | CAR-014 | SEDE-001 | EMP-019 | USR-021 | claudia.aguilar@jjsumi.pe | +51 951 100 021 | Activo |
+| EMP-022 | Diego Armando Paredes Huanca | DEP-007 | ARE-010 | CAR-015 | SEDE-001 | EMP-020 | USR-022 | diego.paredes@jjsumi.pe | +51 951 100 022 | Activo |
+| EMP-023 | Veronica Isabel Espinoza Vargas | DEP-007 | ARE-010 | CAR-015 | SEDE-001 | EMP-020 | USR-023 | veronica.espinoza@jjsumi.pe | +51 951 100 023 | Activo |
+| EMP-024 | Alejandro Jose Delgado Torres | DEP-007 | ARE-010 | CAR-015 | SEDE-001 | EMP-020 | USR-024 | alejandro.delgado@jjsumi.pe | +51 951 100 024 | Activo |
+| EMP-025 | Patricia Rosa Quispe Aguilar | DEP-007 | ARE-011 | CAR-015 | SEDE-001 | EMP-019 | USR-025 | patricia.quispe@jjsumi.pe | +51 951 100 025 | Activo |
+| EMP-026 | Raul Alberto Mamani Paredes | DEP-007 | ARE-011 | CAR-015 | SEDE-001 | EMP-019 | USR-026 | raul.mamani@jjsumi.pe | +51 951 100 026 | Activo |
+| EMP-027 | Silvia Maria Rojas Huanca | DEP-007 | ARE-012 | CAR-015 | SEDE-001 | EMP-020 | USR-027 | silvia.rojas@jjsumi.pe | +51 951 100 027 | Activo |
+| EMP-028 | Hector Luis Vargas Torres | DEP-007 | ARE-012 | CAR-015 | SEDE-001 | EMP-020 | USR-028 | hector.vargas@jjsumi.pe | +51 951 100 028 | Activo |
+| EMP-029 | Diana Carolina Torres Quispe | DEP-008 | ARE-013 | CAR-016 | SEDE-001 | EMP-019 | USR-029 | diana.torres@jjsumi.pe | +51 951 100 029 | Activo |
+| EMP-030 | Francisco Javier Aguilar Mamani | DEP-008 | ARE-014 | CAR-016 | SEDE-001 | EMP-021 | USR-030 | francisco.aguilar@jjsumi.pe | +51 951 100 030 | Activo |
+| EMP-031 | Beatriz Elena Paredes Rojas | DEP-008 | ARE-014 | CAR-016 | SEDE-001 | EMP-021 | USR-031 | beatriz.paredes@jjsumi.pe | +51 951 100 031 | Activo |
+| EMP-032 | Oscar Ricardo Huanca Vargas | DEP-008 | ARE-014 | CAR-016 | SEDE-001 | EMP-021 | USR-032 | oscar.huanca@jjsumi.pe | +51 951 100 032 | Activo |
+| EMP-033 | Natalia Sofia Espinoza Torres | DEP-009 | ARE-015 | CAR-017 | SEDE-001 | EMP-019 | USR-033 | natalia.espinoza@jjsumi.pe | +51 951 100 033 | Activo |
+| EMP-034 | Victor Manuel Delgado Quispe | DEP-009 | ARE-015 | CAR-018 | SEDE-001 | EMP-033 | USR-034 | victor.delgado@jjsumi.pe | +51 951 100 034 | Activo |
+| EMP-035 | Andrea Lucia Aguilar Mamani | DEP-009 | ARE-015 | CAR-018 | SEDE-001 | EMP-033 | USR-035 | andrea.aguilar@jjsumi.pe | +51 951 100 035 | Activo |
+| EMP-036 | Sergio Alberto Paredes Rojas | DEP-009 | ARE-015 | CAR-018 | SEDE-001 | EMP-033 | USR-036 | sergio.paredes@jjsumi.pe | +51 951 100 036 | Activo |
+| EMP-037 | Monica Isabel Huanca Vargas | DEP-009 | ARE-015 | CAR-018 | SEDE-001 | EMP-033 | USR-037 | monica.huanca@jjsumi.pe | +51 951 100 037 | Activo |
+| EMP-038 | Eduardo Jose Torres Delgado | DEP-010 | ARE-016 | CAR-019 | SEDE-001 | EMP-001 | USR-038 | eduardo.torres@jjsumi.pe | +51 951 100 038 | Activo |
+| EMP-039 | Daniela Rosa Quispe Aguilar | DEP-010 | ARE-016 | CAR-020 | SEDE-001 | EMP-038 | USR-039 | daniela.quispe@jjsumi.pe | +51 951 100 039 | Activo |
+| EMP-040 | Gustavo Luis Mamani Paredes | DEP-010 | ARE-016 | CAR-020 | SEDE-001 | EMP-038 | USR-040 | gustavo.mamani@jjsumi.pe | +51 951 100 040 | Activo |
+| EMP-041 | Valeria Elena Rojas Huanca | DEP-010 | ARE-016 | CAR-020 | SEDE-001 | EMP-038 | Sin usuario | valeria.rojas@jjsumi.pe | +51 951 100 041 | Activo |
+| EMP-042 | Andres Felipe Vargas Torres | DEP-010 | ARE-016 | CAR-020 | SEDE-001 | EMP-038 | Sin usuario | andres.vargas@jjsumi.pe | +51 951 100 042 | Activo |
+| EMP-043 | Camila Sofia Delgado Quispe | DEP-010 | ARE-020 | CAR-021 | SEDE-001 | EMP-038 | Sin usuario | camila.delgado@jjsumi.pe | +51 951 100 043 | Activo |
+| EMP-044 | Nicolas Alberto Aguilar Mamani | DEP-010 | ARE-020 | CAR-021 | SEDE-001 | EMP-038 | Sin usuario | nicolas.aguilar@jjsumi.pe | +51 951 100 044 | Activo |
+| EMP-045 | Fernanda Maria Paredes Rojas | DEP-010 | ARE-020 | CAR-021 | SEDE-001 | EMP-038 | Sin usuario | fernanda.paredes@jjsumi.pe | +51 951 100 045 | Activo |
+| EMP-046 | Sebastian Luis Huanca Vargas | DEP-011 | ARE-017 | CAR-022 | SEDE-001 | EMP-003 | Sin usuario | sebastian.huanca@jjsumi.pe | +51 951 100 046 | Activo |
+| EMP-047 | Antonia Rosa Espinoza Torres | DEP-011 | ARE-017 | CAR-023 | SEDE-001 | EMP-046 | Sin usuario | antonia.espinoza@jjsumi.pe | +51 951 100 047 | Activo |
+| EMP-048 | Mateo Jose Delgado Quispe | DEP-011 | ARE-017 | CAR-023 | SEDE-001 | EMP-046 | Sin usuario | mateo.delgado@jjsumi.pe | +51 951 100 048 | Activo |
+| EMP-049 | Isabella Lucia Aguilar Mamani | DEP-011 | ARE-017 | CAR-023 | SEDE-001 | EMP-046 | Sin usuario | isabella.aguilar@jjsumi.pe | +51 951 100 049 | Activo |
+| EMP-050 | Tomas Alberto Paredes Rojas | DEP-012 | ARE-018 | CAR-024 | SEDE-001 | EMP-001 | Sin usuario | tomas.paredes@jjsumi.pe | +51 951 100 050 | Activo |
+| EMP-051 | Valentina Elena Huanca Vargas | DEP-012 | ARE-018 | CAR-025 | SEDE-001 | EMP-050 | Sin usuario | valentina.huanca@jjsumi.pe | +51 951 100 051 | Activo |
+| EMP-052 | Benjamin Luis Torres Delgado | DEP-012 | ARE-018 | CAR-025 | SEDE-001 | EMP-050 | Sin usuario | benjamin.torres@jjsumi.pe | +51 951 100 052 | Activo |
+| EMP-053 | Mariana Sofia Quispe Aguilar | DEP-012 | ARE-018 | CAR-025 | SEDE-001 | EMP-050 | Sin usuario | mariana.quispe@jjsumi.pe | +51 951 100 053 | Activo |
+| EMP-054 | Julian Alberto Mamani Paredes | DEP-012 | ARE-019 | CAR-025 | SEDE-002 | EMP-050 | Sin usuario | julian.mamani@jjsumi.pe | +51 951 100 054 | Activo |
+| EMP-055 | Emilia Rosa Rojas Huanca | DEP-012 | ARE-019 | CAR-025 | SEDE-002 | EMP-050 | Sin usuario | emilia.rojas@jjsumi.pe | +51 951 100 055 | Activo |
+| EMP-056 | Leonardo Jose Vargas Torres | DEP-012 | ARE-019 | CAR-025 | SEDE-003 | EMP-050 | Sin usuario | leonardo.vargas@jjsumi.pe | +51 951 100 056 | Activo |
+| EMP-057 | Luciana Elena Delgado Quispe | DEP-012 | ARE-019 | CAR-025 | SEDE-003 | EMP-050 | Sin usuario | luciana.delgado@jjsumi.pe | +51 951 100 057 | Activo |
+| EMP-058 | Santiago Luis Aguilar Mamani | DEP-012 | ARE-019 | CAR-025 | SEDE-004 | EMP-050 | Sin usuario | santiago.aguilar@jjsumi.pe | +51 951 100 058 | Activo |
+| EMP-059 | Catalina Maria Paredes Rojas | DEP-012 | ARE-019 | CAR-025 | SEDE-004 | EMP-050 | Sin usuario | catalina.paredes@jjsumi.pe | +51 951 100 059 | Activo |
+| EMP-060 | Maximiliano Alberto Huanca Vargas | DEP-012 | ARE-019 | CAR-025 | SEDE-005 | EMP-050 | Sin usuario | maximiliano.huanca@jjsumi.pe | +51 951 100 060 | Activo |
+| EMP-061 | Renata Sofia Espinoza Torres | DEP-012 | ARE-019 | CAR-025 | SEDE-005 | EMP-050 | Sin usuario | renata.espinoza@jjsumi.pe | +51 951 100 061 | Activo |
+| EMP-062 | Agustin Jose Delgado Quispe | DEP-007 | ARE-012 | CAR-015 | SEDE-001 | EMP-020 | Sin usuario | agustin.delgado@jjsumi.pe | +51 951 100 062 | Activo |
+| EMP-063 | Victoria Lucia Aguilar Mamani | DEP-007 | ARE-012 | CAR-015 | SEDE-001 | EMP-020 | Sin usuario | victoria.aguilar@jjsumi.pe | +51 951 100 063 | Activo |
+| EMP-064 | Emiliano Alberto Paredes Rojas | DEP-008 | ARE-014 | CAR-016 | SEDE-001 | EMP-021 | Sin usuario | emiliano.paredes@jjsumi.pe | +51 951 100 064 | Activo |
+| EMP-065 | Antonella Elena Huanca Vargas | DEP-010 | ARE-016 | CAR-020 | SEDE-001 | EMP-038 | Sin usuario | antonella.huanca@jjsumi.pe | +51 951 100 065 | Activo |
+
+---
+
+## 12. Menús y formularios CORE
+### 12.1 Entrada desde la pantalla JJSUMI por cards
+Tarjeta `CORE` → menú `CORE / Gobierno empresarial`.
+1. **Panel CORE**
+2. **Organización:** Compañía, Sucursales, Departamentos, Áreas, Cargos, Organigrama.
+3. **Personal:** Empleados, Empleados sin usuario, Empleados con usuario.
+4. **Accesos:** Usuarios, Roles empresariales, Grupos técnicos, Matriz de permisos.
+5. **Gobierno:** Solicitudes de aprobación, Reglas de aprobación, Delegaciones.
+6. **Auditoría:** Eventos, Cambios de configuración, Accesos administrativos.
+7. **Parámetros:** Parámetros generales, Secuencias CORE, Catálogos auxiliares.
+
+---
+
+## 13. Aprobaciones y Auditoría
+- **Solicitudes CORE:** APR-001 a APR-010 definidas para alta de usuarios, cambios de rol, alta de empleados, cambios de departamento/sucursal/cargo, bajas y excepciones de acceso.
+- **Estados:** `Borrador → Enviada → En revisión → Aprobada / Rechazada → Ejecutada / Cancelada`.
+- **Auditoría:** Modelo `jjsumi.audit.event` con tracking nativo (`mail.thread`) para registrar actor, fecha, operación, registro y motivo. Sin edición ni eliminación por usuarios funcionales.
+
+---
+
+## 14. Parámetros empresariales CORE
+| Parámetro | Valor inicial de diseño |
+| :--- | :--- |
+| Empresa principal | JJSUMI S.A.C. |
+| País | Perú |
+| Idioma por defecto | Español |
+| Zona horaria | America/Lima |
+| Dominio de correo corporativo | jjsumi.pe |
+| Prefijo de códigos | JJS |
+| Prefijo de empleados | EMP- |
+| Prefijo de sucursales | SEDE- |
+| Prefijo de departamentos | DEP- |
+| Prefijo de áreas | ARE- |
+| Prefijo de cargos | CAR- |
+| Prefijo de aprobaciones | APR- |
+
+---
+
+## 15. Addons y dependencias técnicas
+- **Nativo Odoo:** `base`, `web`, `hr`, `mail`.
+- **Addons propios candidatos:** `jjsumi_core`, `jjsumi_branches`, `jjsumi_org`, `jjsumi_security`, `jjsumi_approvals`, `jjsumi_audit`, `jjsumi_home_cards`.
+
+---
+
+## 16. Validaciones y reglas de negocio
+1. No duplicar nombre/código de branch.
+2. Toda branch debe tener como matriz a la compañía JJSUMI.
+3. Un departamento no puede ser padre de sí mismo ni crear ciclos.
+4. Un área debe pertenecer a un departamento. El código de área es único.
+5. Un cargo debe pertenecer a un departamento.
+6. Un empleado debe tener código único, departamento y cargo.
+7. Un usuario debe tener login único y vincularse a un empleado sin duplicados.
+8. Un usuario de branch no debe ver registros de otra branch si no tiene permiso.
+9. Un solicitante no aprueba su propia solicitud.
+10. Registros maestros usados se archivan; no se eliminan.
+11. No se almacenan contraseñas en addons, CSV, documentación ni logs.
+
+---
+
+## 17. Orden exacto de implementación
+1. Ejecutar auditoría de Fase 0 en modo lectura.
+2. Crear y verificar backup de PostgreSQL y filestore; probar restauración.
+3. Inventariar addons existentes y dependencias.
+4. Verificar Branches nativo de Odoo 19 y compatibilidad.
+5. Revisar la compañía JJSUMI existente y congelar sus datos legales.
+6. Diseñar la carga idempotente.
+7. Implementar estructura de sucursales en entorno de validación.
+8. Implementar departamentos.
+9. Implementar addon de áreas y campos de relación.
+10. Configurar cargos.
+11. Crear grupos/roles y ACL.
+12. Implementar reglas de registro y probarlas.
+13. Implementar auditoría y aprobaciones CORE.
+14. Crear empleados y usuarios (sin enviar invitaciones automáticas).
+15. Vincular usuarios y empleados.
+16. Integrar menú CORE en el inicio por cards.
+17. Ejecutar las 25 pruebas funcionales y de seguridad.
+18. Presentar resultados para aprobación.
+19. Desplegar en la base existente solo con autorización explícita y backup verificado.
+
+---
+
+## 18. Distribución de control y validación de cantidades
+| Catálogo | Cantidad exacta | Rango/códigos | Validación |
+| :--- | :--- | :--- | :--- |
+| Branches | 5 | SEDE-001…SEDE-005 | Todas subordinadas a JJSUMI |
+| Departamentos | 12 | DEP-001…DEP-012 | Código único; jerarquía sin ciclos |
+| Áreas | 20 | ARE-001…ARE-020 | Departamento obligatorio; código único |
+| Cargos | 25 | CAR-001…CAR-025 | Departamento obligatorio; código único |
+| Roles | 15 | ROL-001…ROL-015 | Grupo técnico único y permisos probados |
+| Usuarios | 40 | USR-001…USR-040 | Una cuenta por persona real autorizada |
+| Empleados | 65 | EMP-001…EMP-065 | Una ficha por persona real del padrón |
+
+**Regla de aceptación final:** El diseño organizacional y las asignaciones funcionales están completos en este documento. La creación efectiva en Odoo se realizará mediante carga masiva (CSV/XML) utilizando exactamente los valores aquí especificados, garantizando la integridad referencial entre departamentos, áreas, cargos, empleados y usuarios.

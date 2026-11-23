@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="sale_order_form_jjsumi_descuento" model="ir.ui.view">
+        <field name="name">sale.order.form.jjsumi.descuento</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_jjsumi_aprobar_descuento" type="object" string="Aprobar descuento JJSUMI"
+                        class="btn-primary"
+                        invisible="jjsumi_aprobacion_requerida == 'ninguna' or jjsumi_aprobado or state not in ('draft', 'sent')"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Descuento y aprobación JJSUMI" name="jjsumi_descuento">
+                    <group>
+                        <group>
+                            <field name="jjsumi_descuento_max"/>
+                            <field name="jjsumi_aprobacion_requerida"/>
+                        </group>
+                        <group>
+                            <field name="jjsumi_aprobado"/>
+                            <field name="jjsumi_descuento_aprobado"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert"
+                         invisible="jjsumi_aprobacion_requerida == 'ninguna'">
+                        Descuentos &gt;5% requieren supervisor comercial; &gt;15% requieren gerente general.
+                        El solicitante no puede aprobar su propio descuento.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_team_form_jjsumi_comision" model="ir.ui.view">
+        <field name="name">crm.team.form.jjsumi.comision</field>
+        <field name="model">crm.team</field>
+        <field name="inherit_id" ref="sales_team.crm_team_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="JJSUMI">
+                    <field name="x_jjsumi_comision_pct"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="pos_order_form_jjsumi_autorizacion" model="ir.ui.view">
+        <field name="name">pos.order.form.jjsumi.autorizacion</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="x_jjsumi_autorizado_por"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

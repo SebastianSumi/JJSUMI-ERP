@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_jjsumi_n8n" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.jjsumi.n8n</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='general_settings']" position="inside">
+                <block title="Integración n8n (JJSUMI)" name="jjsumi_n8n_settings">
+                    <setting id="jjsumi_n8n_setting"
+                             string="Webhooks hacia n8n"
+                             help="Envía eventos de Ventas confirmadas, aprobación de descuentos y nuevas oportunidades CRM a n8n.">
+                        <field name="jjsumi_n8n_enabled"/>
+                        <div class="content-group mt-2" invisible="not jjsumi_n8n_enabled">
+                            <div class="row mt-1">
+                                <label for="jjsumi_n8n_webhook_url" class="col-lg-3 o_light_label"/>
+                                <field name="jjsumi_n8n_webhook_url" placeholder="http://127.0.0.1:5678/webhook/jjsumi-odoo"/>
+                            </div>
+                            <div class="row mt-1">
+                                <label for="jjsumi_n8n_secret" class="col-lg-3 o_light_label"/>
+                                <field name="jjsumi_n8n_secret" password="True" placeholder="Opcional: cabecera X-JJSUMI-Secret"/>
+                            </div>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_jjsumi" model="ir.ui.view">
+        <field name="name">res.users.form.jjsumi</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']" position="after">
+                <page name="jjsumi" string="JJSUMI">
+                    <group>
+                        <group string="Sede y roles">
+                            <field name="jjsumi_sede_id"/>
+                            <field name="jjsumi_role_codes"/>
+                        </group>
+                    </group>
+                    <p invisible="not jjsumi_role_codes">
+                        Los grupos de seguridad JJSUMI se aplican al guardar a partir de los códigos de rol.
+                    </p>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

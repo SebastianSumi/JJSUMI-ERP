@@ -1,0 +1,1184 @@
+# JJSUMI ERP — FASE 02: CATÁLOGO MAESTRO DE PRODUCTOS Y SERVICIOS
+**Especificación funcional, de datos, interfaz, seguridad y pruebas**
+**Plataforma objetivo:** Odoo 19 Community
+**Base existente:** `jjsumi` — protegida
+**Estado:** Diseño aprobado para implementación
+**Versión del documento:** 2.1 (Detalle completo)
+**Fecha:** 18 de noviembre de 2026
+
+---
+
+## 0. Reglas obligatorias de la Fase 02
+
+1. Utilizar exclusivamente los modelos nativos de Odoo: `product.category`, `product.template`, `product.product`, `uom.uom`, `uom.category`, `product.pricelist`, `product.supplierinfo`, `product.attribute`, `product.attribute.value`, `account.tax`, `product.tag`, `stock.location`, `stock.warehouse`, `stock.route`.
+2. No crear modelos paralelos para productos. Las extensiones se harán mediante campos personalizados (`x_jjsumi_*`) solo si son estrictamente necesarios.
+3. Cada producto tendrá un código interno (SKU) único e inmutable.
+4. Los códigos de barras seguirán el estándar EAN-13 (prefijo 775 para Perú), sin duplicados.
+5. Los costos y precios están expresados en Soles (PEN), sin impuestos incluidos en el precio base.
+6. No se eliminarán productos que hayan tenido movimiento; se archivarán (`active = False`).
+7. Las imágenes de productos serán referencias a archivos placeholder rotos (`/web/static/img/placeholder.png`) hasta que JJSUMI entregue las imágenes reales.
+8. Todos los productos tendrán datos técnicos (descripción, especificaciones, composición, peso, dimensiones).
+9. Todos los productos de materia prima y productos terminados de fabricación tendrán seguimiento por lotes.
+10. Los proveedores relacionados se cargarán en la pestaña "Proveedores" del producto.
+
+---
+
+## 1. Objetivo
+
+Centralizar la información comercial y técnica que utilizarán Ventas, Compras, Inventario, POS y Fabricación, en un catálogo único, coherente y poblado.
+
+### 1.1 Cantidades de diseño
+
+| Entidad | Cantidad |
+| :--- | :--- |
+| Categorías | 6 |
+| Productos (templates) | 120 |
+| Variantes (product.product) | 145 |
+| Atributos | 4 |
+| Valores de atributo | 12 |
+| Unidades de medida | 8 |
+| Listas de precios | 5 |
+| Impuestos de prueba | 3 |
+| Proveedores relacionados | 35 |
+| Imágenes placeholder | 120 |
+| Etiquetas de producto | 10 |
+| Rutas de abastecimiento | 4 |
+| Reglas de reposición | 25 |
+| Ubicaciones de almacén | 45 |
+
+### 1.2 Entregable
+
+- Catálogo maestro único y coherente.
+- 6 categorías jerárquicas con método de costo definido.
+- 120 productos con datos completos (técnicos, comerciales, operativos).
+- Variantes y presentaciones gestionadas.
+- Costos, precios y tarifas.
+- Proveedores asociados con precios, plazos y cantidades mínimas.
+- Datos técnicos e imágenes (placeholder).
+- Reglas de seguimiento por lotes.
+- Impuestos de prueba.
+- Listas de precios con reglas matemáticas.
+- Validación de importación.
+
+---
+
+## 2. Aplicaciones nativas utilizadas
+
+| Aplicación nativa | Modelo | Uso en JJSUMI |
+| :--- | :--- | :--- |
+| `product` | `product.category` | Clasificación jerárquica |
+| `product` | `product.template` | Definición del producto |
+| `product` | `product.product` | Variantes |
+| `product` | `product.attribute` | Atributos para variantes |
+| `product` | `product.supplierinfo` | Proveedores por producto |
+| `product` | `product.pricelist` | Tarifas comerciales |
+| `product` | `product.tag` | Etiquetas |
+| `uom` | `uom.uom` | Unidades de medida |
+| `uom` | `uom.category` | Categorías de UoM |
+| `contacts` | `res.partner` | Proveedores |
+| `stock` | `stock.warehouse` | Almacenes |
+| `stock` | `stock.location` | Ubicaciones |
+| `stock` | `stock.route` | Rutas de abastecimiento |
+| `account` | `account.tax` | Impuestos de prueba |
+
+---
+
+## 3. Categorías de productos (6) — Detalle completo
+
+### 3.1 Estructura jerárquica
+
+```
+All / Todos los productos (All Products)
+    │
+    ├── CAT-YES  Yesos de Construcción
+    ├── CAT-PLA  Placas y Derivados
+    ├── CAT-DEC  Productos Decorativos
+    ├── CAT-MAS  Masillas y Mezclas
+    ├── CAT-MAT  Materias Primas
+    └── CAT-HER  Herramientas y Accesorios
+```
+
+### 3.2 Configuración completa de cada categoría
+
+| Campo | CAT-YES | CAT-PLA | CAT-DEC | CAT-MAS | CAT-MAT | CAT-HER |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Código** | CAT-YES | CAT-PLA | CAT-DEC | CAT-MAS | CAT-MAT | CAT-HER |
+| **Nombre** | Yesos de Construcción | Placas y Derivados | Productos Decorativos | Masillas y Mezclas | Materias Primas | Herramientas y Accesorios |
+| **Categoría padre** | All Products | All Products | All Products | All Products | All Products | All Products |
+| **complete_name** | All / Yesos de Construcción | All / Placas y Derivados | All / Productos Decorativos | All / Masillas y Mezclas | All / Materias Primas | All / Herramientas y Accesorios |
+| **cost_method** | average (AVCO) | average (AVCO) | standard | average (AVCO) | average (AVCO) | standard |
+| **valuation** | manual_periodic | manual_periodic | manual_periodic | manual_periodic | manual_periodic | manual_periodic |
+| **removal_strategy** | fifo | fifo | fifo | fifo | fifo | fifo |
+| **route_ids** | Buy, Manufacture | Buy | Buy | Buy, Manufacture | Buy | Buy |
+| **account_stock_valuation** | 201100 | 201200 | 201300 | 201400 | 201500 | 201600 |
+| **account_stock_input** | 201101 | 201201 | 201301 | 201401 | 201501 | 201601 |
+| **account_stock_output** | 201102 | 201202 | 201302 | 201402 | 201502 | 201602 |
+| **account_journal** | Inventario | Inventario | Inventario | Inventario | Inventario | Inventario |
+| **company_id** | JJSUMI | JJSUMI | JJSUMI | JJSUMI | JJSUMI | JJSUMI |
+| **active** | Sí | Sí | Sí | Sí | Sí | Sí |
+| **Descripción funcional** | Yesos en polvo, sacos, granel | Placas de yeso, perfiles, cintas | Cornisas, molduras, paneles 3D | Masillas, estucos, selladores | Piedra, aditivos, empaques, repuestos | Herramientas manuales y eléctricas |
+
+### 3.3 Reglas de negocio por categoría
+
+- **CAT-YES:** Seguimiento por lotes obligatorio. Ruta Buy + Manufacture. Costo promedio.
+- **CAT-PLA:** Sin seguimiento por lotes. Ruta Buy. Costo promedio.
+- **CAT-DEC:** Sin seguimiento por lotes. Ruta Buy. Costo estándar.
+- **CAT-MAS:** Seguimiento por lotes obligatorio. Ruta Buy + Manufacture. Costo promedio.
+- **CAT-MAT:** Seguimiento por lotes obligatorio. Ruta Buy. Costo promedio. Regla de reorden automático.
+- **CAT-HER:** Sin seguimiento por lotes. Ruta Buy. Costo estándar.
+
+---
+
+## 4. Unidades de medida (8) — Detalle completo
+
+### 4.1 Configuración de cada UoM
+
+| Código | Nombre | Categoría UoM | Tipo | Ratio | Redondeo | UoM Base | Activa |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| UOM-KGM | Kilogramo | Peso | Referencia | 1.0 | 0.001 | — | Sí |
+| UOM-TNE | Tonelada | Peso | Mayor | 1000.0 | 0.01 | UOM-KGM | Sí |
+| UOM-UNT | Unidades | Unidad | Referencia | 1.0 | 1.0 | — | Sí |
+| UOM-SAC | Saco | Unidad | Mayor | 25.0 | 1.0 | UOM-UNT | Sí |
+| UOM-PAC | Paquete | Unidad | Mayor | 10.0 | 1.0 | UOM-UNT | Sí |
+| UOM-LTR | Litro | Volumen | Referencia | 1.0 | 0.01 | — | Sí |
+| UOM-MTR | Metro | Longitud | Referencia | 1.0 | 0.01 | — | Sí |
+| UOM-SRV | Servicio | Servicio | Referencia | 1.0 | 1.0 | — | Sí |
+
+### 4.2 Activación requerida
+
+**Ruta:** Ajustes → Inventario → Activar "Unidades de medida".
+
+### 4.3 Reglas de conversión
+
+- 1 Tonelada = 1000 Kilogramos
+- 1 Saco = 25 Unidades (para yeso)
+- 1 Paquete = 10 Unidades
+- 1 Litro = 1000 Mililitros
+
+---
+
+## 5. Atributos y valores para variantes
+
+### 5.1 Atributos definidos
+
+| Código | Nombre | Tipo | Modo de creación | Visibilidad | Obligatorio |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| ATT-PRE | Presentación | Radio | Dinámicamente | Siempre | Sí |
+| ATT-PES | Peso del Saco | Radio | Dinámicamente | Siempre | Sí |
+| ATT-DIM | Dimensión | Radio | Dinámicamente | Siempre | Sí |
+| ATT-COL | Color | Radio | Instantáneamente | Siempre | No |
+
+### 5.2 Valores de atributo
+
+| Atributo | Valor | Código | HTML Color | Secuencia |
+| :--- | :--- | :--- | :--- | :--- |
+| ATT-PRE | Saco | VAL-SAC | — | 10 |
+| ATT-PRE | Granel | VAL-GRA | — | 20 |
+| ATT-PRE | Unidad | VAL-UNT | — | 30 |
+| ATT-PRE | Paquete | VAL-PAC | — | 40 |
+| ATT-PES | 5 kg | VAL-5KG | — | 10 |
+| ATT-PES | 10 kg | VAL-10KG | — | 20 |
+| ATT-PES | 20 kg | VAL-20KG | — | 30 |
+| ATT-PES | 25 kg | VAL-25KG | — | 40 |
+| ATT-PES | 30 kg | VAL-30KG | — | 50 |
+| ATT-PES | 40 kg | VAL-40KG | — | 60 |
+| ATT-PES | 50 kg | VAL-50KG | — | 70 |
+| ATT-DIM | 1.2 x 2.4 m | VAL-1224 | — | 10 |
+| ATT-DIM | 60 x 60 cm | VAL-6060 | — | 20 |
+| ATT-DIM | 50 x 50 cm | VAL-5050 | — | 30 |
+| ATT-COL | Blanco | VAL-BLA | #FFFFFF | 10 |
+| ATT-COL | Beige | VAL-BEI | #F5F5DC | 20 |
+| ATT-COL | Gris | VAL-GRI | #808080 | 30 |
+
+---
+
+## 6. Etiquetas de producto (10)
+
+| Código | Nombre | Color | Uso |
+| :--- | :--- | :--- | :--- |
+| TAG-NEW | Nuevo Producto | Verde | Productos recién lanzados |
+| TAG-PROMO | En Promoción | Rojo | Productos con descuento activo |
+| TAG-ECO | Ecológico | Verde oscuro | Productos con certificación ambiental |
+| TAG-PREM | Premium | Dorado | Línea premium |
+| TAG-IND | Industrial | Gris | Uso industrial |
+| TAG-RES | Resistente | Azul | Alta resistencia |
+| TAG-RAP | Fraguado Rápido | Naranja | Fraguado en menos de 15 min |
+| TAG-IGN | Ignífugo | Rojo oscuro | Resistente al fuego |
+| TAG-ACO | Acústico | Morado | Aislante acústico |
+| TAG-IMP | Impermeable | Celeste | Hidrofugado |
+
+---
+
+## 7. Rutas de abastecimiento (4)
+
+| Código | Nombre | Descripción | Aplicación |
+| :--- | :--- | :--- | :--- |
+| ROUTE-BUY | Comprar | El producto se compra a un proveedor | Todos los productos |
+| ROUTE-MANU | Fabricar | El producto se fabrica internamente | Productos terminados |
+| ROUTE-MTO | Bajo Pedido (MTO) | Se produce solo cuando hay pedido | Productos especiales |
+| ROUTE-REPL | Reponer | Regla de reabastecimiento automático | Materias primas |
+
+---
+
+## 8. Impuestos de prueba (3)
+
+| Código | Nombre | Tipo | Monto | Aplicación | Cuenta contable | Descripción |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TAX-IGV-18 | IGV 18% Venta | Ventas | 18% | Todos los productos de venta | 401111 | Impuesto General a las Ventas - Ventas |
+| TAX-IGV-18-COMP | IGV 18% Compra | Compras | 18% | Todos los productos de compra | 401112 | Impuesto General a las Ventas - Compras |
+| TAX-EXON | Exonerado | Ambos | 0% | Productos exonerados | 401113 | Operaciones exoneradas del IGV |
+
+**Nota:** Estos impuestos son de prueba para la Fase 02. La configuración fiscal real (SUNAT) está fuera del alcance.
+
+---
+
+## 9. Proveedores relacionados (35) — Detalle completo
+
+| Código | Nombre | Tipo | País | Ciudad | RUC | Categoría principal | Teléfono | Email | Plazo pago |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| PROV-001 | Minera Yesos del Sur S.A.C. | Proveedor | Perú | Juliaca | 20100112345 | Materias primas | +51 051 321-101 | ventas@yesosdelsur.pe | 30 días |
+| PROV-002 | Cantera Andina de Yeso S.A. | Proveedor | Perú | Puno | 20100223456 | Materias primas | +51 051 362-202 | ventas@canteraandina.pe | 30 días |
+| PROV-003 | Yesos Premium del Altiplano E.I.R.L. | Proveedor | Perú | Juliaca | 20100334567 | Yesos | +51 051 321-303 | contacto@yesospremium.pe | 15 días |
+| PROV-004 | AgroYeso Perú S.A.C. | Proveedor | Perú | Arequipa | 20100445678 | Yeso agrícola | +51 054 215-404 | ventas@agroyeso.pe | 30 días |
+| PROV-005 | Suministros Médicos Andinos S.A.C. | Proveedor | Perú | Cusco | 20100556789 | Yeso médico | +51 084 234-505 | ventas@suministrosmedicos.pe | 15 días |
+| PROV-006 | Placas Industriales del Sur S.A. | Proveedor | Perú | Lima | 20100667890 | Placas | +51 01 456-606 | ventas@placassur.pe | 30 días |
+| PROV-007 | Perfiles y Accesorios Metálicos JJS S.A.C. | Proveedor | Perú | Lima | 20100778901 | Perfiles | +51 01 456-707 | ventas@perfilesjjs.pe | 30 días |
+| PROV-008 | Cintas y Accesorios de Construcción S.A. | Proveedor | Perú | Lima | 20100889012 | Accesorios | +51 01 456-808 | ventas@cintasconstruccion.pe | 15 días |
+| PROV-009 | Cementos y Placas del Sur S.A.C. | Proveedor | Perú | Arequipa | 20100990123 | Placas cementicias | +51 054 215-909 | ventas@cementossursac.pe | 30 días |
+| PROV-010 | Decorados en Yeso Artesanal E.I.R.L. | Proveedor | Perú | Puno | 20101001234 | Decorativos | +51 051 362-010 | ventas@decoradosyeso.pe | 15 días |
+| PROV-011 | Molduras y Columnas del Sur S.A.C. | Proveedor | Perú | Cusco | 20101112345 | Decorativos grandes | +51 084 234-111 | ventas@moldurassur.pe | 30 días |
+| PROV-012 | Masillas y Mezclas Industriales S.A. | Proveedor | Perú | Lima | 20101223456 | Masillas | +51 01 456-212 | ventas@masillasindustriales.pe | 30 días |
+| PROV-013 | Químicos de Construcción Andina S.A.C. | Proveedor | Perú | Lima | 20101334567 | Selladores, aditivos | +51 01 456-313 | ventas@quimicosandina.pe | 15 días |
+| PROV-014 | Aditivos Químicos del Sur S.A.C. | Proveedor | Perú | Arequipa | 20101445678 | Aditivos líquidos | +51 054 215-414 | ventas@aditivossur.pe | 30 días |
+| PROV-015 | Pinturas y Recubrimientos JJS S.A.C. | Proveedor | Perú | Lima | 20101556789 | Pinturas | +51 01 456-515 | ventas@pinturasjjs.pe | 30 días |
+| PROV-016 | Cantera Central de Yeso S.A. | Proveedor | Perú | Juliaca | 20101667890 | Piedra de yeso | +51 051 321-616 | ventas@canteracentral.pe | 30 días |
+| PROV-017 | Minas y Canteras del Altiplano S.A.A. | Proveedor | Perú | Puno | 20101778901 | Piedra de yeso | +51 051 362-717 | ventas@minasaltiplano.pe | 30 días |
+| PROV-018 | Químicos Industriales Andinos S.A. | Proveedor | Perú | Lima | 20101889012 | Aditivos industriales | +51 01 456-818 | ventas@quimicosindustriales.pe | 30 días |
+| PROV-019 | Energía y Combustibles del Altiplano S.A.C. | Proveedor | Perú | Juliaca | 20101990123 | Combustibles | +51 051 321-919 | ventas@energiaaltiplano.pe | 15 días |
+| PROV-020 | Gas Natural del Sur S.R.L. | Proveedor | Perú | Arequipa | 20102001234 | Gas industrial | +51 054 215-020 | ventas@gasnaturalsur.pe | 30 días |
+| PROV-021 | Empaques y Envases JJSUMI S.A.C. | Proveedor | Perú | Juliaca | 20102112345 | Empaques | +51 051 321-121 | ventas@empaquesjjsumi.pe | 15 días |
+| PROV-022 | Flejes y Embalajes Industriales S.A.C. | Proveedor | Perú | Lima | 20102223456 | Flejes | +51 01 456-222 | ventas@flejesindustriales.pe | 30 días |
+| PROV-023 | Lubricantes y Grasas Industriales S.A. | Proveedor | Perú | Lima | 20102334567 | Lubricantes | +51 01 456-323 | ventas@lubricantesindustriales.pe | 30 días |
+| PROV-024 | Ferretería Industrial Global S.A.C. | Proveedor | Perú | Lima | 20102445678 | Repuestos | +51 01 456-424 | ventas@ferreteriaiglobal.pe | 15 días |
+| PROV-025 | Pinturas Industriales del Sur S.A.C. | Proveedor | Perú | Arequipa | 20102556789 | Pinturas industriales | +51 054 215-525 | ventas@pinturasindustrial.pe | 30 días |
+| PROV-026 | Herramientas y Fijaciones Andinas S.A.C. | Proveedor | Perú | Lima | 20102667890 | Herramientas manuales | +51 01 456-626 | ventas@herramientasandinas.pe | 15 días |
+| PROV-027 | Maquinaria y Herramientas Eléctricas S.A. | Proveedor | Perú | Lima | 20102778901 | Herramientas eléctricas | +51 01 456-727 | ventas@maquinariaelectrica.pe | 30 días |
+| PROV-028 | Plásticos y Accesorios de Construcción S.A. | Proveedor | Perú | Lima | 20102889012 | Baldes, rodillos | +51 01 456-828 | ventas@plasticosconstruccion.pe | 30 días |
+| PROV-029 | Equipos de Seguridad Industrial S.A.C. | Proveedor | Perú | Lima | 20102990123 | EPP | +51 01 456-929 | ventas@seguridadindustrial.pe | 15 días |
+| PROV-030 | Transportes y Logística del Sur S.A.C. | Proveedor | Perú | Juliaca | 20103001234 | Transporte | +51 051 321-030 | ventas@transportessur.pe | 30 días |
+| PROV-031 | Servicios de Mantenimiento Industrial S.A. | Proveedor | Perú | Juliaca | 20103112345 | Servicios | +51 051 321-131 | contacto@mantenimientoind.pe | 15 días |
+| PROV-032 | Imprenta y Papelería JJSUMI S.A.C. | Proveedor | Perú | Juliaca | 20103223456 | Papelería | +51 051 321-232 | ventas@imprentajjsumi.pe | 15 días |
+| PROV-033 | Suministros de Oficina JJS S.A.C. | Proveedor | Perú | Juliaca | 20103334567 | Oficina | +51 051 321-333 | ventas@suministrosoficina.pe | 15 días |
+| PROV-034 | Servicios de Limpieza Industrial S.A.C. | Proveedor | Perú | Arequipa | 20103445678 | Limpieza | +51 054 215-434 | ventas@limpiezaindustrial.pe | 30 días |
+| PROV-035 | Asesoría Legal y Contable JJS S.A.C. | Proveedor | Perú | Lima | 20103556789 | Servicios profesionales | +51 01 456-535 | contacto@asesoriajjs.pe | 30 días |
+
+---
+
+## 10. Listas de precios (5) — Detalle completo
+
+| Código | Nombre | Moneda | Tipo | Selectable | Regla base | Descripción |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| PRICELIST-001 | Lista Pública PEN | PEN | Venta | Sí | Precio de venta | Tarifa estándar para clientes minoristas |
+| PRICELIST-002 | Lista Mayorista PEN | PEN | Venta | Sí | Precio de venta - 10% | Tarifa para clientes mayoristas |
+| PRICELIST-003 | Lista Distribuidor PEN | PEN | Venta | Sí | Precio de venta - 18% | Tarifa para distribuidores autorizados |
+| PRICELIST-004 | Lista Corporativa PEN | PEN | Venta | Sí | Precio de venta - 15% | Tarifa para clientes corporativos |
+| PRICELIST-005 | Lista Promocional PEN | PEN | Venta | No | Precio de venta - 5% | Tarifa promocional para productos seleccionados |
+
+### 10.1 Reglas de precios por lista
+
+**PRICELIST-001 (Lista Pública):**
+- Base: `list_price` del producto
+- Descuento: 0%
+- Aplicación: Todos los clientes
+
+**PRICELIST-002 (Lista Mayorista):**
+- Base: `list_price` del producto
+- Descuento: 10%
+- Aplicación: Clientes con condición "Mayorista"
+- Cantidad mínima: 10 unidades
+
+**PRICELIST-003 (Lista Distribuidor):**
+- Base: `list_price` del producto
+- Descuento: 18%
+- Aplicación: Clientes con condición "Distribuidor Autorizado"
+- Cantidad mínima: 50 unidades
+
+**PRICELIST-004 (Lista Corporativa):**
+- Base: `list_price` del producto
+- Descuento: 15%
+- Aplicación: Clientes con condición "Corporativo"
+- Cantidad mínima: 20 unidades
+
+**PRICELIST-005 (Lista Promocional):**
+- Base: `list_price` del producto
+- Descuento: 5%
+- Aplicación: Productos etiquetados como TAG-PROMO
+- Vigencia: 30 días
+
+### 10.2 Activación requerida
+
+**Ruta:** Ajustes → Ventas → Activar "Listas de precios múltiples".
+
+---
+
+## 11. Catálogo completo de 120 productos — Detalle exhaustivo
+
+*Todos los productos tienen los siguientes campos comunes:*
+- `company_id`: JJSUMI
+- `active`: True
+- `image_1920`: `/web/static/img/placeholder.png` (roto, pendiente de carga real)
+- `image_1024`, `image_512`, `image_256`, `image_128`: mismos placeholders
+- `sale_ok`: True (excepto materias primas)
+- `purchase_ok`: True
+- `type`: según tabla
+- `tracking`: según tabla
+- `taxes_id`: TAX-IGV-18 (productos de venta)
+- `supplier_taxes_id`: TAX-IGV-18-COMP (productos de compra)
+
+### 11.1 Yesos de Construcción (25 productos)
+
+#### YES-001 — Yeso Fino Extra Andino
+
+| Campo | Valor |
+| :--- | :--- |
+| **SKU** | YES-001 |
+| **Nombre** | Yeso Fino Extra Andino |
+| **Categoría** | CAT-YES (Yesos de Construcción) |
+| **Tipo de producto** | Almacenable (storable) |
+| **UoM venta** | Saco (25 kg) |
+| **UoM compra** | Saco (25 kg) |
+| **Costo estándar** | S/ 18.50 |
+| **Precio de venta** | S/ 28.00 |
+| **Margen bruto** | 33.87% |
+| **Seguimiento** | Por Lotes |
+| **Código de barras EAN-13** | 7750000000011 |
+| **Peso unitario** | 25.00 kg |
+| **Volumen unitario** | 0.028 m³ |
+| **Dimensiones (L x A x H)** | 45 x 35 x 12 cm |
+| **Rutas** | Buy, Manufacture |
+| **Etiquetas** | TAG-PREM, TAG-ECO |
+| **Composición** | CaSO₄·½H₂O 95%, impurezas 3%, humedad 2% |
+| **Blancura** | 92% |
+| **Tiempo de fraguado** | 15-20 minutos |
+| **Resistencia a compresión** | 4.5 MPa |
+| **Granulometría** | < 0.3 mm (95%) |
+| **pH** | 6.5 - 7.5 |
+| **Rendimiento** | 1.2 kg/m² por mm de espesor |
+| **Vida útil** | 6 meses en lugar seco |
+| **Condiciones de almacenamiento** | Lugar seco, protegido de la humedad |
+| **Descripción de venta** | Yeso fino de alta blancura, ideal para acabados interiores de calidad premium. Fraguado controlado y excelente trabajabilidad. |
+| **Descripción de compra** | Yeso fino extra andino en sacos de 25 kg. Proveedor certificado. |
+| **Descripción interna** | Producto estrella de la línea premium. |
+| **Notas internas** | Controlar humedad en almacén. Rotación FIFO estricta. |
+| **Imagen** | `/web/static/img/placeholder.png` |
+| **Variantes** | 25 kg (YES-001-25), 40 kg (YES-001-40) |
+| **Proveedores** | PROV-001 (Minera Yesos del Sur), PROV-002 (Cantera Andina) |
+
+**Información de proveedores (supplierinfo):**
+
+| Proveedor | Precio | Cantidad mínima | Plazo entrega | Valididez |
+| :--- | :--- | :--- | :--- | :--- |
+| PROV-001 | S/ 18.50 | 100 sacos | 5 días | 31/12/2026 |
+| PROV-002 | S/ 19.00 | 50 sacos | 7 días | 31/12/2026 |
+
+**Regla de reposición:**
+- Mínimo: 200 sacos
+- Máximo: 800 sacos
+- Cantidad a pedir: 600 sacos
+- Lead time: 7 días
+
+**Ubicaciones de almacén:**
+- WH-JUL/Stock/Yesos
+- WH-PUN/Stock/Yesos
+- WH-AQP/Stock/Yesos
+- WH-CUS/Stock/Yesos
+- WH-TAC/Stock/Yesos
+
+---
+
+#### YES-002 — Yeso Industrial 40kg
+
+| Campo | Valor |
+| :--- | :--- |
+| **SKU** | YES-002 |
+| **Nombre** | Yeso Industrial 40kg |
+| **Categoría** | CAT-YES |
+| **Tipo** | Almacenable |
+| **UoM venta** | Saco (40 kg) |
+| **UoM compra** | Saco (40 kg) |
+| **Costo** | S/ 24.00 |
+| **Precio** | S/ 35.00 |
+| **Margen** | 31.43% |
+| **Seguimiento** | Por Lotes |
+| **Barras** | 7750000000028 |
+| **Peso** | 40.00 kg |
+| **Volumen** | 0.045 m³ |
+| **Dimensiones** | 55 x 40 x 15 cm |
+| **Rutas** | Buy, Manufacture |
+| **Etiquetas** | TAG-IND |
+| **Composición** | CaSO₄·½H₂O 93%, impurezas 5%, humedad 2% |
+| **Blancura** | 88% |
+| **Fraguado** | 20-25 minutos |
+| **Resistencia** | 3.8 MPa |
+| **Granulometría** | < 0.5 mm (90%) |
+| **pH** | 6.0 - 7.0 |
+| **Rendimiento** | 1.3 kg/m² por mm de espesor |
+| **Vida útil** | 6 meses |
+| **Almacenamiento** | Lugar seco |
+| **Desc. venta** | Yeso industrial de alta resistencia para trabajos de gran escala. |
+| **Desc. compra** | Yeso industrial en sacos de 40 kg. |
+| **Desc. interna** | Para proyectos industriales. |
+| **Notas** | Verificar integridad del saco. |
+| **Imagen** | `/web/static/img/placeholder.png` |
+| **Variantes** | 40 kg (YES-002-40), granel (YES-002-GR) |
+| **Proveedores** | PROV-001 |
+
+**supplierinfo:**
+
+| Proveedor | Precio | Cant. mín. | Plazo |
+| :--- | :--- | :--- | :--- |
+| PROV-001 | S/ 24.00 | 80 sacos | 5 días |
+
+**Regla de reposición:**
+- Mínimo: 150 sacos
+- Máximo: 600 sacos
+- Cantidad: 450 sacos
+
+---
+
+#### YES-003 — Yeso de Fraguado Rápido 25kg
+
+| Campo | Valor |
+| :--- | :--- |
+| **SKU** | YES-003 |
+| **Nombre** | Yeso de Fraguado Rápido 25kg |
+| **Categoría** | CAT-YES |
+| **Tipo** | Almacenable |
+| **UoM** | Saco (25 kg) |
+| **Costo** | S/ 21.00 |
+| **Precio** | S/ 32.00 |
+| **Margen** | 34.38% |
+| **Seguimiento** | Por Lotes |
+| **Barras** | 7750000000035 |
+| **Peso** | 25.00 kg |
+| **Volumen** | 0.028 m³ |
+| **Dimensiones** | 45 x 35 x 12 cm |
+| **Rutas** | Buy, Manufacture |
+| **Etiquetas** | TAG-RAP |
+| **Composición** | CaSO₄·½H₂O 94%, aditivos aceleradores 3%, humedad 3% |
+| **Blancura** | 90% |
+| **Fraguado** | 8-12 minutos |
+| **Resistencia** | 4.2 MPa |
+| **Granulometría** | < 0.3 mm (95%) |
+| **pH** | 6.5 - 7.5 |
+| **Rendimiento** | 1.2 kg/m² por mm |
+| **Vida útil** | 4 meses |
+| **Almacenamiento** | Lugar seco, temperatura controlada |
+| **Desc. venta** | Yeso de fraguado ultrarrápido para moldes y trabajos que requieren endurecimiento rápido. |
+| **Desc. compra** | Yeso de fraguado rápido en sacos de 25 kg. |
+| **Desc. interna** | Controlar temperatura de almacenamiento. |
+| **Notas** | Producto sensible a humedad. |
+| **Imagen** | `/web/static/img/placeholder.png` |
+| **Variantes** | 25 kg (YES-003-25) |
+| **Proveedores** | PROV-001, PROV-003 |
+
+**supplierinfo:**
+
+| Proveedor | Precio | Cant. mín. | Plazo |
+| :--- | :--- | :--- | :--- |
+| PROV-001 | S/ 21.00 | 50 sacos | 5 días |
+| PROV-003 | S/ 21.50 | 30 sacos | 3 días |
+
+**Regla de reposición:**
+- Mínimo: 100 sacos
+- Máximo: 400 sacos
+- Cantidad: 300 sacos
+
+---
+
+#### YES-004 — Yeso para Moldes 25kg
+
+| Campo | Valor |
+| :--- | :--- |
+| **SKU** | YES-004 |
+| **Nombre** | Yeso para Moldes 25kg |
+| **Categoría** | CAT-YES |
+| **Tipo** | Almacenable |
+| **UoM** | Saco (25 kg) |
+| **Costo** | S/ 22.50 |
+| **Precio** | S/ 34.00 |
+| **Margen** | 33.82% |
+| **Seguimiento** | Por Lotes |
+| **Barras** | 7750000000042 |
+| **Peso** | 25.00 kg |
+| **Volumen** | 0.028 m³ |
+| **Dimensiones** | 45 x 35 x 12 cm |
+| **Rutas** | Buy, Manufacture |
+| **Etiquetas** | TAG-PREM |
+| **Composición** | CaSO₄·½H₂O 96%, impurezas 2%, humedad 2% |
+| **Blancura** | 94% |
+| **Fraguado** | 18-22 minutos |
+| **Expansión** | 0.3% |
+| **Dureza superficial** | Alta |
+| **Resistencia** | 5.0 MPa |
+| **Granulometría** | < 0.2 mm (98%) |
+| **pH** | 6.5 - 7.5 |
+| **Rendimiento** | 1.1 kg/m² por mm |
+| **Vida útil** | 6 meses |
+| **Almacenamiento** | Lugar seco |
+| **Desc. venta** | Yeso especial para moldes de alta precisión. Baja expansión y excelente detalle. |
+| **Desc. compra** | Yeso para moldes en sacos de 25 kg. |
+| **Desc. interna** | Para fundiciones artísticas. |
+| **Notas** | No mezclar con otros yesos. |
+| **Imagen** | `/web/static/img/placeholder.png` |
+| **Variantes** | 25 kg (YES-004-25), 40 kg (YES-004-40) |
+| **Proveedores** | PROV-002 |
+
+**supplierinfo:**
+
+| Proveedor | Precio | Cant. mín. | Plazo |
+| :--- | :--- | :--- | :--- |
+| PROV-002 | S/ 22.50 | 40 sacos | 7 días |
+
+**Regla de reposición:**
+- Mínimo: 80 sacos
+- Máximo: 300 sacos
+- Cantidad: 220 sacos
+
+---
+
+#### YES-005 a YES-025 — Yesos restantes (resumen detallado)
+
+| SKU | Nombre | UoM | Costo | Precio | Margen | Barras | Peso | Frag. | Etiquetas | Variantes | Proveedores |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| YES-005 | Yeso Proyectado 30kg | Saco 30kg | 26.00 | 39.00 | 33.33% | 7750000000059 | 30.00 | 15-20 min | TAG-IND | 30 kg | PROV-001 |
+| YES-006 | Yeso Blanco Premium 20kg | Saco 20kg | 19.00 | 29.50 | 35.59% | 7750000000066 | 20.00 | 18-22 min | TAG-PREM | 20 kg, 25 kg | PROV-003 |
+| YES-007 | Yeso Grueso de Construcción 40kg | Saco 40kg | 23.00 | 34.50 | 33.33% | 7750000000073 | 40.00 | 25-30 min | TAG-IND | 40 kg | PROV-001 |
+| YES-008 | Yeso Agrícola 50kg | Saco 50kg | 15.00 | 24.00 | 37.50% | 7750000000080 | 50.00 | 30-40 min | TAG-ECO | 50 kg | PROV-004 |
+| YES-009 | Yeso en Polvo a Granel | Tonelada | 650.00 | 950.00 | 31.58% | 7750000000097 | 1000.00 | 20-25 min | TAG-IND | — | PROV-001, PROV-002 |
+| YES-010 | Yeso Estuco Fino 25kg | Saco 25kg | 20.00 | 31.00 | 35.48% | 7750000000103 | 25.00 | 15-20 min | TAG-PREM | 25 kg | PROV-002 |
+| YES-011 | Yeso para Tabiquería 30kg | Saco 30kg | 25.00 | 37.50 | 33.33% | 7750000000110 | 30.00 | 18-22 min | TAG-RES | 30 kg | PROV-003 |
+| YES-012 | Yeso Ignífugo 25kg | Saco 25kg | 28.00 | 42.00 | 33.33% | 7750000000127 | 25.00 | 20-25 min | TAG-IGN | 25 kg | PROV-002 |
+| YES-013 | Yeso Acústico 25kg | Saco 25kg | 29.00 | 43.50 | 33.33% | 7750000000134 | 25.00 | 18-22 min | TAG-ACO | 25 kg | PROV-003 |
+| YES-014 | Yeso de Alta Dureza 20kg | Saco 20kg | 23.50 | 35.00 | 32.86% | 7750000000141 | 20.00 | 20-25 min | TAG-RES | 20 kg | PROV-001 |
+| YES-015 | Yeso para Revestimiento 25kg | Saco 25kg | 21.50 | 32.50 | 33.85% | 7750000000158 | 25.00 | 18-22 min | — | 25 kg | PROV-002 |
+| YES-016 | Yeso Nivelador de Pisos 25kg | Saco 25kg | 27.00 | 40.00 | 32.50% | 7750000000165 | 25.00 | 25-30 min | TAG-RES | 25 kg | PROV-003 |
+| YES-017 | Yeso para Restauración 10kg | Saco 10kg | 16.00 | 25.00 | 36.00% | 7750000000172 | 10.00 | 30-40 min | TAG-ECO | 10 kg | PROV-002 |
+| YES-018 | Yeso con Fibra 25kg | Saco 25kg | 24.50 | 36.50 | 32.88% | 7750000000180 | 25.00 | 20-25 min | TAG-RES | 25 kg | PROV-001 |
+| YES-019 | Yeso Impermeabilizado 25kg | Saco 25kg | 26.50 | 39.50 | 32.91% | 7750000000197 | 25.00 | 20-25 min | TAG-IMP | 25 kg | PROV-003 |
+| YES-020 | Yeso de Calcinación Controlada 40kg | Saco 40kg | 25.50 | 38.00 | 32.89% | 7750000000203 | 40.00 | 20-25 min | TAG-IND | 40 kg | PROV-001 |
+| YES-021 | Yeso para Artesanía 5kg | Saco 5kg | 9.00 | 15.00 | 40.00% | 7750000000210 | 5.00 | 15-20 min | TAG-PREM | 5 kg, 10 kg | PROV-002 |
+| YES-022 | Yeso Médico 1kg | Unidad | 5.00 | 9.50 | 47.37% | 7750000000227 | 1.00 | 10-15 min | — | — | PROV-005 |
+| YES-023 | Yeso de Fraguado Retardado 25kg | Saco 25kg | 22.00 | 33.00 | 33.33% | 7750000000234 | 25.00 | 40-50 min | — | 25 kg | PROV-001 |
+| YES-024 | Yeso para Fundición 25kg | Saco 25kg | 23.00 | 34.50 | 33.33% | 7750000000241 | 25.00 | 20-25 min | TAG-RES | 25 kg | PROV-002 |
+| YES-025 | Yeso Ecológico 25kg | Saco 25kg | 24.00 | 36.00 | 33.33% | 7750000000258 | 25.00 | 18-22 min | TAG-ECO | 25 kg | PROV-003 |
+
+---
+
+### 11.2 Placas y Derivados (20 productos)
+
+#### PLA-001 — Placa de Yeso Estándar
+
+| Campo | Valor |
+| :--- | :--- |
+| **SKU** | PLA-001 |
+| **Nombre** | Placa de Yeso Estándar |
+| **Categoría** | CAT-PLA |
+| **Tipo** | Almacenable |
+| **UoM** | Unidad |
+| **Costo** | S/ 28.00 |
+| **Precio** | S/ 42.00 |
+| **Margen** | 33.33% |
+| **Seguimiento** | Sin seguimiento |
+| **Barras** | 7750000000265 |
+| **Peso** | 24.00 kg |
+| **Volumen** | 0.035 m³ |
+| **Dimensiones** | 240 x 120 x 1.25 cm |
+| **Rutas** | Buy |
+| **Etiquetas** | — |
+| **Composición** | Núcleo de yeso, cartón reciclado en caras |
+| **Espesor** | 12.5 mm |
+| **Ancho** | 1200 mm |
+| **Largo** | 2400 mm |
+| **Densidad** | 8.5 kg/m² |
+| **Resistencia al fuego** | 15 minutos |
+| **Absorción de agua** | < 5% |
+| **Clasificación** | Tipo A (estándar) |
+| **Norma** | ASTM C1396 |
+| **Vida útil** | Ilimitada en condiciones normales |
+| **Almacenamiento** | Apilar horizontalmente, lugar seco |
+| **Desc. venta** | Placa de yeso estándar para cielos rasos y tabiques interiores. |
+| **Desc. compra** | Placa de yeso estándar 1.2x2.4m. |
+| **Desc. interna** | Producto de alta rotación. |
+| **Notas** | No exponer a humedad. |
+| **Imagen** | `/web/static/img/placeholder.png` |
+| **Variantes** | 9.5 mm (PLA-001-095), 12.5 mm (PLA-001-125), 15 mm (PLA-001-150) |
+| **Proveedores** | PROV-006 |
+
+**supplierinfo:**
+
+| Proveedor | Precio | Cant. mín. | Plazo |
+| :--- | :--- | :--- | :--- |
+| PROV-006 | S/ 28.00 | 50 placas | 10 días |
+
+**Regla de reposición:**
+- Mínimo: 100 placas
+- Máximo: 500 placas
+- Cantidad: 400 placas
+
+---
+
+#### PLA-002 a PLA-020 — Placas restantes (resumen detallado)
+
+| SKU | Nombre | UoM | Costo | Precio | Margen | Barras | Peso | Espesor | Etiquetas | Variantes | Proveedores |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| PLA-002 | Placa Resistente a la Humedad | Unidad | 35.00 | 52.00 | 32.69% | 7750000000272 | 26.00 | 12.5 mm | TAG-IMP | 12.5, 15 mm | PROV-006 |
+| PLA-003 | Placa Ignífuga Tipo X | Unidad | 38.00 | 56.00 | 32.14% | 7750000000289 | 28.00 | 12.5 mm | TAG-IGN | 12.5, 15 mm | PROV-006 |
+| PLA-004 | Placa Flexible | Unidad | 40.00 | 59.00 | 32.20% | 7750000000296 | 22.00 | 9.5 mm | — | 9.5 mm | PROV-007 |
+| PLA-005 | Placa de Yeso 9.5mm | Unidad | 26.00 | 39.00 | 33.33% | 7750000000302 | 19.00 | 9.5 mm | — | — | PROV-006 |
+| PLA-006 | Placa de Yeso 15mm | Unidad | 32.00 | 48.00 | 33.33% | 7750000000319 | 30.00 | 15 mm | TAG-RES | — | PROV-006 |
+| PLA-007 | Perfil Metálico Parante 0.6mm 3m | Unidad | 12.00 | 18.50 | 35.14% | 7750000000326 | 2.50 | — | — | 3 m, 2.5 m | PROV-007 |
+| PLA-008 | Perfil Metálico Canal 0.6mm 3m | Unidad | 11.00 | 17.00 | 35.29% | 7750000000333 | 2.30 | — | — | 3 m | PROV-007 |
+| PLA-009 | Perfil Metálico Omega 0.6mm 3m | Unidad | 13.00 | 19.50 | 33.33% | 7750000000340 | 2.70 | — | — | 3 m | PROV-007 |
+| PLA-010 | Perfil Metálico U 0.6mm 3m | Unidad | 10.50 | 16.00 | 34.38% | 7750000000357 | 2.20 | — | — | 3 m | PROV-007 |
+| PLA-011 | Cinta de Papel Microperforada 75m | Unidad | 6.00 | 9.50 | 36.84% | 7750000000364 | 0.80 | — | — | — | PROV-008 |
+| PLA-012 | Cinta de Malla de Fibra de Vidrio 90m | Unidad | 8.00 | 12.50 | 36.00% | 7750000000371 | 1.00 | — | — | — | PROV-008 |
+| PLA-013 | Esquinero Metálico 2.4m | Unidad | 7.50 | 11.50 | 34.78% | 7750000000388 | 0.50 | — | — | 2.4 m, 3 m | PROV-008 |
+| PLA-014 | Esquinero de PVC 2.4m | Unidad | 6.50 | 10.00 | 35.00% | 7750000000395 | 0.40 | — | — | 2.4 m | PROV-008 |
+| PLA-015 | Suspensor Ajustable 1.5mm | Paquete | 15.00 | 23.00 | 34.78% | 7750000000401 | 2.00 | — | — | — | PROV-007 |
+| PLA-016 | Conector de Perfiles | Paquete | 18.00 | 27.00 | 33.33% | 7750000000418 | 2.50 | — | — | — | PROV-007 |
+| PLA-017 | Placa de Yeso Acústica | Unidad | 45.00 | 67.00 | 32.84% | 7750000000425 | 25.00 | 12.5 mm | TAG-ACO | 12.5 mm | PROV-006 |
+| PLA-018 | Placa de Yeso con Aislante Térmico | Unidad | 50.00 | 75.00 | 33.33% | 7750000000432 | 32.00 | 15 mm | TAG-RES | 15 mm | PROV-006 |
+| PLA-019 | Placa Cementicia 1.2x2.4m | Unidad | 42.00 | 63.00 | 33.33% | 7750000000449 | 35.00 | 8 mm | TAG-RES | 8 mm, 12 mm | PROV-009 |
+| PLA-020 | Placa de Yeso Curvada | Unidad | 48.00 | 72.00 | 33.33% | 7750000000456 | 23.00 | 9.5 mm | — | 9.5 mm | PROV-007 |
+
+---
+
+### 11.3 Productos Decorativos (20 productos)
+
+#### DEC-001 — Cornisa Decorativa Clásica 2.4m
+
+| Campo | Valor |
+| :--- | :--- |
+| **SKU** | DEC-001 |
+| **Nombre** | Cornisa Decorativa Clásica 2.4m |
+| **Categoría** | CAT-DEC |
+| **Tipo** | Almacenable |
+| **UoM** | Unidad |
+| **Costo** | S/ 12.00 |
+| **Precio** | S/ 18.00 |
+| **Margen** | 33.33% |
+| **Seguimiento** | Sin seguimiento |
+| **Barras** | 7750000000463 |
+| **Peso** | 3.50 kg |
+| **Volumen** | 0.012 m³ |
+| **Dimensiones** | 240 x 12 x 8 cm |
+| **Rutas** | Buy |
+| **Etiquetas** | TAG-PREM |
+| **Composición** | Yeso moldeado, refuerzo de fibra de vidrio |
+| **Estilo** | Clásico |
+| **Acabado** | Liso, listo para pintar |
+| **Dureza** | Alta |
+| **Resistencia** | 4.0 MPa |
+| **Vida útil** | Ilimitada |
+| **Almacenamiento** | Horizontal, protegido de golpes |
+| **Desc. venta** | Cornisa decorativa de estilo clásico para techos y muros. |
+| **Desc. compra** | Cornisa clásica de yeso 2.4m. |
+| **Desc. interna** | Producto artesanal. |
+| **Notas** | Frágil, manipular con cuidado. |
+| **Imagen** | `/web/static/img/placeholder.png` |
+| **Variantes** | — |
+| **Proveedores** | PROV-010 |
+
+**supplierinfo:**
+
+| Proveedor | Precio | Cant. mín. | Plazo |
+| :--- | :--- | :--- | :--- |
+| PROV-010 | S/ 12.00 | 20 unidades | 7 días |
+
+**Regla de reposición:**
+- Mínimo: 30 unidades
+- Máximo: 150 unidades
+- Cantidad: 120 unidades
+
+---
+
+#### DEC-002 a DEC-020 — Decorativos restantes (resumen detallado)
+
+| SKU | Nombre | UoM | Costo | Precio | Margen | Barras | Peso | Dimensiones | Etiquetas | Variantes | Proveedores |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| DEC-002 | Cornisa Decorativa Moderna 2.4m | Unidad | 14.00 | 21.00 | 33.33% | 7750000000470 | 3.80 | 240x10x6 cm | TAG-PREM | — | PROV-010 |
+| DEC-003 | Moldura para Pared 2m | Unidad | 8.00 | 12.50 | 36.00% | 7750000000487 | 2.50 | 200x8x4 cm | — | — | PROV-010 |
+| DEC-004 | Rosetón para Centro de Luz 50cm | Unidad | 15.00 | 23.00 | 34.78% | 7750000000494 | 2.80 | Ø50 cm | TAG-PREM | 50 cm, 80 cm | PROV-010 |
+| DEC-005 | Rosetón para Centro de Luz 80cm | Unidad | 22.00 | 33.00 | 33.33% | 7750000000500 | 4.50 | Ø80 cm | TAG-PREM | — | PROV-010 |
+| DEC-006 | Columna Decorativa 2.5m | Unidad | 85.00 | 125.00 | 32.00% | 7750000000517 | 25.00 | 250x25x25 cm | TAG-PREM | — | PROV-011 |
+| DEC-007 | Capitel para Columna | Unidad | 35.00 | 52.00 | 32.69% | 7750000000524 | 8.00 | 30x30x20 cm | TAG-PREM | — | PROV-011 |
+| DEC-008 | Base para Columna | Unidad | 30.00 | 45.00 | 33.33% | 7750000000531 | 7.00 | 35x35x15 cm | — | — | PROV-011 |
+| DEC-009 | Panel 3D de Yeso 60x60cm | Unidad | 18.00 | 27.00 | 33.33% | 7750000000548 | 5.50 | 60x60x3 cm | TAG-PREM | 60x60, 50x50 | PROV-010 |
+| DEC-010 | Panel 3D de Yeso 50x50cm | Unidad | 15.00 | 23.00 | 34.78% | 7750000000555 | 4.00 | 50x50x3 cm | — | — | PROV-010 |
+| DEC-011 | Zócalo de Yeso 2.4m | Unidad | 9.00 | 14.00 | 35.71% | 7750000000562 | 3.00 | 240x10x2 cm | — | — | PROV-010 |
+| DEC-012 | Guardapolvo de Yeso 2.4m | Unidad | 7.00 | 11.00 | 36.36% | 7750000000579 | 2.50 | 240x8x2 cm | — | — | PROV-010 |
+| DEC-013 | Dovelaje Decorativo 2m | Unidad | 25.00 | 38.00 | 34.21% | 7750000000586 | 6.00 | 200x15x10 cm | TAG-PREM | — | PROV-011 |
+| DEC-014 | Marco para Espejo de Yeso | Unidad | 40.00 | 60.00 | 33.33% | 7750000000593 | 8.50 | 90x70x5 cm | TAG-PREM | — | PROV-011 |
+| DEC-015 | Aplicación Floral de Yeso | Unidad | 12.00 | 18.50 | 35.14% | 7750000000609 | 2.00 | 30x30x3 cm | — | — | PROV-010 |
+| DEC-016 | Aplicación Geométrica de Yeso | Unidad | 14.00 | 21.00 | 33.33% | 7750000000616 | 2.50 | 40x40x3 cm | — | — | PROV-010 |
+| DEC-017 | Friso Decorativo 2.4m | Unidad | 16.00 | 24.00 | 33.33% | 7750000000623 | 4.00 | 240x12x3 cm | — | — | PROV-010 |
+| DEC-018 | Remate de Muro 2.4m | Unidad | 11.00 | 17.00 | 35.29% | 7750000000630 | 3.50 | 240x10x5 cm | — | — | PROV-010 |
+| DEC-019 | Nicho de Yeso para Pared | Unidad | 45.00 | 68.00 | 33.82% | 7750000000647 | 12.00 | 60x40x15 cm | TAG-PREM | — | PROV-011 |
+| DEC-020 | Cenefa Decorativa de Yeso 2m | Unidad | 13.00 | 20.00 | 35.00% | 7750000000654 | 3.00 | 200x10x3 cm | — | — | PROV-010 |
+
+---
+
+### 11.4 Masillas y Mezclas (15 productos)
+
+#### MAS-001 — Masilla para Juntas 20kg
+
+| Campo | Valor |
+| :--- | :--- |
+| **SKU** | MAS-001 |
+| **Nombre** | Masilla para Juntas 20kg |
+| **Categoría** | CAT-MAS |
+| **Tipo** | Almacenable |
+| **UoM** | Saco |
+| **Costo** | S/ 25.00 |
+| **Precio** | S/ 38.00 |
+| **Margen** | 34.21% |
+| **Seguimiento** | Por Lotes |
+| **Barras** | 7750000000661 |
+| **Peso** | 20.00 kg |
+| **Volumen** | 0.022 m³ |
+| **Dimensiones** | 40 x 30 x 10 cm |
+| **Rutas** | Buy, Manufacture |
+| **Etiquetas** | — |
+| **Composición** | Carbonato de calcio, yeso, aditivos especiales |
+| **Tiempo de secado** | 24 horas |
+| **Espesor máximo** | 3 mm por capa |
+| **Rendimiento** | 1.5 kg/m² por mm |
+| **Adherencia** | > 0.5 MPa |
+| **pH** | 7.0 - 8.0 |
+| **Vida útil** | 12 meses |
+| **Almacenamiento** | Lugar seco, cerrado |
+| **Desc. venta** | Masilla profesional para juntas de placas de yeso. |
+| **Desc. compra** | Masilla para juntas en sacos de 20 kg. |
+| **Desc. interna** | Producto de alta rotación. |
+| **Notas** | No usar en exteriores. |
+| **Imagen** | `/web/static/img/placeholder.png` |
+| **Variantes** | 20 kg (MAS-001-20), 5 kg (MAS-001-05) |
+| **Proveedores** | PROV-012 |
+
+**supplierinfo:**
+
+| Proveedor | Precio | Cant. mín. | Plazo |
+| :--- | :--- | :--- | :--- |
+| PROV-012 | S/ 25.00 | 50 sacos | 7 días |
+
+**Regla de reposición:**
+- Mínimo: 100 sacos
+- Máximo: 400 sacos
+- Cantidad: 300 sacos
+
+---
+
+#### MAS-002 a MAS-015 — Masillas restantes (resumen detallado)
+
+| SKU | Nombre | UoM | Costo | Precio | Margen | Barras | Peso | Seguimiento | Etiquetas | Variantes | Proveedores |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| MAS-002 | Masilla para Juntas 5kg | Saco | 8.00 | 12.50 | 36.00% | 7750000000678 | 5.00 | Por Lotes | — | — | PROV-012 |
+| MAS-003 | Pegamento para Placas de Yeso 20kg | Saco | 22.00 | 33.00 | 33.33% | 7750000000685 | 20.00 | Por Lotes | TAG-RES | — | PROV-012 |
+| MAS-004 | Estuco Plástico 25kg | Saco | 30.00 | 45.00 | 33.33% | 7750000000692 | 25.00 | Por Lotes | TAG-PREM | — | PROV-012 |
+| MAS-005 | Pasta Mural 25kg | Saco | 28.00 | 42.00 | 33.33% | 7750000000708 | 25.00 | Por Lotes | — | 25 kg, 10 kg | PROV-013 |
+| MAS-006 | Pasta Mural 10kg | Saco | 13.00 | 20.00 | 35.00% | 7750000000715 | 10.00 | Por Lotes | — | — | PROV-013 |
+| MAS-007 | Sellador Acrílico 1kg | Unidad | 6.00 | 9.50 | 36.84% | 7750000000722 | 1.00 | Sin | — | — | PROV-013 |
+| MAS-008 | Sellador de Poliuretano 300ml | Unidad | 8.00 | 12.50 | 36.00% | 7750000000739 | 0.40 | Sin | TAG-RES | — | PROV-013 |
+| MAS-009 | Impermeabilizante para Yeso 5L | Unidad | 35.00 | 52.00 | 32.69% | 7750000000746 | 5.50 | Sin | TAG-IMP | — | PROV-014 |
+| MAS-010 | Aditivo Retardador de Fraguado 1L | Unidad | 15.00 | 23.00 | 34.78% | 7750000000753 | 1.10 | Sin | — | — | PROV-014 |
+| MAS-011 | Aditivo Acelerador de Fraguado 1L | Unidad | 14.00 | 21.50 | 34.88% | 7750000000760 | 1.10 | Sin | TAG-RAP | — | PROV-014 |
+| MAS-012 | Mezcla para Revestimiento Exterior 25kg | Saco | 32.00 | 48.00 | 33.33% | 7750000000777 | 25.00 | Por Lotes | TAG-RES, TAG-IMP | — | PROV-012 |
+| MAS-013 | Mortero de Reparación 20kg | Saco | 26.00 | 39.00 | 33.33% | 7750000000784 | 20.00 | Por Lotes | TAG-RES | — | PROV-012 |
+| MAS-014 | Pintura Selladora Blanca 5L | Unidad | 40.00 | 60.00 | 33.33% | 7750000000791 | 5.80 | Sin | — | — | PROV-015 |
+| MAS-015 | Enduido Corrido 25kg | Saco | 24.00 | 36.00 | 33.33% | 7750000000807 | 25.00 | Por Lotes | — | — | PROV-012 |
+
+---
+
+### 11.5 Materias Primas (20 productos)
+
+#### MAT-001 — Piedra de Yeso Natural
+
+| Campo | Valor |
+| :--- | :--- |
+| **SKU** | MAT-001 |
+| **Nombre** | Piedra de Yeso Natural |
+| **Categoría** | CAT-MAT |
+| **Tipo** | Almacenable |
+| **UoM** | Tonelada |
+| **Costo** | S/ 120.00 |
+| **Precio** | S/ 180.00 |
+| **Margen** | 33.33% |
+| **Seguimiento** | Por Lotes |
+| **Barras** | 7750000000814 |
+| **Peso** | 1000.00 kg |
+| **Volumen** | 0.45 m³ |
+| **Dimensiones** | Variable (granel) |
+| **Rutas** | Buy |
+| **Etiquetas** | TAG-IND |
+| **Composición** | CaSO₄·2H₂O 92%, impurezas 5%, humedad 3% |
+| **Pureza** | 92% |
+| **Granulometría** | 50-200 mm |
+| **Densidad** | 2.3 g/cm³ |
+| **Dureza Mohs** | 2.0 |
+| **Color** | Blanco a gris claro |
+| **Vida útil** | Ilimitada |
+| **Almacenamiento** | Patio techado, sobre plataforma |
+| **Desc. venta** | Piedra de yeso natural para procesamiento industrial. |
+| **Desc. compra** | Piedra de yeso natural en toneladas. |
+| **Desc. interna** | Materia prima principal. |
+| **Notas** | Controlar humedad. Rotación FIFO. |
+| **Imagen** | `/web/static/img/placeholder.png` |
+| **Variantes** | — |
+| **Proveedores** | PROV-016, PROV-017 |
+
+**supplierinfo:**
+
+| Proveedor | Precio | Cant. mín. | Plazo |
+| :--- | :--- | :--- | :--- |
+| PROV-016 | S/ 120.00 | 10 toneladas | 15 días |
+| PROV-017 | S/ 125.00 | 5 toneladas | 10 días |
+
+**Regla de reposición:**
+- Mínimo: 50 toneladas
+- Máximo: 200 toneladas
+- Cantidad: 150 toneladas
+- Lead time: 15 días
+
+---
+
+#### MAT-002 a MAT-020 — Materias primas restantes (resumen detallado)
+
+| SKU | Nombre | UoM | Costo | Precio | Margen | Barras | Peso | Seguimiento | Etiquetas | Variantes | Proveedores |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| MAT-002 | Piedra de Yeso Triturada | Tonelada | 140.00 | 210.00 | 33.33% | 7750000000821 | 1000.00 | Por Lotes | TAG-IND | — | PROV-016 |
+| MAT-003 | Aditivo Industrial A-100 | kg | 8.00 | 12.50 | 36.80% | 7750000000838 | 1.00 | Por Lotes | — | — | PROV-018 |
+| MAT-004 | Aditivo Industrial B-200 | kg | 9.50 | 14.50 | 34.48% | 7750000000845 | 1.00 | Por Lotes | — | — | PROV-018 |
+| MAT-005 | Carbón Mineral para Horno | Tonelada | 350.00 | 520.00 | 32.69% | 7750000000852 | 1000.00 | Por Lotes | TAG-IND | — | PROV-019 |
+| MAT-006 | Gas Natural Industrial | Unidad | 450.00 | 670.00 | 32.84% | 7750000000869 | — | Sin | TAG-IND | — | PROV-020 |
+| MAT-007 | Bolsa de Polipropileno 25kg | Paquete | 12.00 | 18.00 | 33.33% | 7750000000876 | 15.00 | Sin | — | — | PROV-021 |
+| MAT-008 | Bolsa de Polipropileno 40kg | Paquete | 15.00 | 22.50 | 33.33% | 7750000000883 | 18.00 | Sin | — | — | PROV-021 |
+| MAT-009 | Fleje de Acero 500m | Unidad | 45.00 | 68.00 | 33.82% | 7750000000890 | 25.00 | Sin | — | — | PROV-022 |
+| MAT-010 | Fleje Plástico 500m | Unidad | 25.00 | 38.00 | 34.21% | 7750000000906 | 18.00 | Sin | — | — | PROV-022 |
+| MAT-011 | Hebillas para Fleje | Paquete | 18.00 | 27.00 | 33.33% | 7750000000913 | 12.00 | Sin | — | — | PROV-022 |
+| MAT-012 | Lubricante Industrial 20L | Unidad | 120.00 | 180.00 | 33.33% | 7750000000920 | 22.00 | Sin | TAG-IND | — | PROV-023 |
+| MAT-013 | Grasa para Maquinaria 15kg | Unidad | 85.00 | 128.00 | 33.59% | 7750000000937 | 16.00 | Sin | TAG-IND | — | PROV-023 |
+| MAT-014 | Repuesto Trituradora Tipo A | Unidad | 250.00 | 375.00 | 33.33% | 7750000000944 | 35.00 | Sin | TAG-IND | — | PROV-024 |
+| MAT-015 | Repuesto Trituradora Tipo B | Unidad | 180.00 | 270.00 | 33.33% | 7750000000951 | 28.00 | Sin | TAG-IND | — | PROV-024 |
+| MAT-016 | Filtro de Aire Industrial | Unidad | 65.00 | 98.00 | 33.67% | 7750000000968 | 5.00 | Sin | — | — | PROV-024 |
+| MAT-017 | Correa de Transmisión 1.5m | Unidad | 40.00 | 60.00 | 33.33% | 7750000000975 | 3.50 | Sin | — | — | PROV-024 |
+| MAT-018 | Rodamiento de Bola 6205 | Unidad | 15.00 | 23.00 | 34.78% | 7750000000982 | 0.30 | Sin | — | — | PROV-024 |
+| MAT-019 | Pintura Industrial para Maquinaria 5L | Unidad | 55.00 | 82.00 | 32.93% | 7750000000999 | 5.50 | Sin | — | — | PROV-025 |
+| MAT-020 | Material de Empaque Stretch 20kg | Unidad | 70.00 | 105.00 | 33.33% | 7750000001002 | 20.00 | Sin | — | — | PROV-021 |
+
+---
+
+### 11.6 Herramientas y Accesorios (20 productos)
+
+#### HER-001 — Llana de Acero Profesional
+
+| Campo | Valor |
+| :--- | :--- |
+| **SKU** | HER-001 |
+| **Nombre** | Llana de Acero Profesional |
+| **Categoría** | CAT-HER |
+| **Tipo** | Consumible |
+| **UoM** | Unidad |
+| **Costo** | S/ 15.00 |
+| **Precio** | S/ 23.00 |
+| **Margen** | 34.78% |
+| **Seguimiento** | Sin seguimiento |
+| **Barras** | 7750000001019 |
+| **Peso** | 0.60 kg |
+| **Volumen** | 0.002 m³ |
+| **Dimensiones** | 28 x 12 x 3 cm |
+| **Rutas** | Buy |
+| **Etiquetas** | — |
+| **Material** | Acero inoxidable |
+| **Mango** | Madera ergonómica |
+| **Longitud hoja** | 28 cm |
+| **Ancho hoja** | 12 cm |
+| **Dureza** | 58 HRC |
+| **Vida útil** | 2 años (uso intensivo) |
+| **Almacenamiento** | Lugar seco |
+| **Desc. venta** | Llana profesional de acero inoxidable para acabados de yeso. |
+| **Desc. compra** | Llana de acero profesional. |
+| **Desc. interna** | Herramienta de alta rotación. |
+| **Notas** | Limpiar después de cada uso. |
+| **Imagen** | `/web/static/img/placeholder.png` |
+| **Variantes** | — |
+| **Proveedores** | PROV-026 |
+
+**supplierinfo:**
+
+| Proveedor | Precio | Cant. mín. | Plazo |
+| :--- | :--- | :--- | :--- |
+| PROV-026 | S/ 15.00 | 20 unidades | 5 días |
+
+**Regla de reposición:**
+- Mínimo: 30 unidades
+- Máximo: 150 unidades
+- Cantidad: 120 unidades
+
+---
+
+#### HER-002 a HER-020 — Herramientas restantes (resumen detallado)
+
+| SKU | Nombre | UoM | Costo | Precio | Margen | Barras | Peso | Tipo | Etiquetas | Variantes | Proveedores |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| HER-002 | Espátula de 10cm | Unidad | 5.00 | 8.00 | 37.50% | 7750000001026 | 0.20 | Consumible | — | — | PROV-026 |
+| HER-003 | Espátula de 25cm | Unidad | 9.00 | 14.00 | 35.71% | 7750000001033 | 0.40 | Consumible | — | — | PROV-026 |
+| HER-004 | Mezcladora de Paleta Eléctrica | Unidad | 120.00 | 180.00 | 33.33% | 7750000001040 | 3.50 | Consumible | — | — | PROV-027 |
+| HER-005 | Cortadora de Placas de Yeso | Unidad | 35.00 | 52.00 | 32.69% | 7750000001057 | 2.00 | Consumible | — | — | PROV-027 |
+| HER-006 | Cuchilla para Cortadora (paq. 10) | Paquete | 8.00 | 12.50 | 36.00% | 7750000001064 | 0.30 | Consumible | — | — | PROV-027 |
+| HER-007 | Nivel de Burbuja 60cm | Unidad | 25.00 | 38.00 | 34.21% | 7750000001071 | 0.80 | Consumible | — | — | PROV-026 |
+| HER-008 | Lija de Agua Grano 120 (paq. 10) | Paquete | 12.00 | 18.50 | 35.14% | 7750000001088 | 0.50 | Consumible | — | 120, 220 | PROV-026 |
+| HER-009 | Lija de Agua Grano 220 (paq. 10) | Paquete | 14.00 | 21.50 | 34.88% | 7750000001095 | 0.50 | Consumible | — | — | PROV-026 |
+| HER-010 | Pistola para Sellador | Unidad | 18.00 | 27.00 | 33.33% | 7750000001101 | 0.90 | Consumible | — | — | PROV-027 |
+| HER-011 | Balde de Plástico 20L | Unidad | 10.00 | 15.50 | 35.48% | 7750000001118 | 0.80 | Consumible | — | — | PROV-028 |
+| HER-012 | Rodillo de Pintura 23cm | Unidad | 12.00 | 18.50 | 35.14% | 7750000001125 | 0.40 | Consumible | — | — | PROV-028 |
+| HER-013 | Bandeja para Pintura | Unidad | 8.00 | 12.50 | 36.00% | 7750000001132 | 0.30 | Consumible | — | — | PROV-028 |
+| HER-014 | Guantes de Trabajo (par) | Par | 4.00 | 6.50 | 38.46% | 7750000001149 | 0.20 | Consumible | — | — | PROV-029 |
+| HER-015 | Mascarilla N95 (caja 20) | Paquete | 25.00 | 38.00 | 34.21% | 7750000001156 | 0.80 | Consumible | — | — | PROV-029 |
+| HER-016 | Lentes de Seguridad | Unidad | 15.00 | 23.00 | 34.78% | 7750000001163 | 0.15 | Consumible | — | — | PROV-029 |
+| HER-017 | Casco de Seguridad Blanco | Unidad | 18.00 | 27.00 | 33.33% | 7750000001170 | 0.40 | Consumible | — | — | PROV-029 |
+| HER-018 | Taladro Percutor 1/2" | Unidad | 150.00 | 225.00 | 33.33% | 7750000001187 | 2.80 | Consumible | — | — | PROV-027 |
+| HER-019 | Destornillador Phillips | Unidad | 8.00 | 12.50 | 36.00% | 7750000001194 | 0.25 | Consumible | — | — | PROV-026 |
+| HER-020 | Cinta Métrica 5m | Unidad | 12.00 | 18.50 | 35.14% | 7750000001200 | 0.30 | Consumible | — | — | PROV-026 |
+
+---
+
+## 12. Variantes explícitas (25 adicionales)
+
+| Template | Variante | SKU Variante | Barras | Precio Ajustado | Costo Ajustado |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| YES-001 | Yeso Fino Extra Andino 25kg | YES-001-25 | 7750000010011 | 28.00 | 18.50 |
+| YES-001 | Yeso Fino Extra Andino 40kg | YES-001-40 | 7750000010028 | 38.50 | 25.00 |
+| YES-002 | Yeso Industrial 40kg | YES-002-40 | 7750000010035 | 35.00 | 24.00 |
+| YES-002 | Yeso Industrial Granel | YES-002-GR | 7750000010042 | 850.00 | 580.00 |
+| YES-003 | Yeso de Fraguado Rápido 25kg | YES-003-25 | 7750000010059 | 32.00 | 21.00 |
+| YES-004 | Yeso para Moldes 25kg | YES-004-25 | 7750000010066 | 34.00 | 22.50 |
+| YES-004 | Yeso para Moldes 40kg | YES-004-40 | 7750000010073 | 48.00 | 32.00 |
+| PLA-001 | Placa Estándar 9.5mm | PLA-001-095 | 7750000020010 | 39.00 | 26.00 |
+| PLA-001 | Placa Estándar 12.5mm | PLA-001-125 | 7750000020027 | 42.00 | 28.00 |
+| PLA-001 | Placa Estándar 15mm | PLA-001-150 | 7750000020034 | 48.00 | 32.00 |
+| PLA-002 | Placa Humedad 12.5mm | PLA-002-125 | 7750000020041 | 52.00 | 35.00 |
+| PLA-002 | Placa Humedad 15mm | PLA-002-150 | 7750000020058 | 58.00 | 39.00 |
+| PLA-003 | Placa Ignífuga 12.5mm | PLA-003-125 | 7750000020065 | 56.00 | 38.00 |
+| PLA-003 | Placa Ignífuga 15mm | PLA-003-150 | 7750000020072 | 62.00 | 42.00 |
+| DEC-004 | Rosetón 50cm | DEC-004-50 | 7750000030019 | 23.00 | 15.00 |
+| DEC-004 | Rosetón 80cm | DEC-004-80 | 7750000030026 | 33.00 | 22.00 |
+| DEC-009 | Panel 3D 60x60cm | DEC-009-6060 | 7750000030033 | 27.00 | 18.00 |
+| DEC-009 | Panel 3D 50x50cm | DEC-009-5050 | 7750000030040 | 23.00 | 15.00 |
+| MAS-001 | Masilla Juntas 20kg | MAS-001-20 | 7750000040018 | 38.00 | 25.00 |
+| MAS-001 | Masilla Juntas 5kg | MAS-001-05 | 7750000040025 | 12.50 | 8.00 |
+| MAS-005 | Pasta Mural 25kg | MAS-005-25 | 7750000040032 | 42.00 | 28.00 |
+| MAS-005 | Pasta Mural 10kg | MAS-005-10 | 7750000040049 | 20.00 | 13.00 |
+| YES-006 | Yeso Blanco Premium 20kg | YES-006-20 | 7750000010080 | 29.50 | 19.00 |
+| YES-006 | Yeso Blanco Premium 25kg | YES-006-25 | 7750000010097 | 35.00 | 23.00 |
+| YES-021 | Yeso Artesanía 5kg | YES-021-05 | 7750000010103 | 15.00 | 9.00 |
+
+---
+
+## 13. Imágenes placeholder
+
+Todos los 120 productos tendrán el campo `image_1920` configurado con la ruta:
+
+```
+/web/static/img/placeholder.png
+```
+
+Esta ruta devuelve una imagen rota o placeholder genérico hasta que JJSUMI entregue las imágenes reales de cada producto. Los campos relacionados (`image_1024`, `image_512`, `image_256`, `image_128`) se generan automáticamente por Odoo.
+
+**Regla:** No se cargarán imágenes inventadas. Solo placeholders hasta recibir material oficial.
+
+---
+
+## 14. Reglas de seguimiento
+
+| Categoría | Seguimiento | Regla |
+| :--- | :--- | :--- |
+| CAT-YES | By Lots | Obligatorio para trazabilidad |
+| CAT-PLA | No Tracking | No requiere |
+| CAT-DEC | No Tracking | No requiere |
+| CAT-MAS | By Lots | Obligatorio para trazabilidad |
+| CAT-MAT | By Lots | Obligatorio para fabricación |
+| CAT-HER | No Tracking | Consumibles |
+
+**Activación requerida:** Ajustes → Inventario → Activar "Números de serie y lotes".
+
+---
+
+## 15. Importación y validación de datos
+
+### 15.1 Archivos de importación
+
+| Archivo | Registros | Campos principales |
+| :--- | :--- | :--- |
+| `categories.csv` | 6 | id, name, parent_id, cost_method, valuation, removal_strategy, route_ids |
+| `uom.csv` | 8 | id, name, category_id, factor, rounding, active |
+| `attributes.csv` | 4 | id, name, create_variant, visibility |
+| `attribute_values.csv` | 17 | id, attribute_id, name, html_color, sequence |
+| `tags.csv` | 10 | id, name, color |
+| `routes.csv` | 4 | id, name, description |
+| `taxes.csv` | 3 | id, name, amount, type_tax_use, account_id |
+| `suppliers.csv` | 35 | id, name, supplier_rank, country_id, city, vat, phone, email, property_payment_term_id |
+| `pricelists.csv` | 5 | id, name, currency_id, selectable, discount_policy |
+| `pricelist_items.csv` | 15 | id, pricelist_id, compute_price, fixed_price, percent_price, base |
+| `products_template.csv` | 120 | default_code, name, categ_id, type, list_price, standard_price, tracking, barcode, weight, volume, uom_id, uom_po_id, taxes_id, supplier_taxes_id, route_ids, tag_ids, description_sale, description_purchase, active, image |
+| `products_variant.csv` | 25 | product_tmpl_id, product_template_attribute_value_ids, default_code, barcode, list_price, standard_price |
+| `supplierinfo.csv` | 350+ | product_tmpl_id, partner_id, price, min_qty, delay, date_start, date_end |
+| `stock_rules.csv` | 25 | product_id, location_id, product_min_qty, product_max_qty, qty_to_order, lead_time |
+
+### 15.2 Validaciones pre-importación
+
+1. **SKU único:** Ningún `default_code` duplicado.
+2. **Barras único:** Ningún `barcode` duplicado.
+3. **Categoría válida:** Toda `categ_id` existe en el catálogo.
+4. **Precio positivo:** `list_price` > 0 y `standard_price` > 0.
+5. **Proveedor válido:** Todo `partner_id` existe en `res.partner`.
+6. **UoM válida:** Toda `uom_id` existe en `uom.uom`.
+7. **Impuesto válido:** Todo `taxes_id` existe en `account.tax`.
+8. **Jerarquía de variantes:** Las variantes pertenecen a templates válidos.
+9. **Rutas válidas:** Toda `route_id` existe en `stock.route`.
+10. **Etiquetas válidas:** Toda `tag_id` existe en `product.tag`.
+
+### 15.3 Orden de carga
+
+1. Categorías (6).
+2. UoM (8).
+3. Atributos y valores (4 + 17).
+4. Etiquetas (10).
+5. Rutas (4).
+6. Impuestos (3).
+7. Proveedores (35).
+8. Listas de precios (5 + 15 items).
+9. Templates de productos (120).
+10. Variantes (25 adicionales).
+11. Información de proveedores por producto (350+).
+12. Reglas de reposición (25).
+
+### 15.4 Carga idempotente
+
+El script de importación será idempotente: si se ejecuta dos veces, no duplicará registros. Usará `default_code` como clave externa para actualizar o crear.
+
+---
+
+## 16. Pruebas de aceptación (Fase 02)
+
+| ID | Prueba | Resultado esperado |
+| :--- | :--- | :--- |
+| T01 | Crear producto YES-001 manualmente | Se guarda con categoría CAT-YES, tipo almacenable, seguimiento por lotes |
+| T02 | Intentar crear producto con SKU duplicado | Error de validación, no guarda |
+| T03 | Intentar crear producto con código de barras duplicado | Error de validación, no guarda |
+| T04 | Verificar seguimiento de lote en MAT-001 | Campo "Seguimiento" muestra "Por Lotes" |
+| T05 | Aplicar Lista Mayorista a YES-001 | Precio = S/ 25.20 (10% menos de 28.00) |
+| T06 | Buscar producto por código de barras en POS | Producto se agrega al carrito |
+| T07 | Importar 10 productos vía CSV | 10 productos creados sin duplicar |
+| T08 | Archivar producto HER-005 | Desaparece de vistas activas, mantiene historial |
+| T09 | Verificar UoM de MAT-001 | UoM compra y venta = Tonelada |
+| T10 | Consultar proveedor en ficha MAT-003 | Aparece PROV-018 "Químicos Industriales Andinos S.A." |
+| T11 | Verificar imagen placeholder de YES-001 | Se muestra imagen rota/placeholder |
+| T12 | Verificar datos técnicos de PLA-001 | Descripción de 1.2x2.4m, espesor 12.5mm visible |
+| T13 | Crear variante de DEC-004 (50cm y 80cm) | Dos variantes creadas con precios distintos |
+| T14 | Aplicar impuesto IGV 18% a YES-001 | Precio con IGV = S/ 33.04 |
+| T15 | Validar que todos los productos tengan proveedor | Ningún producto sin al menos un proveedor |
+| T16 | Validar que todos los productos tengan imagen | Todos muestran placeholder |
+| T17 | Importar 120 productos completos | Todos cargados con datos técnicos |
+| T18 | Verificar reglas de reposición en MAT-001 | Regla de reorden automático configurada |
+| T19 | Validar que categorías tengan método de costo correcto | CAT-YES y CAT-MAT = AVCO, CAT-DEC y CAT-HER = Estándar |
+| T20 | Validar que listas de precios funcionen | 5 listas operativas con descuentos aplicados |
+| T21 | Verificar composición química en YES-001 | Campo composición muestra CaSO₄·½H₂O 95% |
+| T22 | Verificar tiempo de fraguado en YES-003 | Campo fraguado muestra 8-12 minutos |
+| T23 | Verificar dimensiones en PLA-001 | Campo dimensiones muestra 240 x 120 x 1.25 cm |
+| T24 | Verificar proveedor con plazo más corto en YES-001 | PROV-003 aparece como opción de 3 días |
+| T25 | Validar margen bruto promedio | Margen promedio entre 32% y 36% |
+
+### 16.1 Criterios de aceptación
+
+La Fase 02 se considera terminada cuando:
+
+- Existen las 6 categorías con método de costo correcto.
+- Existen los 120 templates de productos con datos completos.
+- Existen las 25 variantes adicionales (145 product.product en total).
+- Todos los productos tienen SKU único y código de barras único.
+- Todos los productos tienen datos técnicos (descripción, peso, volumen, composición).
+- Todos los productos tienen imagen placeholder.
+- Todos los productos de CAT-YES, CAT-MAS y CAT-MAT tienen seguimiento por lotes.
+- Existen las 5 listas de precios operativas.
+- Existen los 3 impuestos de prueba.
+- Existen los 35 proveedores relacionados.
+- Todos los productos tienen al menos un proveedor asignado.
+- La importación es idempotente.
+- Se ejecutaron las 25 pruebas de aceptación.
+- No se dañó ningún registro preexistente.
+
+---
+
+## 17. Orden exacto de implementación
+
+1. Ejecutar auditoría de módulos: `product`, `uom`, `sale`, `purchase`, `stock`, `account`.
+2. Activar unidades de medida en configuración.
+3. Activar números de serie y lotes en configuración.
+4. Activar listas de precios múltiples en configuración.
+5. Crear backup de la base antes de la carga.
+6. Importar categorías (6).
+7. Importar UoM (8).
+8. Importar atributos y valores (4 + 17).
+9. Importar etiquetas (10).
+10. Importar rutas (4).
+11. Importar impuestos (3).
+12. Importar proveedores (35).
+13. Importar listas de precios (5 + 15 items).
+14. Importar templates de productos (120).
+15. Importar variantes (25).
+16. Importar información de proveedores por producto (350+).
+17. Importar reglas de reposición (25).
+18. Ejecutar las 25 pruebas de aceptación.
+19. Documentar resultados.
+20. Presentar para aprobación.
+
+---
+
+## 18. Fuera del alcance de Fase 02
+
+- Imágenes reales de productos (se cargarán en fase posterior).
+- Integración con SUNAT.
+- Configuración fiscal real.
+- Reglas de reposición avanzadas.
+- Códigos de barras físicos (solo se registran en el sistema).
+- Variantes adicionales no listadas.
+- Productos adicionales a los 120.
+
+---
+
+## 19. Estado de aprobación
+
+| Elemento | Estado |
+| :--- | :--- |
+| 6 categorías | Definidas con método de costo |
+| 120 productos | Definidos con datos completos |
+| 25 variantes | Definidas |
+| 8 UoM | Definidas |
+| 5 listas de precios | Definidas con reglas |
+| 3 impuestos | Definidos |
+| 35 proveedores | Definidos con datos completos |
+| 10 etiquetas | Definidas |
+| 4 rutas | Definidas |
+| 120 imágenes placeholder | Configuradas |
+| Datos técnicos | Completos (composición, fraguado, dimensiones, etc.) |
+| Importación | Planificada |
+| Validaciones | Definidas |
+| Implementación | No iniciada |
+
+**Siguiente paso técnico:** Ejecutar la Fase 01 (Core) antes de esta. Una vez aprobada, proceder con la carga masiva de este catálogo en entorno de validación.
+
+---
+
+**Documento maestro de Fase 02 — JJSUMI ERP — Odoo 19 Community.**
+**Estado: diseño aprobado para implementación. No autoriza por sí mismo cambios en la base de datos.**

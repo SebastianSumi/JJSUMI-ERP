@@ -1,0 +1,214 @@
+# JJSUMI ERP — FASE 04: COMPRAS Y ABASTECIMIENTO
+
+**Especificación funcional, de datos, interfaz, seguridad y pruebas**  
+**Plataforma objetivo:** Odoo 19 Community  
+**Base existente:** `jjsumi` — protegida  
+**Estado:** Diseño aprobado para implementación  
+**Versión del documento:** 1.0 (Datos Maestros Completos y Explícitos)  
+**Fecha:** 18 de noviembre de 2026  
+
+---
+
+## 0. Reglas obligatorias de la Fase 04
+
+1. Utilizar exclusivamente los modelos nativos de Odoo: `res.partner`, `purchase.order`, `purchase.order.line`, `purchase.requisition` (Acuerdos de compra), `account.move` (Facturas de proveedor), `account.payment.term`, `product.supplierinfo`.
+2. Las aprobaciones de compras superiores a los límites definidos se gestionarán mediante el addon propio `jjsumi_approvals` o una extensión `jjsumi_purchase_ext` que añade estados de aprobación (`pending_approval`, `approved`) al modelo `purchase.order`, ya que Odoo 19 Community no incluye el flujo de aprobación de compras de Enterprise.
+3. No se crearán proveedores con RUC reales de terceros. Se utilizará el rango ficticio `20600000001` a `20600000035` claramente identificado como dato de prueba.
+4. Toda Orden de Compra (OC) debe estar vinculada a un `product.supplierinfo` válido para garantizar la trazabilidad de precios y plazos.
+5. La recepción de mercadería se ejecutará exclusivamente a través del modelo `stock.picking` vinculado a la OC, no mediante ajustes manuales de inventario.
+6. Las facturas de proveedor (`account.move` tipo `in_invoice`) se vincularán a la OC y a la recepción para aplicar la validación de 3 vías (OC, Recepción, Factura).
+
+---
+
+## 1. Objetivo y Alcance
+
+Controlar las necesidades de compra, la relación con proveedores, las aprobaciones por montos, la recepción de mercadería y el registro de obligaciones, garantizando que el abastecimiento de la planta de Juliaca y las sucursales sea oportuno, trazable y autorizado.
+
+### 1.1 Entregables
+- 35 proveedores registrados con datos completos y condiciones de pago.
+- Matriz de aprobación de compras configurada y operativa.
+- Flujo completo: Solicitud de Compra → Cotización → Orden de Compra → Recepción → Factura.
+- Evaluación básica de proveedores (tiempos de entrega y conformidad).
+- Integración total con Inventario (Fase 03) y Catálogo (Fase 02).
+
+---
+
+## 2. Aplicaciones nativas y modelos técnicos (Odoo 19)
+
+| Modelo Nativo | Uso en JJSUMI | Campos técnicos clave |
+| :--- | :--- | :--- |
+| `res.partner` | Proveedores | `name`, `vat` (RUC), `street`, `city`, `phone`, `email`, `property_payment_term_id`, `supplier_rank` |
+| `purchase.order` | Órdenes de Compra | `partner_id`, `date_order`, `currency_id`, `state` (`draft`, `sent`, `to approve`, `purchase`, `done`, `cancel`), `amount_total` |
+| `purchase.order.line` | Líneas de OC | `product_id`, `name`, `product_qty`, `product_uom`, `price_unit`, `taxes_id` |
+| `purchase.requisition` | Solicitud de Cotización (RFQ) | `user_id`, `line_ids`, `state` (`draft`, `in_progress`, `done`) |
+| `account.move` | Facturas de Proveedor | `partner_id`, `invoice_date`, `invoice_date_due`, `move_type` (`in_invoice`), `invoice_line_ids`, `payment_state` |
+| `account.payment.term` | Condiciones de Pago | `name`, `line_ids` (días, porcentaje) |
+| `product.supplierinfo` | Info. de Proveedor por Producto | `partner_id`, `product_tmpl_id`, `price`, `min_qty`, `delay`, `currency_id` |
+
+---
+
+## 3. Catálogo de Proveedores (35) — Datos Explícitos
+
+*Nota: Los RUCs utilizan el rango ficticio `206000000XX` para cumplir con la regla de no usar datos reales que puedan confundirse, manteniendo la validez estructural para pruebas.*
+
+| Código | Nombre del Proveedor | RUC (Ficticio) | Ciudad | Contacto | Email | Teléfono | Plazo de Pago | Categoría Principal |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| PROV-001 | Minera Yesos del Sur S.A.C. | 20600000001 | Juliaca | Carlos Mamani | c.mamani@yesossur.pe | +51 051 321101 | 30 días | Materias primas |
+| PROV-002 | Cantera Andina de Yeso S.A. | 20600000002 | Puno | Rosa Quispe | r.quispe@canteraandina.pe | +51 051 362202 | 30 días | Materias primas |
+| PROV-003 | Yesos Premium del Altiplano E.I.R.L. | 20600000003 | Juliaca | Juan Delgado | j.delgado@yesospremium.pe | +51 051 321303 | 15 días | Yesos |
+| PROV-004 | AgroYeso Perú S.A.C. | 20600000004 | Arequipa | Maria Lopez | m.lopez@agroyeso.pe | +51 054 215404 | 30 días | Yeso agrícola |
+| PROV-005 | Suministros Médicos Andinos S.A.C. | 20600000005 | Cusco | Pedro Vargas | p.vargas@suministrosmed.pe | +51 084 234505 | 15 días | Yeso médico |
+| PROV-006 | Placas Industriales del Sur S.A. | 20600000006 | Lima | Sofia Medina | s.medina@placassur.pe | +51 01 456606 | 30 días | Placas |
+| PROV-007 | Perfiles y Accesorios Metálicos JJS S.A.C. | 20600000007 | Lima | Luis Paredes | l.paredes@perfilesjjs.pe | +51 01 456707 | 30 días | Perfiles |
+| PROV-008 | Cintas y Accesorios de Construcción S.A. | 20600000008 | Lima | Ana Flores | a.flores@cintasconstruccion.pe | +51 01 456808 | 15 días | Accesorios |
+| PROV-009 | Cementos y Placas del Sur S.A.C. | 20600000009 | Arequipa | Roberto Condori | r.condori@cementossur.pe | +51 054 215909 | 30 días | Placas cementicias |
+| PROV-010 | Decorados en Yeso Artesanal E.I.R.L. | 20600000010 | Puno | Carmen Torres | c.torres@decoradosyeso.pe | +51 051 362010 | 15 días | Decorativos |
+| PROV-011 | Molduras y Columnas del Sur S.A.C. | 20600000011 | Cusco | David Huanca | d.huanca@moldurassur.pe | +51 084 234111 | 30 días | Decorativos grandes |
+| PROV-012 | Masillas y Mezclas Industriales S.A. | 20600000012 | Lima | Elena Vargas | e.vargas@masillasindustriales.pe | +51 01 456212 | 30 días | Masillas |
+| PROV-013 | Químicos de Construcción Andina S.A.C. | 20600000013 | Lima | Jorge Sanchez | j.sanchez@quimicosandina.pe | +51 01 456313 | 15 días | Selladores, aditivos |
+| PROV-014 | Aditivos Químicos del Sur S.A.C. | 20600000014 | Arequipa | Marta Espinoza | m.espinoza@aditivossur.pe | +51 054 215414 | 30 días | Aditivos líquidos |
+| PROV-015 | Pinturas y Recubrimientos JJS S.A.C. | 20600000015 | Lima | Fernando Rojas | f.rojas@pinturasjjs.pe | +51 01 456515 | 30 días | Pinturas |
+| PROV-016 | Cantera Central de Yeso S.A. | 20600000016 | Juliaca | Gabriela Quispe | g.quispe@canteracentral.pe | +51 051 321616 | 30 días | Piedra de yeso |
+| PROV-017 | Minas y Canteras del Altiplano S.A.A. | 20600000017 | Puno | Ricardo Mamani | r.mamani@minasaltiplano.pe | +51 051 362717 | 30 días | Piedra de yeso |
+| PROV-018 | Químicos Industriales Andinos S.A. | 20600000018 | Lima | Claudia Aguilar | c.aguilar@quimicosindustriales.pe | +51 01 456818 | 30 días | Aditivos industriales |
+| PROV-019 | Energía y Combustibles del Altiplano S.A.C. | 20600000019 | Juliaca | Diego Paredes | d.paredes@energiaaltiplano.pe | +51 051 321919 | 15 días | Combustibles |
+| PROV-020 | Gas Natural del Sur S.R.L. | 20600000020 | Arequipa | Veronica Vargas | v.vargas@gasnaturalsur.pe | +51 054 215020 | 30 días | Gas industrial |
+| PROV-021 | Empaques y Envases JJSUMI S.A.C. | 20600000021 | Juliaca | Alejandro Delgado | a.delgado@empaquesjjsumi.pe | +51 051 321121 | 15 días | Empaques |
+| PROV-022 | Flejes y Embalajes Industriales S.A.C. | 20600000022 | Lima | Patricia Quispe | p.quispe@flejesindustriales.pe | +51 01 456222 | 30 días | Flejes |
+| PROV-023 | Lubricantes y Grasas Industriales S.A. | 20600000023 | Lima | Raul Mamani | r.mamani@lubricantesindustriales.pe | +51 01 456323 | 30 días | Lubricantes |
+| PROV-024 | Ferretería Industrial Global S.A.C. | 20600000024 | Lima | Silvia Rojas | s.rojas@ferreteriaiglobal.pe | +51 01 456424 | 15 días | Repuestos |
+| PROV-025 | Pinturas Industriales del Sur S.A.C. | 20600000025 | Arequipa | Hector Vargas | h.vargas@pinturasindustrial.pe | +51 054 215525 | 30 días | Pinturas industriales |
+| PROV-026 | Herramientas y Fijaciones Andinas S.A.C. | 20600000026 | Lima | Diana Torres | d.torres@herramientasandinas.pe | +51 01 456626 | 15 días | Herramientas manuales |
+| PROV-027 | Maquinaria y Herramientas Eléctricas S.A. | 20600000027 | Lima | Francisco Aguilar | f.aguilar@maquinariaelectrica.pe | +51 01 456727 | 30 días | Herramientas eléctricas |
+| PROV-028 | Plásticos y Accesorios de Construcción S.A. | 20600000028 | Lima | Beatriz Paredes | b.paredes@plasticosconstruccion.pe | +51 01 456828 | 30 días | Baldes, rodillos |
+| PROV-029 | Equipos de Seguridad Industrial S.A.C. | 20600000029 | Lima | Oscar Huanca | o.huanca@seguridadindustrial.pe | +51 01 456929 | 15 días | EPP |
+| PROV-030 | Transportes y Logística del Sur S.A.C. | 20600000030 | Juliaca | Natalia Espinoza | n.espinoza@transportessur.pe | +51 051 321030 | 30 días | Transporte |
+| PROV-031 | Servicios de Mantenimiento Industrial S.A. | 20600000031 | Juliaca | Victor Delgado | v.delgado@mantenimientoind.pe | +51 051 321131 | 15 días | Servicios |
+| PROV-032 | Imprenta y Papelería JJSUMI S.A.C. | 20600000032 | Juliaca | Andrea Aguilar | a.aguilar@imprentajjsumi.pe | +51 051 321232 | 15 días | Papelería |
+| PROV-033 | Suministros de Oficina JJS S.A.C. | 20600000033 | Juliaca | Sergio Paredes | s.paredes@suministrosoficina.pe | +51 051 321333 | 15 días | Oficina |
+| PROV-034 | Servicios de Limpieza Industrial S.A.C. | 20600000034 | Arequipa | Monica Huanca | m.huanca@limpiezaindustrial.pe | +51 054 215434 | 30 días | Limpieza |
+| PROV-035 | Asesoría Legal y Contable JJS S.A.C. | 20600000035 | Lima | Eduardo Torres | e.torres@asesoriajjs.pe | +51 01 456535 | 30 días | Servicios profesionales |
+
+---
+
+## 4. Condiciones de Pago (`account.payment.term`)
+
+| Código | Nombre | Líneas de Pago (Días, Porcentaje) |
+| :--- | :--- | :--- |
+| PT-CONTADO | Contado | 0 días, 100% |
+| PT-15DIAS | 15 días | 15 días, 100% |
+| PT-30DIAS | 30 días | 30 días, 100% |
+| PT-30-60DIAS | 30/60 días | 30 días (50%), 60 días (50%) |
+
+---
+
+## 5. Matriz de Aprobación de Compras
+
+Dado que Odoo 19 Community no tiene aprobación nativa avanzada, se implementará mediante el addon `jjsumi_approvals` vinculado a `purchase.order` o un estado personalizado `x_state` con las siguientes reglas estrictas:
+
+| Monto Total de la OC (PEN) | Aprobador Requerido | Acción en Odoo |
+| :--- | :--- | :--- |
+| **< S/ 5,000** | Jefe de Área / Supervisor | El usuario con rol `group_jjsumi_buyer` o `group_jjsumi_warehouse_supervisor` puede confirmar la OC directamente. |
+| **S/ 5,000 - S/ 20,000** | Gerente de Sucursal o Gerente Administrativo | La OC entra en estado `to approve`. El usuario con rol `group_jjsumi_branch_manager` o `group_jjsumi_general_manager` debe hacer clic en "Aprobar". |
+| **> S/ 20,000** | Gerente General | La OC entra en estado `to approve`. Solo el usuario con rol `group_jjsumi_general_manager` puede aprobar. |
+| **Cualquier monto (Materiales Críticos)** | Jefe de Producción (para MAT) | Validación adicional de especificaciones técnicas antes de la aprobación financiera. |
+
+*Regla de seguridad:* El usuario que crea la Orden de Compra (`create_uid`) no puede ser el mismo que la aprueba (`x_approved_by`). El sistema bloqueará la acción con un `UserError`.
+
+---
+
+## 6. Flujos de Compras (Mapeo a Modelos Odoo)
+
+### 6.1 Flujo Estándar de Compra
+1. **Necesidad:** Se detecta bajo stock (vía regla de reabastecimiento `stock.warehouse.orderpoint`) o solicitud manual.
+2. **Solicitud de Cotización (RFQ):** Se crea un `purchase.order` en estado `draft`. Se selecciona el `partner_id` y se agregan `purchase.order.line`.
+3. **Envío al Proveedor:** Se cambia el estado a `sent` (se envía el PDF por email nativo de Odoo).
+4. **Confirmación y Aprobación:** 
+   - Si el monto lo requiere, el estado pasa a `to approve`.
+   - Tras la aprobación, el estado pasa a `purchase` (Orden de Compra confirmada).
+5. **Recepción:** Odoo genera automáticamente un `stock.picking` vinculado (`origin` = número de OC). El almacenero valida la entrada en `WH-JUL/Recepcion` (o sucursal correspondiente), ingresando cantidades y lotes (`stock.move.line`).
+6. **Facturación:** Se crea una `account.move` (tipo `in_invoice`) desde la OC o la recepción. Se valida la coincidencia de cantidades y precios (Validación de 3 vías).
+7. **Pago:** Se registra un `account.payment` vinculado a la factura, cambiando el `payment_state` a `paid`.
+
+### 6.2 Flujo de Solicitud de Cotización Múltiple (Comparación)
+1. Se crea un `purchase.requisition` (Acuerdo de compra) en estado `draft`.
+2. Se agregan líneas de productos necesarios.
+3. Se generan múltiples `purchase.order` (RFQs) vinculadas a este acuerdo, enviadas a distintos proveedores (ej. PROV-001, PROV-002, PROV-016 para piedra de yeso).
+4. Al recibir respuestas, se comparan precios y plazos en la vista del acuerdo.
+5. Se selecciona la mejor oferta y se confirma esa `purchase.order` específica. El acuerdo pasa a estado `done`.
+
+---
+
+## 7. Configuración de Tipos de Operación y Secuencias
+
+| Almacén | Código | Nombre visible | Secuencia (Prefix) | Ubicación Origen | Ubicación Destino |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| WH-JUL | IN | Recepciones de Materia Prima | WH-JUL/IN/ | Proveedores (Virtual) | WH-JUL/Recepcion |
+| WH-PUN | IN | Recepciones de Sucursal | WH-PUN/IN/ | WH-JUL/Stock (o Prov.) | WH-PUN/Recepcion |
+| WH-AQP | IN | Recepciones de Sucursal | WH-AQP/IN/ | WH-JUL/Stock (o Prov.) | WH-AQP/Recepcion |
+| WH-CUS | IN | Recepciones de Sucursal | WH-CUS/IN/ | WH-JUL/Stock (o Prov.) | WH-CUS/Recepcion |
+| WH-TAC | IN | Recepciones de Sucursal | WH-TAC/IN/ | WH-JUL/Stock (o Prov.) | WH-TAC/Recepcion |
+
+*Nota:* Las secuencias se configuran en `ir.sequence` vinculadas a los `purchase.order` o `stock.picking.type` según corresponda.
+
+---
+
+## 8. Reglas de Negocio y Validaciones
+
+1. **Proveedor Obligatorio:** No se puede confirmar una OC sin un `partner_id` con `supplier_rank > 0`.
+2. **Precio y Moneda:** El `price_unit` en la línea de compra debe coincidir con el `price` definido en `product.supplierinfo` para ese `partner_id` y `min_qty`. Si difiere, el sistema mostrará una advertencia (warning) pero permitirá continuar si el usuario tiene permisos de Gerente.
+3. **Validación de 3 Vías:** Al crear la factura de proveedor, Odoo comparará `quantity` y `price_unit` de la factura contra la recepción (`stock.valuation.layer`) y la OC. Si hay discrepancia > 5%, bloqueará la validación de la factura hasta que un usuario con rol `group_jjsumi_accountant` o `group_jjsumi_admin` la fuerce o ajuste.
+4. **Lotes en Recepción:** Si el producto tiene `tracking = 'lot'`, la validación del `stock.picking` será rechazada si no se especifica un `lot_id` en las líneas de movimiento.
+5. **No Eliminación:** Una OC en estado `purchase` o `done` no puede ser eliminada. Solo puede ser cancelada (`state = 'cancel'`), lo cual revertirá las cantidades reservadas en inventario.
+
+---
+
+## 9. Pruebas de Aceptación (Fase 04)
+
+| ID | Prueba | Resultado esperado |
+| :--- | :--- | :--- |
+| T01 | Crear proveedor PROV-001 | Se guarda con RUC ficticio, plazo de pago 30 días y `supplier_rank=1`. |
+| T02 | Crear RFQ para MAT-001 (10 Ton) | Se vincula automáticamente el precio de PROV-001 desde `product.supplierinfo`. |
+| T03 | Confirmar OC > S/ 20,000 | El estado cambia a `to approve`. El creador no puede aprobarla. |
+| T04 | Aprobar OC como Gerente General | El estado cambia a `purchase`. Se genera un `stock.picking` en estado `waiting` o `assigned`. |
+| T05 | Validar recepción de MAT-001 | El sistema exige ingresar un número de lote. Al validar, el stock aumenta en `WH-JUL/Recepcion`. |
+| T06 | Crear factura de proveedor desde la OC | Se pre-llenán cantidades y precios. La validación de 3 vías no muestra errores. |
+| T07 | Registrar pago de la factura | El `payment_state` de la factura cambia a `Pagado`. |
+| T08 | Solicitud de cotización múltiple | Se crean 2 RFQs desde un `purchase.requisition`. Se compara y se confirma una. |
+| T09 | Intentar eliminar OC confirmada | El sistema muestra error de permisos o bloquea la acción (solo permite cancelar). |
+| T10 | Recepción parcial | Se valida solo el 50% de la cantidad. La OC queda en estado `partial` y permite una segunda recepción. |
+| T11 | Discrepancia de precio en factura | Si la factura tiene un precio 10% mayor que la OC, el sistema bloquea la validación (regla de 3 vías). |
+| T12 | Evaluación de proveedor | Al recibir a tiempo, el campo de evaluación del proveedor se actualiza (vía acción programada o manual). |
+
+---
+
+## 10. Orden exacto de implementación
+
+1. **Auditoría previa:** Verificar módulos `purchase`, `account`, `stock` instalados.
+2. **Configuración de Compras:** Ajustes → Compras → Activar "Acuerdos de compra" (para RFQs múltiples) y "Facturación en 3 vías".
+3. **Creación de Condiciones de Pago:** Importar o crear manualmente los 4 plazos de pago (`account.payment.term`).
+4. **Carga de Proveedores:** Importar los 35 proveedores vía CSV, mapeando `name`, `vat`, `street`, `city`, `phone`, `email`, `property_payment_term_id`, `supplier_rank`.
+5. **Vinculación de Info. de Proveedor:** Ejecutar script o importar `product.supplierinfo` vinculando los productos de la Fase 02 con los proveedores de esta fase (precios, cantidades mínimas, plazos de entrega).
+6. **Implementación de Aprobaciones:** Instalar/configurar `jjsumi_approvals` o la extensión `jjsumi_purchase_ext` para los estados de aprobación y la matriz de montos.
+7. **Pruebas de Flujo:** Ejecutar una compra completa (RFQ → OC → Aprobación → Recepción con Lote → Factura → Pago) para el producto MAT-001.
+8. **Validación y Aprobación:** Firmar el acta de aceptación de la Fase 04.
+
+---
+
+## 11. Estado de aprobación
+
+| Elemento | Estado |
+| :--- | :--- |
+| Catálogo de 35 proveedores | Definido con datos explícitos y RUCs ficticios de prueba |
+| Condiciones de pago | Definidas (4 plazos) |
+| Matriz de aprobación de compras | Definida por montos y roles |
+| Flujos de compra y facturación | Mapeados a modelos nativos de Odoo 19 |
+| Reglas de negocio y validaciones | Definidas (3 vías, lotes, no eliminación) |
+| Pruebas de aceptación | Diseñadas (12 casos) |
+| Implementación | No iniciada (Pendiente de aprobación de Fases 01, 02 y 03) |
+
+---
+
+**Documento maestro de Fase 04 — JJSUMI ERP — Odoo 19 Community.**  
+**Estado:** Diseño aprobado para implementación. No autoriza por sí mismo cambios en la base de datos.  
+**Próximo paso:** Una vez aprobadas las fases anteriores, proceder con la carga de proveedores y la configuración de los flujos de compra en el entorno de validación, siguiendo estrictamente los modelos y campos nativos detallados.

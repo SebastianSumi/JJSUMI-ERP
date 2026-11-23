@@ -1,0 +1,197 @@
+# JJSUMI ERP — FASE 08: PUNTOS DE VENTA (POS)
+
+**Especificación funcional, de datos, interfaz, seguridad y pruebas**  
+**Plataforma objetivo:** Odoo 19 Community  
+**Base existente:** `jjsumi` — protegida  
+**Estado:** Diseño aprobado para implementación  
+**Versión del documento:** 1.0 (Datos Maestros Completos y Explícitos)  
+**Fecha:** 18 de noviembre de 2026  
+
+---
+
+## 0. Reglas obligatorias de la Fase 08
+
+1. Utilizar exclusivamente la aplicación nativa `point_of_sale` de Odoo 19 Community y sus modelos asociados: `pos.config`, `pos.session`, `pos.order`, `pos.order.line`, `pos.payment`, `pos.payment.method`, `account.journal`.
+2. No reconstruir ni reemplazar la interfaz nativa del POS. Las personalizaciones se limitarán a campos adicionales en el modelo `pos.order` (ej. `x_jjsumi_observation`) o reglas de seguridad, nunca a modificar el código JavaScript del frontend del POS.
+3. Cada uno de los 8 puntos de venta tendrá una configuración (`pos.config`) independiente, vinculada a su almacén y diario de caja específicos.
+4. Los cajeros solo podrán operar en las sesiones del POS que tengan asignado. No podrán abrir sesiones de otras sucursales.
+5. Los descuentos en el POS están restringidos: hasta 5% autorizado para el cajero; superior al 5% requiere la contraseña o intervención de un usuario con rol de Supervisor (`group_jjsumi_sales_supervisor`) o Gerente de Sucursal.
+6. No se permitirá la venta con stock negativo en el POS. El sistema debe validar la disponibilidad en el almacén vinculado al POS antes de confirmar el pago.
+7. Las devoluciones en el POS se gestionarán vinculando la operación al pedido original (`pos.order` de tipo `return_in_pos_order`), garantizando la reversión del inventario y del asiento contable interno.
+
+---
+
+## 1. Objetivo y Alcance
+
+Operar los ocho puntos de venta distribuidos en las cinco sucursales de JJSUMI, garantizando un proceso de venta rápida, control estricto de efectivo, integración en tiempo real con el inventario y trazabilidad completa de las sesiones de caja.
+
+### 1.1 Entregables
+- 8 configuraciones de POS (`pos.config`) operativas y vinculadas a sus respectivos almacenes.
+- 8 diarios de caja (`account.journal`) configurados para el registro contable interno.
+- 4 métodos de pago estandarizados (Efectivo, Tarjeta, Transferencia, Crédito).
+- Flujo completo: Apertura de sesión → Venta rápida → Aplicación de descuentos autorizados → Pago → Cierre y arqueo de caja.
+- Gestión de devoluciones vinculadas a tickets originales.
+- Reportes de ventas por cajero, por sesión y por sucursal.
+
+---
+
+## 2. Modelos nativos y campos técnicos (Odoo 19 Community)
+
+| Modelo Nativo | Uso en JJSUMI | Campos técnicos clave |
+| :--- | :--- | :--- |
+| `pos.config` | Configuración de cada punto de venta | `name`, `company_id`, `warehouse_id`, `journal_id`, `payment_method_ids`, `restrict_price_control` (True), `iface_cashdrawer` (según hardware), `module_pos_restaurant` (False) |
+| `pos.session` | Sesión de caja diaria | `config_id`, `user_id` (cajero), `start_at`, `stop_at`, `state` (`opening_control`, `opened`, `closing_control`, `closed`), `cash_register_balance_end_real` |
+| `pos.order` | Pedido de venta en POS | `pos_reference`, `config_id`, `session_id`, `partner_id`, `amount_total`, `amount_paid`, `state` (`draft`, `cancel`, `paid`, `done`, `invoiced`), `is_tipped`, `is_invoiced` |
+| `pos.order.line` | Líneas del pedido | `order_id`, `product_id`, `qty`, `price_unit`, `discount`, `tax_ids` |
+| `pos.payment` | Pagos registrados en el pedido | `pos_order_id`, `payment_method_id`, `amount`, `currency_id` |
+| `pos.payment.method` | Métodos de pago configurados | `name`, `journal_id`, `is_cash_count` (True para efectivo) |
+| `account.journal` | Diarios contables de caja | `name`, `type` (`cash` o `bank`), `company_id`, `default_account_id` |
+
+---
+
+## 3. Configuración de los 8 Puntos de Venta (Explícito)
+
+| Código POS | Nombre del POS | Sucursal | Almacén Vinculado (`warehouse_id`) | Diario de Caja (`journal_id`) | Cajeros Asignados (Usuarios) | Supervisor Asignado |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| POS-001 | Tienda Principal Juliaca | SEDE-001 | WH-JUL | DIARIO-CAJA-JUL-01 | USR-022, USR-027 | USR-010 (Rosa Medina) |
+| POS-002 | Tienda Industrial Juliaca | SEDE-001 | WH-JUL | DIARIO-CAJA-JUL-02 | USR-023, USR-028 | USR-010 (Rosa Medina) |
+| POS-003 | Tienda Centro Puno | SEDE-002 | WH-PUN | DIARIO-CAJA-PUN-01 | USR-024, USR-029 | USR-011 (Luis Paredes) |
+| POS-004 | Tienda Norte Puno | SEDE-002 | WH-PUN | DIARIO-CAJA-PUN-02 | USR-025 | USR-011 (Luis Paredes) |
+| POS-005 | Tienda Principal Arequipa | SEDE-003 | WH-AQP | DIARIO-CAJA-AQP-01 | USR-026 | USR-012 (Marta Espinoza) |
+| POS-006 | Tienda Secundaria Arequipa| SEDE-003 | WH-AQP | DIARIO-CAJA-AQP-02 | USR-027 (compartido) | USR-012 (Marta Espinoza) |
+| POS-007 | Tienda Comercial Cusco | SEDE-004 | WH-CUS | DIARIO-CAJA-CUS-01 | USR-028 (compartido) | USR-013 (Claudia Aguilar) |
+| POS-008 | Tienda Comercial Tacna | SEDE-005 | WH-TAC | DIARIO-CAJA-TAC-01 | USR-029 (compartido) | USR-014 (Juan Delgado) |
+
+*Nota: Los usuarios cajeros (USR-022 a USR-029) tienen el rol `group_jjsumi_cashier` y restricción de registro (`ir.rule`) para ver solo sesiones de su `config_id` asignado.*
+
+---
+
+## 4. Métodos de Pago y Diarios Contables
+
+### 4.1 Diarios de Caja (`account.journal`)
+| Código | Nombre del Diario | Tipo | Compañía | Cuenta Contable por Defecto |
+| :--- | :--- | :--- | :--- | :--- |
+| DIARIO-CAJA-JUL-01 | Caja Tienda Principal Juliaca | Efectivo | JJSUMI | 104101 (Caja Moneda Nacional) |
+| DIARIO-CAJA-JUL-02 | Caja Tienda Industrial Juliaca | Efectivo | JJSUMI | 104101 |
+| DIARIO-CAJA-PUN-01 | Caja Tienda Centro Puno | Efectivo | JJSUMI | 104102 (Caja Puno) |
+| DIARIO-CAJA-PUN-02 | Caja Tienda Norte Puno | Efectivo | JJSUMI | 104102 |
+| DIARIO-CAJA-AQP-01 | Caja Tienda Principal Arequipa| Efectivo | JJSUMI | 104103 (Caja Arequipa) |
+| DIARIO-CAJA-AQP-02 | Caja Tienda Secundaria Arequipa| Efectivo | JJSUMI | 104103 |
+| DIARIO-CAJA-CUS-01 | Caja Tienda Comercial Cusco | Efectivo | JJSUMI | 104104 (Caja Cusco) |
+| DIARIO-CAJA-TAC-01 | Caja Tienda Comercial Tacna | Efectivo | JJSUMI | 104105 (Caja Tacna) |
+
+### 4.2 Métodos de Pago (`pos.payment.method`)
+Se configurarán 4 métodos de pago globales, disponibles en los 8 POS:
+1. **Efectivo (PEN)**: Vinculado al diario de caja específico del POS. `is_cash_count = True`.
+2. **Tarjeta (Débito/Crédito)**: Vinculado a un diario bancario de conciliación (ej. `DIARIO-BANCO-BCP`). `is_cash_count = False`.
+3. **Transferencia Bancaria**: Vinculado al mismo diario bancario. `is_cash_count = False`.
+4. **Crédito / Cuenta Corriente**: Vinculado a diario de clientes (cuentas por cobrar). `is_cash_count = False`. Requiere seleccionar un `partner_id` obligatorio.
+
+---
+
+## 5. Flujos de Operación POS
+
+### 5.1 Apertura de Sesión
+1. El cajero (ej. USR-022) accede al dashboard del POS y selecciona "POS-001".
+2. El sistema crea un `pos.session` en estado `opening_control`.
+3. El cajero ingresa el "Saldo Inicial de Caja" (ej. S/ 200.00 en billetes de denominación específica).
+4. El cajero hace clic en "Abrir Sesión". El estado cambia a `opened`.
+
+### 5.2 Venta Rápida y Escaneo
+1. El cajero escanea el código de barras del producto (ej. `7750000000011` para YES-001) o lo busca por nombre/SKU.
+2. El sistema valida que `qty_available` en `WH-JUL` sea suficiente. Si no, muestra advertencia y bloquea la venta (configuración `available_in_pos` y reglas de stock).
+3. El cajero selecciona el cliente (opcional para venta mostrador, obligatorio para venta a crédito).
+4. Se aplica descuento si corresponde (máximo 5% sin autorización).
+
+### 5.3 Pago y Emisión de Ticket
+1. El cajero presiona "Pago".
+2. Selecciona el método de pago (ej. Efectivo).
+3. Ingresa el monto recibido. El sistema calcula el vuelto automáticamente.
+4. Al confirmar, se genera el `pos.order` en estado `paid`, se crea el `pos.payment` y se dispara el movimiento de inventario (`stock.picking` tipo `outgoing` en segundo plano).
+5. Se imprime el ticket (vía navegador o impresora de red configurada).
+
+### 5.4 Cierre de Sesión y Arqueo
+1. El cajero presiona "Cerrar Sesión". El estado cambia a `closing_control`.
+2. El sistema muestra el "Efectivo Esperado" (Saldo Inicial + Ventas en Efectivo - Retiros).
+3. El cajero cuenta el efectivo físico e ingresa el "Efectivo Real".
+4. El sistema calcula la "Diferencia de Caja" (Sobrante o Faltante).
+5. El Supervisor (ej. USR-010) revisa y valida la diferencia. Si es aceptable, hace clic en "Cerrar Sesión".
+6. El estado cambia a `closed`. Se genera el asiento contable de conciliación de caja.
+
+### 5.5 Devoluciones en POS
+1. Desde el dashboard del POS, el cajero selecciona "Pedidos" y busca el ticket original por referencia o cliente.
+2. Selecciona "Devolver".
+3. El sistema crea un nuevo `pos.order` vinculado (`is_invoiced = False`, `pos_reference` con sufijo `RETURN`).
+4. Las cantidades se ingresan como negativas.
+5. Al procesar el pago, el sistema devuelve el efectivo o abona a la cuenta del cliente, y revierte el stock al almacén de origen (o a la ubicación de devoluciones, según configuración de ruta).
+
+---
+
+## 6. Reglas de Negocio y Validaciones
+
+1. **Restricción de Precio**: El campo `restrict_price_control` en `pos.config` estará activado. Los cajeros no pueden modificar el `price_unit` manualmente.
+2. **Límite de Descuento**: 
+   - Descuento ≤ 5%: Permitido nativamente al cajero.
+   - Descuento > 5%: El botón de pago se deshabilita hasta que un usuario con el grupo `group_jjsumi_sales_supervisor` ingrese su credencial en la pantalla del POS para autorizar la línea.
+3. **Stock Negativo**: La configuración `available_in_pos` del producto se combinará con una validación en el backend. Si `qty_available < qty_solicitada`, el POS mostrará un error: "Stock insuficiente en [Nombre del Almacén]".
+4. **Cliente Obligatorio para Crédito**: Si el método de pago es "Crédito", el campo `partner_id` en `pos.order` es obligatorio. De lo contrario, el sistema bloquea la validación.
+5. **Integridad de Sesión**: Un cajero no puede abrir una nueva sesión si tiene una sesión anterior en estado `opened` o `closing_control` en cualquier POS.
+6. **No Eliminación**: Un `pos.order` en estado `paid` o `done` no puede ser eliminado. Solo se permite la acción "Anular" (que requiere permiso de supervisor) o procesar una devolución formal.
+
+---
+
+## 7. Pruebas de Aceptación (Fase 08)
+
+| ID | Prueba | Resultado esperado |
+| :--- | :--- | :--- |
+| T01 | Verificar las 8 configuraciones POS | POS-001 a POS-008 existen, vinculados a sus almacenes y diarios correctos. |
+| T02 | Abrir sesión como cajero (USR-022) | La sesión POS-001 se abre correctamente, solicitando saldo inicial. |
+| T03 | Intentar abrir sesión de otra sucursal | USR-022 no puede ver ni abrir la sesión de POS-003 (Puno) por regla de registro. |
+| T04 | Venta con escaneo de código de barras | Al escanear `7750000000011`, el producto YES-001 se agrega con el precio correcto de la lista pública. |
+| T05 | Aplicar descuento del 4% | El cajero aplica el descuento y el sistema permite finalizar la venta sin pedir autorización. |
+| T06 | Intentar aplicar descuento del 10% | El sistema bloquea el botón de pago y solicita la intervención/contraseña de un Supervisor. |
+| T07 | Venta con stock insuficiente | Al intentar vender 100 sacos de YES-001 cuando solo hay 50, el sistema muestra error y no permite el pago. |
+| T08 | Pago mixto (Efectivo + Tarjeta) | El sistema permite dividir el pago en dos métodos y registra dos líneas en `pos.payment`. |
+| T09 | Cierre de sesión con diferencia de caja | El cajero ingresa un monto real distinto al esperado; el sistema registra la diferencia y el supervisor puede validar el cierre. |
+| T10 | Devolución vinculada a ticket original | Se procesa una devolución; el stock del producto aumenta y se genera un asiento de reversión de ingresos. |
+| T11 | Venta a crédito sin cliente | El sistema impide finalizar la venta si se selecciona el método "Crédito" y no se ha seleccionado un `partner_id`. |
+| T12 | Reporte de ventas por sesión | El informe "Detalles de la sesión" muestra el total vendido, por método de pago y las diferencias de caja. |
+| T13 | Sincronización de inventario | Tras cerrar la sesión, el `qty_available` en el almacén vinculado se ha reducido exactamente en la cantidad vendida. |
+
+---
+
+## 8. Orden exacto de implementación
+
+1. **Auditoría previa:** Verificar que el módulo `point_of_sale` esté instalado y que los diarios contables (`account.journal`) de caja estén creados.
+2. **Configuración de Métodos de Pago:** Crear los 4 métodos de pago globales (`pos.payment.method`) y vincularlos a sus respectivos diarios.
+3. **Configuración de los 8 POS:** Crear los registros en `pos.config` para POS-001 a POS-008, asignando:
+   - Almacén (`warehouse_id`).
+   - Diario de caja (`journal_id`).
+   - Métodos de pago permitidos.
+   - Activar "Restringir control de precios" y "Gestión de inventario en tiempo real".
+4. **Asignación de Permisos:** Configurar las reglas de registro (`ir.rule`) para que los usuarios con rol `group_jjsumi_cashier` solo puedan acceder a los `pos.config` de su sucursal.
+5. **Habilitación de Productos en POS:** Verificar que los 120 productos de la Fase 02 tengan el campo `available_in_pos = True` (o crear una regla automática que lo active para las categorías CAT-YES, CAT-PLA, CAT-DEC, CAT-MAS, CAT-HER).
+6. **Pruebas de Flujo:** Ejecutar un ciclo completo en POS-001: Apertura → Venta con descuento autorizado → Pago mixto → Cierre con arqueo → Verificación de asientos contables y movimiento de stock.
+7. **Capacitación y Validación:** Realizar una sesión de prueba con los cajeros designados (USR-022 a USR-029) y sus supervisores.
+8. **Aprobación:** Firmar el acta de aceptación de la Fase 08.
+
+---
+
+## 9. Estado de aprobación
+
+| Elemento | Estado |
+| :--- | :--- |
+| 8 Configuraciones de POS (`pos.config`) | Definidas con almacenes y diarios vinculados |
+| 4 Métodos de Pago estandarizados | Definidos y vinculados a diarios |
+| 8 Diarios de Caja (`account.journal`) | Configurados para conciliación |
+| Flujo de Apertura, Venta y Cierre | Mapeado a modelos nativos de Odoo 19 |
+| Reglas de descuento y autorización | Definidas (límite 5% para cajero) |
+| Gestión de devoluciones en POS | Definida |
+| Pruebas de aceptación | Diseñadas (13 casos) |
+| Implementación | No iniciada (Pendiente de aprobación de Fases 01 a 07) |
+
+---
+
+**Documento maestro de Fase 08 — JJSUMI ERP — Odoo 19 Community.**  
+**Estado:** Diseño aprobado para implementación. No autoriza por sí mismo cambios en la base de datos.  
+**Próximo paso:** Una vez aprobadas las fases anteriores, proceder con la configuración de los 8 puntos de venta en el entorno de validación, asegurando que las reglas de seguridad y la integración con el inventario funcionen exactamente como se especifica.

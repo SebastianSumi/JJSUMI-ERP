@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_jjsumi_root" name="JJSumi" sequence="5"
+              web_icon="jjsumi_base,static/description/icon.png"/>
+    <menuitem id="menu_jjsumi_ventas" name="Ventas" parent="menu_jjsumi_root" sequence="10"/>
+    <menuitem id="menu_jjsumi_finanzas" name="Finanzas" parent="menu_jjsumi_root" sequence="20"/>
+    <menuitem id="menu_jjsumi_inventario" name="Inventario y fabricación" parent="menu_jjsumi_root" sequence="30"/>
+    <menuitem id="menu_jjsumi_marketing" name="Marketing" parent="menu_jjsumi_root" sequence="40"/>
+</odoo>

@@ -1,0 +1,26 @@
+TODO ESTO DEVE TENER DATOS:
+
+1. Fase 03 – Inventarios y almacenes
+Contempla:
+- Gestión de almacenes y ubicaciones.
+- Existencias por sucursal y almacén.
+- Entradas, salidas y transferencias internas.
+- Recepciones de compras y despachos de ventas.
+- Lotes y trazabilidad de productos.
+- Inventarios físicos y ajustes.
+- Reposición y reglas de abastecimiento.
+- Mermas, productos dañados y cuarentena.
+- Valoración de inventario y costos de existencias.
+2. Fase 09 – Finanzas y administración económica
+Contempla:
+- Contabilidad general.
+- Plan contable y configuración de cuentas.
+- Cuentas por cobrar.
+- Cuentas por pagar.
+- Tesorería y caja.
+- Bancos y conciliaciones.
+- Facturas de clientes y proveedores.
+- Impuestos y tratamiento del IGV.
+- Costos y análisis de rentabilidad.
+- Presupuestos y control financiero.
+- Cierres contables y reportes financieros.

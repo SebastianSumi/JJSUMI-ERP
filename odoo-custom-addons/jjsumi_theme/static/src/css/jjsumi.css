@@ -1,0 +1,159 @@
+/* ============================================================
+   JJSumi Theme — Odoo 19
+   Azul marino corporativo; dorado únicamente como acento.
+   ============================================================ */
+
+:root {
+    --jj-navy-900: #0B1628;
+    --jj-navy-800: #101F3A;
+    --jj-navy-700: #16305A;
+    --jj-navy-link: #1E4B8C;
+    --jj-gold: #C9A227;
+    --jj-gold-600: #A9861B;
+    --jj-ink: #1D2939;
+    --jj-muted: #667085;
+    --jj-line: #E4E7EC;
+    --jj-surface: #F7F8FA;
+}
+
+/* ---------- Barra de navegación (backend) ---------- */
+.o_main_navbar {
+    background-color: var(--jj-navy-800) !important;
+    border-bottom: 1px solid var(--jj-navy-900) !important;
+    --NavBar-entry-backgroundColor: transparent;
+    --NavBar-entry-backgroundColor--hover: rgba(255, 255, 255, .09);
+    --NavBar-entry-backgroundColor--focus: rgba(255, 255, 255, .12);
+    --NavBar-entry-backgroundColor--active: rgba(255, 255, 255, .12);
+    --NavBar-entry-color: rgba(255, 255, 255, .86);
+    --NavBar-entry-color--hover: #FFFFFF;
+    --NavBar-entry-color--active: #FFFFFF;
+    --NavBar-entry-borderColor-active: var(--jj-gold);
+    --NavBar-brand-color: #FFFFFF;
+}
+.o_main_navbar .o_menu_brand {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    letter-spacing: .01em;
+    box-shadow: inset 0 -2px 0 0 var(--jj-gold);
+}
+.o_main_navbar .o_navbar_apps_menu .o_app,
+.o_main_navbar .dropdown-menu {
+    background-color: #FFFFFF;
+}
+.o_main_navbar .dropdown-menu .dropdown-item:hover {
+    background-color: var(--jj-surface);
+    color: var(--jj-navy-800);
+}
+
+/* Menú lateral de aplicaciones (fondo oscuro) */
+.o_app_menu_sidebar .btn-primary,
+.o_sidebar_topbar .btn-primary {
+    background-color: var(--jj-gold) !important;
+    border-color: var(--jj-gold) !important;
+    color: var(--jj-navy-900) !important;
+}
+
+/* ---------- Botones ---------- */
+.btn-primary {
+    background-color: var(--jj-navy-800) !important;
+    border-color: var(--jj-navy-800) !important;
+    color: #FFFFFF !important;
+    font-weight: 500;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--jj-navy-700) !important;
+    border-color: var(--jj-navy-700) !important;
+    color: #FFFFFF !important;
+}
+.btn-primary:not(:disabled):not(.disabled):active {
+    background-color: var(--jj-navy-900) !important;
+    border-color: var(--jj-navy-900) !important;
+}
+
+/* ---------- Enlaces ---------- */
+a {
+    color: var(--jj-navy-link);
+}
+a:hover {
+    color: var(--jj-navy-700);
+}
+.o_main_navbar a,
+.o_main_navbar .dropdown-item {
+    color: rgba(255, 255, 255, .86);
+}
+.o_main_navbar a:hover,
+.o_main_navbar .dropdown-item:hover {
+    color: #FFFFFF;
+}
+
+/* ---------- Vistas de lista ---------- */
+.o_list_renderer {
+    --ListRenderer-thead-bg-color: #F4F6FA;
+    --ListRenderer-thead-border-end-color: var(--jj-line);
+}
+.o_list_table thead > tr > th {
+    color: #475467;
+    font-weight: 600;
+    border-bottom: 1px solid var(--jj-line);
+}
+.o_list_table tbody > tr:hover > td {
+    background-color: #FAFBFC;
+}
+
+/* ---------- Formularios: pestañas ---------- */
+.o_notebook .nav-tabs {
+    border-bottom: 1px solid var(--jj-line);
+}
+.o_notebook .nav-tabs .nav-link {
+    color: var(--jj-muted);
+    font-weight: 500;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+}
+.o_notebook .nav-tabs .nav-link:hover {
+    color: var(--jj-navy-800);
+    border-bottom-color: rgba(201, 162, 39, .45);
+}
+.o_notebook .nav-tabs .nav-link.active {
+    color: var(--jj-navy-800);
+    background: transparent;
+    border-bottom: 2px solid var(--jj-gold);
+    box-shadow: none;
+}
+
+/* ---------- Encabezados ---------- */
+h1, h2, h3, h4,
+.o_control_panel .o_breadcrumb {
+    color: var(--jj-navy-800);
+}
+.o_control_panel {
+    border-bottom: 1px solid var(--jj-line);
+}
+
+/* ---------- Encabezado del sitio web (frontend) ---------- */
+#wrapwrap header.navbar,
+#wrapwrap header.navbar .navbar-brand,
+#wrapwrap header.navbar .nav-link {
+    background-color: #FFFFFF;
+    color: var(--jj-navy-800);
+}
+#wrapwrap header.navbar {
+    border-bottom: 1px solid var(--jj-line);
+}
+#wrapwrap header.navbar .navbar-brand {
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+#wrapwrap header.navbar .nav-link:hover {
+    color: var(--jj-gold-600);
+}
+
+/* ---------- Pie del sitio web (frontend) ---------- */
+#wrapwrap .o_footer,
+.o_footer {
+    background-color: var(--jj-navy-900);
+    border-top: none;
+}

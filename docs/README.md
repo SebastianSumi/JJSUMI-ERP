@@ -38,3 +38,4 @@ El ecosistema **JJSUMI** integra tres plataformas en tiempo real para gestionar 
 | [04-n8n-automatizacion-y-notificaciones.md](./04-n8n-automatizacion-y-notificaciones.md) | Detalle de los 3 workflows activos, webhook de eventos Odoo, resúmenes diarios y alertas críticas. | Desarrollo / Operaciones |
 | [05-operacion-mantenimiento-y-manual-usuario.md](./05-operacion-mantenimiento-y-manual-usuario.md) | Guía paso a paso para usuarios finales, comandos de administración, despliegues y respaldo. | Público Final / Soporte TI |
 | [06-guia-visual-y-recursos.md](./06-guia-visual-y-recursos.md) | Paleta corporativa, hojas de estilo consolidadas, íconos y diagramas visuales. | Diseño / Desarrollo / Público Final |
+| [guias-por-integrante/README.md](./guias-por-integrante/README.md) | 4 consolidados detallados (flujos, guion de presentación y comandos de verificación/BD) por cada integrante del equipo. | Equipo de 4 Personas |
